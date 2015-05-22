@@ -425,10 +425,9 @@ class BoxDimensions {
   const BoxDimensions({this.width, this.height});
 
   BoxDimensions.withConstraints(
-      BoxConstraints constraints, {double width: 0.0, double height: 0.0}) {
-    this.width = constraints.constrainWidth(width);
-    this.height = constraints.constrainHeight(height);
-  }
+      BoxConstraints constraints, {double width: 0.0, double height: 0.0})
+    : width = constraints.constrainWidth(width),
+      height = constraints.constrainHeight(height);
 
   final double width;
   final double height;
@@ -650,10 +649,10 @@ class RenderBlock extends RenderDecoratedBox with ContainerRenderNodeMixin<Rende
     assert(outerWidth < double.INFINITY);
     double innerWidth = outerWidth - (_padding.left + _padding.right);
     RenderBox child = _firstChild;
-    BoxConstraints constraints = new BoxConstraints(minWidth: innerWidth,
-                                                    maxWidth: innerWidth);
+    BoxConstraints innerConstraints = new BoxConstraints(minWidth: innerWidth,
+                                                         maxWidth: innerWidth);
     while (child != null) {
-      outerHeight += child.getIntrinsicDimensions(constraints).height;
+      outerHeight += child.getIntrinsicDimensions(innerConstraints).height;
       assert(child.parentData is BlockParentData);
       child = child.parentData.nextSibling;
     }
