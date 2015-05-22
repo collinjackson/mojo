@@ -461,6 +461,22 @@ abstract class RenderBox extends RenderNode {
     layoutDone();
   }
 
+  bool handlePointer(sky.PointerEvent event, { double x: 0.0, double y: 0.0 }) {
+    // the x, y parameters have the top left of the node's box as the origin
+    RenderBox child = _lastChild;
+    while (child != null) {
+      assert(child.parentData is BoxParentData);
+      if ((x >= child.parentData.x) && (x < child.parentData.x + child.width) &&
+          (y >= child.parentData.y) && (y < child.parentData.y + child.height)) {
+        if (child.handlePointer(event, x: x-child.parentData.x, y: y-child.parentData.y))
+          return true;
+        break;
+      }
+      child = child.parentData.previousSibling;
+    }
+    return super.handlePointer(event, x: x, y: y);
+  }
+
   double width;
   double height;
 }
@@ -682,22 +698,6 @@ class RenderBlock extends RenderDecoratedBox with ContainerRenderNodeMixin<Rende
     layoutDone();
   }
 
-  bool handlePointer(sky.PointerEvent event, { double x: 0.0, double y: 0.0 }) {
-    // the x, y parameters have the top left of the node's box as the origin
-    RenderBox child = _lastChild;
-    while (child != null) {
-      assert(child.parentData is BlockParentData);
-      if ((x >= child.parentData.x) && (x < child.parentData.x + child.width) &&
-          (y >= child.parentData.y) && (y < child.parentData.y + child.height)) {
-        if (child.handlePointer(event, x: x-child.parentData.x, y: y-child.parentData.y))
-          return true;
-        break;
-      }
-      child = child.parentData.previousSibling;
-    }
-    return super.handlePointer(event, x: x, y: y);
-  }
-
   void paint(RenderNodeDisplayList canvas) {
     super.paint(canvas);
     RenderBox child = _firstChild;
@@ -710,7 +710,9 @@ class RenderBlock extends RenderDecoratedBox with ContainerRenderNodeMixin<Rende
 
 }
 
-class FlexBoxParentData extends BoxParentData {
+// FLEXBOX LAYOUT MANAGER
+
+class FlexBoxParentData extends BoxParentData with ContainerParentDataMixin<RenderBox> {
   int flex;
   void merge(FlexBoxParentData other) {
     if (other.flex != null)
@@ -721,8 +723,110 @@ class FlexBoxParentData extends BoxParentData {
 
 enum FlexDirection { Row, Column }
 
-// TODO(ianh): FlexBox
+class RenderFlex extends RenderDecoratedBox with ContainerRenderNodeMixin<RenderBox, FlexBoxParentData> {
+  // lays out RenderBox children in a vertical stack using flexible layout
+  // uses the maximum width and height provided by the parent
 
+  RenderFlex({
+    BoxDecoration decoration,
+    FlexDirection direction: FlexDirection.Row
+  }) : super(decoration), _direction = direction;
+
+  FlexDirection _direction;
+  FlexDirection get direction => _direction;
+  void set direction (FlexDirection value) {
+    _direction = value;
+    relayout();
+  }
+
+  void setParentData(RenderBox child) {
+    if (child.parentData is! FlexBoxParentData)
+      child.parentData = new FlexBoxParentData();
+  }
+
+  void layout(BoxConstraints constraints, { RenderNode relayoutSubtreeRoot }) {
+    width = clamp(min: constraints.minWidth, max: constraints.maxWidth);
+    height = clamp(min: constraints.minHeight, max: constraints.maxHeight);
+    relayout();
+  }
+
+  void relayout() {
+    internalLayout(this);
+  }
+
+  int getFlex(RenderBox child) {
+    assert(child.parentData is FlexBoxParentData);
+    return (child.parentData.flex != null ? child.parentData.flex : 0);
+  }
+
+  void internalLayout(RenderNode relayoutSubtreeRoot) {
+    // Based on http://www.w3.org/TR/css-flexbox-1/ Section 9.7 Resolving Flexible Lengths
+    // Steps 1-3. Determine used flex factor, size inflexible items, calculate free space
+    int numFlexibleChildren = 0;
+    int totalFlex = 0;
+    double freeSpace = (_direction == FlexDirection.Row) ? width : height;
+    RenderBox child = _firstChild;
+    while (child != null) {
+      int flex = getFlex(child);
+      if (flex > 0) {
+        numFlexibleChildren++;
+        totalFlex += child.parentData.flex;
+      } else {
+        child.layout(new BoxConstraints(minWidth: width, maxWidth: width),
+                     relayoutSubtreeRoot: relayoutSubtreeRoot);
+        freeSpace -= (_direction == FlexDirection.Row) ? child.width : child.height;
+      }
+      child = child.parentData.nextSibling;
+    }
+
+    // Steps 4-5. Distribute remaining space to flexible children.
+    double spacePerFlex = freeSpace / totalFlex;
+    double usedSpace = 0.0;
+    child = _firstChild;
+    while (child != null) {
+      int flex = getFlex(child);
+      if (flex > 0) {
+        double spaceForChild = spacePerFlex * flex;
+        BoxConstraints constraints;
+        switch (_direction) {
+          case FlexDirection.Row:
+            constraints = new BoxConstraints(maxHeight: height, maxWidth: spaceForChild);
+            break;
+          case FlexDirection.Column:
+            constraints = new BoxConstraints(maxHeight: spaceForChild, maxWidth: width);
+            break;
+        }
+        child.layout(constraints, relayoutSubtreeRoot: relayoutSubtreeRoot);
+      }
+
+      switch (_direction) {
+        // always center the item
+        case FlexDirection.Row:
+          child.parentData.x = usedSpace;
+          usedSpace += child.width;
+          child.parentData.y = height / 2 - child.height / 2;
+          break;
+        case FlexDirection.Column:
+          child.parentData.y = usedSpace;
+          usedSpace += child.height;
+          child.parentData.x = width / 2 - child.width / 2;
+          break;
+      }
+      child = child.parentData.nextSibling;
+    }
+    layoutDone();
+  }
+
+  void paint(RenderNodeDisplayList canvas) {
+    super.paint(canvas);
+    RenderBox child = _firstChild;
+    while (child != null) {
+      assert(child.parentData is FlexBoxParentData);
+      canvas.paintChild(child, child.parentData.x, child.parentData.y);
+      child = child.parentData.nextSibling;
+    }
+  }
+}
 
 // SCAFFOLD LAYOUT MANAGER
 
