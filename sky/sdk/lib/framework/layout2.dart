@@ -721,22 +721,23 @@ class FlexBoxParentData extends BoxParentData with ContainerParentDataMixin<Rend
   }
 }
 
-enum FlexDirection { Row, Column }
+enum FlexDirection { Horizontal, Vertical }
 
 class RenderFlex extends RenderDecoratedBox with ContainerRenderNodeMixin<RenderBox, FlexBoxParentData> {
-  // lays out RenderBox children in a vertical stack using flexible layout
-  // uses the maximum width and height provided by the parent
+  // lays out RenderBox children using flexible layout
 
   RenderFlex({
     BoxDecoration decoration,
-    FlexDirection direction: FlexDirection.Row
+    FlexDirection direction: FlexDirection.Horizontal
   }) : super(decoration), _direction = direction;
 
   FlexDirection _direction;
   FlexDirection get direction => _direction;
   void set direction (FlexDirection value) {
-    _direction = value;
-    relayout();
+    if (_direction != value) {
+      _direction = value;
+      markNeedsLayout();
+    }
   }
 
   void setParentData(RenderBox child) {
@@ -744,17 +745,24 @@ class RenderFlex extends RenderDecoratedBox with ContainerRenderNodeMixin<Render
       child.parentData = new FlexBoxParentData();
   }
 
+  BoxConstraints _constraints;  // value cached from parent for relayout call
   void layout(BoxConstraints constraints, { RenderNode relayoutSubtreeRoot }) {
-    width = clamp(min: constraints.minWidth, max: constraints.maxWidth);
-    height = clamp(min: constraints.minHeight, max: constraints.maxHeight);
-    relayout();
+    if (relayoutSubtreeRoot != null)
+      saveRelayoutSubtreeRoot(relayoutSubtreeRoot);
+    relayoutSubtreeRoot = relayoutSubtreeRoot == null ? this : relayoutSubtreeRoot;
+    _constraints = constraints;
+    width = clamp(min: _constraints.minWidth, max: _constraints.maxWidth);
+    height = clamp(min: _constraints.minHeight, max: _constraints.maxHeight);
+    assert(height < double.INFINITY);
+    assert(width < double.INFINITY);
+    internalLayout(relayoutSubtreeRoot);
   }
 
   void relayout() {
     internalLayout(this);
   }
 
-  int getFlex(RenderBox child) {
+  int _getFlex(RenderBox child) {
     assert(child.parentData is FlexBoxParentData);
     return (child.parentData.flex != null ? child.parentData.flex : 0);
   }
@@ -764,17 +772,20 @@ class RenderFlex extends RenderDecoratedBox with ContainerRenderNodeMixin<Render
     // Steps 1-3. Determine used flex factor, size inflexible items, calculate free space
     int numFlexibleChildren = 0;
     int totalFlex = 0;
-    double freeSpace = (_direction == FlexDirection.Row) ? width : height;
+    assert(_constraints != null);
+    double freeSpace = (_direction == FlexDirection.Horizontal) ? _constraints.maxWidth : _constraints.maxHeight;
     RenderBox child = _firstChild;
     while (child != null) {
-      int flex = getFlex(child);
+      int flex = _getFlex(child);
       if (flex > 0) {
         numFlexibleChildren++;
         totalFlex += child.parentData.flex;
       } else {
-        child.layout(new BoxConstraints(minWidth: width, maxWidth: width),
+        BoxConstraints constraints = new BoxConstraints(maxHeight: _constraints.maxHeight,
+                                                        maxWidth: _constraints.maxWidth);
+        child.layout(constraints,
                      relayoutSubtreeRoot: relayoutSubtreeRoot);
-        freeSpace -= (_direction == FlexDirection.Row) ? child.width : child.height;
+        freeSpace -= (_direction == FlexDirection.Horizontal) ? child.width : child.height;
       }
       child = child.parentData.nextSibling;
     }
@@ -784,29 +795,33 @@ class RenderFlex extends RenderDecoratedBox with ContainerRenderNodeMixin<Render
     double usedSpace = 0.0;
     child = _firstChild;
     while (child != null) {
-      int flex = getFlex(child);
+      int flex = _getFlex(child);
       if (flex > 0) {
         double spaceForChild = spacePerFlex * flex;
         BoxConstraints constraints;
         switch (_direction) {
-          case FlexDirection.Row:
-            constraints = new BoxConstraints(maxHeight: height, maxWidth: spaceForChild);
+          case FlexDirection.Horizontal:
+            constraints = new BoxConstraints(maxHeight: _constraints.maxHeight,
+                                             minWidth: spaceForChild,
+                                             maxWidth: spaceForChild);
             break;
-          case FlexDirection.Column:
-            constraints = new BoxConstraints(maxHeight: spaceForChild, maxWidth: width);
+          case FlexDirection.Vertical:
+            constraints = new BoxConstraints(minHeight: spaceForChild,
+                                             maxHeight: spaceForChild,
+                                             maxWidth: _constraints.maxWidth);
             break;
         }
         child.layout(constraints, relayoutSubtreeRoot: relayoutSubtreeRoot);
       }
 
+      // For now, center the flex items in the cross direction
       switch (_direction) {
-        // always center the item
-        case FlexDirection.Row:
+        case FlexDirection.Horizontal:
           child.parentData.x = usedSpace;
           usedSpace += child.width;
           child.parentData.y = height / 2 - child.height / 2;
           break;
-        case FlexDirection.Column:
+        case FlexDirection.Vertical:
           child.parentData.y = usedSpace;
           usedSpace += child.height;
           child.parentData.x = width / 2 - child.width / 2;
