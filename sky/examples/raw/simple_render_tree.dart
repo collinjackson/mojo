@@ -67,10 +67,9 @@ void main() {
       direction: FlexDirection.Vertical,
       decoration: new BoxDecoration(backgroundColor: 0xFF000000));
 
-  void addFlexChild(RenderFlex renderFlex, int backgroundColor, { int flex: 0 }) {
+  void addFlexChild(RenderFlex parent, int backgroundColor, { int flex: 0 }) {
     RenderNode child = new RenderSolidColor(backgroundColor);
-    renderFlex.add(child);
-    renderFlex.setParentData(child);
+    parent.add(child);
     child.parentData.flex = flex;
   }
 
@@ -99,7 +98,6 @@ void main() {
   addFlexChild(row, 0xFF0000FF, flex: 2);
 
   root.add(row);
-  root.setParentData(row);
   row.parentData.flex = 3;
 
   renderView = new RenderView(root: root);

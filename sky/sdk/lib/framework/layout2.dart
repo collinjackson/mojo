@@ -584,7 +584,7 @@ class RenderView extends RenderNode {
 abstract class RenderBoxContainerDefaultsMixin<ChildType extends RenderBox, ParentDataType extends ContainerParentDataMixin<ChildType>> implements ContainerRenderNodeMixin<ChildType, ParentDataType> {
   bool defaultHandlePointer(sky.PointerEvent event, double x, double y) {
     // the x, y parameters have the top left of the node's box as the origin
-    ChildType child = _lastChild;
+    ChildType child = lastChild;
     while (child != null) {
       assert(child.parentData is BoxParentData);
       if ((x >= child.parentData.x) && (x < child.parentData.x + child.width) &&
