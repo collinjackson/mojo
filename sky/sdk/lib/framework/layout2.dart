@@ -221,6 +221,7 @@ abstract class RenderNode extends AbstractNode {
   bool handlePointer(sky.PointerEvent event, { double x: 0.0, double y: 0.0 }) {
     // override this if you have children, to hand it to the appropriate child
     // override this if you want to do anything with the pointer event
+    return false;
   }
 
 
@@ -460,22 +461,6 @@ abstract class RenderBox extends RenderNode {
     layoutDone();
   }
 
-  bool handlePointer(sky.PointerEvent event, { double x: 0.0, double y: 0.0 }) {
-    // the x, y parameters have the top left of the node's box as the origin
-    RenderBox child = _lastChild;
-    while (child != null) {
-      assert(child.parentData is BoxParentData);
-      if ((x >= child.parentData.x) && (x < child.parentData.x + child.width) &&
-          (y >= child.parentData.y) && (y < child.parentData.y + child.height)) {
-        if (child.handlePointer(event, x: x-child.parentData.x, y: y-child.parentData.y))
-          return true;
-        break;
-      }
-      child = child.parentData.previousSibling;
-    }
-    return super.handlePointer(event, x: x, y: y);
-  }
-
   double width;
   double height;
 }
@@ -595,6 +580,33 @@ class RenderView extends RenderNode {
 
 }
 
+// DEFAULT BEHAVIORS FOR RENDERBOX CONTAINERS
+abstract class RenderBoxContainerDefaultsMixin<ChildType extends RenderBox, ParentDataType extends ContainerParentDataMixin<ChildType>> implements ContainerRenderNodeMixin<ChildType, ParentDataType> {
+  bool defaultHandlePointer(sky.PointerEvent event, double x, double y) {
+    // the x, y parameters have the top left of the node's box as the origin
+    ChildType child = _lastChild;
+    while (child != null) {
+      assert(child.parentData is BoxParentData);
+      if ((x >= child.parentData.x) && (x < child.parentData.x + child.width) &&
+          (y >= child.parentData.y) && (y < child.parentData.y + child.height)) {
+        if (child.handlePointer(event, x: x-child.parentData.x, y: y-child.parentData.y))
+          return true;
+        break;
+      }
+      child = child.parentData.previousSibling;
+    }
+    return false;
+  }
+
+  void defaultPaint(RenderNodeDisplayList canvas) {
+    RenderBox child = firstChild;
+    while (child != null) {
+      assert(child.parentData is BoxParentData);
+      canvas.paintChild(child, child.parentData.x, child.parentData.y);
+      child = child.parentData.nextSibling;
+    }
+  }
+}
 
 // BLOCK LAYOUT MANAGER
 
@@ -613,7 +625,8 @@ class EdgeDims {
 
 class BlockParentData extends BoxParentData with ContainerParentDataMixin<RenderBox> { }
 
-class RenderBlock extends RenderDecoratedBox with ContainerRenderNodeMixin<RenderBox, BlockParentData> {
+class RenderBlock extends RenderDecoratedBox with ContainerRenderNodeMixin<RenderBox, BlockParentData>,
+                                                  RenderBoxContainerDefaultsMixin<RenderBox, BlockParentData> {
   // lays out RenderBox children in a vertical stack
   // uses the maximum width provided by the parent
   // sizes itself to the height of its child stack
@@ -697,14 +710,13 @@ class RenderBlock extends RenderDecoratedBox with ContainerRenderNodeMixin<Rende
     layoutDone();
   }
 
+  bool handlePointer(sky.PointerEvent event, { double x: 0.0, double y: 0.0 }) {
+    return defaultHandlePointer(event, x, y) || super.handlePointer(event, x: x, y: y);
+  }
+
   void paint(RenderNodeDisplayList canvas) {
     super.paint(canvas);
-    RenderBox child = _firstChild;
-    while (child != null) {
-      assert(child.parentData is BlockParentData);
-      canvas.paintChild(child, child.parentData.x, child.parentData.y);
-      child = child.parentData.nextSibling;
-    }
+    defaultPaint(canvas);
   }
 
 }
@@ -722,7 +734,8 @@ class FlexBoxParentData extends BoxParentData with ContainerParentDataMixin<Rend
 
 enum FlexDirection { Horizontal, Vertical }
 
-class RenderFlex extends RenderDecoratedBox with ContainerRenderNodeMixin<RenderBox, FlexBoxParentData> {
+class RenderFlex extends RenderDecoratedBox with ContainerRenderNodeMixin<RenderBox, FlexBoxParentData>,
+                                                 RenderBoxContainerDefaultsMixin<RenderBox, BlockParentData> {
   // lays out RenderBox children using flexible layout
 
   RenderFlex({
@@ -750,8 +763,8 @@ class RenderFlex extends RenderDecoratedBox with ContainerRenderNodeMixin<Render
       saveRelayoutSubtreeRoot(relayoutSubtreeRoot);
     relayoutSubtreeRoot = relayoutSubtreeRoot == null ? this : relayoutSubtreeRoot;
     _constraints = constraints;
-    width = clamp(min: _constraints.minWidth, max: _constraints.maxWidth);
-    height = clamp(min: _constraints.minHeight, max: _constraints.maxHeight);
+    width = _constraints.constrainWidth(_constraints.maxWidth);
+    height = _constraints.constrainHeight(_constraints.maxHeight);
     assert(height < double.INFINITY);
     assert(width < double.INFINITY);
     internalLayout(relayoutSubtreeRoot);
@@ -790,7 +803,7 @@ class RenderFlex extends RenderDecoratedBox with ContainerRenderNodeMixin<Render
     }
 
     // Steps 4-5. Distribute remaining space to flexible children.
-    double spacePerFlex = freeSpace / totalFlex;
+    double spacePerFlex = totalFlex > 0 ? (freeSpace / totalFlex) : 0.0;
     double usedSpace = 0.0;
     child = _firstChild;
     while (child != null) {
@@ -831,14 +844,13 @@ class RenderFlex extends RenderDecoratedBox with ContainerRenderNodeMixin<Render
     layoutDone();
   }
 
+  bool handlePointer(sky.PointerEvent event, { double x: 0.0, double y: 0.0 }) {
+    return defaultHandlePointer(event, x, y) || super.handlePointer(event, x: x, y: y);
+  }
+
   void paint(RenderNodeDisplayList canvas) {
     super.paint(canvas);
-    RenderBox child = _firstChild;
-    while (child != null) {
-      assert(child.parentData is FlexBoxParentData);
-      canvas.paintChild(child, child.parentData.x, child.parentData.y);
-      child = child.parentData.nextSibling;
-    }
+    defaultPaint(canvas);
   }
 }
 

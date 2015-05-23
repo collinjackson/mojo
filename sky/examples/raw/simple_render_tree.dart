@@ -7,11 +7,28 @@ import 'dart:sky';
 import 'package:sky/framework/layout2.dart';
 
 class RenderSolidColor extends RenderDecoratedBox {
+  final double desiredHeight;
+  final double desiredWidth;
   final int backgroundColor;
 
-  RenderSolidColor(int backgroundColor)
-      : super(new BoxDecoration(backgroundColor: backgroundColor)),
-        backgroundColor = backgroundColor;
+  RenderSolidColor(int backgroundColor, { double desiredHeight: double.INFINITY,
+                                          double desiredWidth: double.INFINITY })
+      : desiredHeight = desiredHeight,
+        desiredWidth = desiredWidth,
+        backgroundColor = backgroundColor,
+        super(new BoxDecoration(backgroundColor: backgroundColor));
+
+  BoxDimensions getIntrinsicDimensions(BoxConstraints constraints) {
+    return new BoxDimensions.withConstraints(constraints,
+                                             height: desiredHeight,
+                                             width: desiredWidth);
+  }
+
+  void layout(BoxConstraints constraints, { RenderNode relayoutSubtreeRoot }) {
+    width = constraints.constrainWidth(desiredWidth);
+    height = constraints.constrainHeight(desiredHeight);
+    layoutDone();
+  }
 
   bool handlePointer(PointerEvent event, { double x: 0.0, double y: 0.0 }) {
     if (event.type == 'pointerdown') {
@@ -25,37 +42,6 @@ class RenderSolidColor extends RenderDecoratedBox {
     }
 
     return false;
-  }
-}
-
-class RenderSolidColorBlock extends RenderSolidColor {
-  final double desiredHeight;
-
-  RenderSolidColorBlock(int backgroundColor, { double desiredHeight : 100.0 })
-      : super(backgroundColor), desiredHeight = desiredHeight;
-
-  BoxDimensions getIntrinsicDimensions(BoxConstraints constraints) {
-    return new BoxDimensions.withConstraints(constraints, height: requestedHeight);
-  }
-
-  void layout(BoxConstraints constraints, { RenderNode relayoutSubtreeRoot }) {
-    width = constraints.constrainWidth(constraints.maxWidth);
-    height = constraints.constrainHeight(desiredHeight);
-    layoutDone();
-  }
-}
-
-class RenderSolidColorFlex extends RenderSolidColor {
-  RenderSolidColorFlex(int backgroundColor, flex)
-      : super(backgroundColor) {
-    parentData = new FlexBoxParentData();
-    parentData.flex = flex;
-  }
-
-  void layout(BoxConstraints constraints, { RenderNode relayoutSubtreeRoot }) {
-    width = constraints.constrainWidth(constraints.maxWidth);
-    height = constraints.constrainHeight(constraints.maxHeight);
-    layoutDone();
   }
 }
 
@@ -78,19 +64,43 @@ void main() {
   view.setBeginFrameCallback(beginFrame);
 
   var root = new RenderFlex(
-      direction: FlexDirection.Column,
-      decoration: new BoxDecoration(backgroundColor: 0xFFFFFFFF));
+      direction: FlexDirection.Vertical,
+      decoration: new BoxDecoration(backgroundColor: 0xFF000000));
 
-  var block = new RenderBlock(
-      decoration: new BoxDecoration(backgroundColor: 0x77000000),
+  void addFlexChild(RenderFlex renderFlex, int backgroundColor, { int flex: 0 }) {
+    RenderNode child = new RenderSolidColor(backgroundColor);
+    renderFlex.add(child);
+    renderFlex.setParentData(child);
+    child.parentData.flex = flex;
+  }
+
+  // Yellow bar at top
+  addFlexChild(root, 0xFFFFFF00, flex: 1);
+
+  // Turquoise box
+  root.add(new RenderSolidColor(0x7700FFFF, desiredHeight: 100.0, desiredWidth: 100.0));
+
+  // Green and cyan render block with padding
+  var renderBlock = new RenderBlock(
+      decoration: new BoxDecoration(backgroundColor: 0xFFFFFFFF),
       padding: const EdgeDims(10.0, 10.0, 10.0, 10.0));
-  block.add(new RenderSolidColorBlock(0xFF00FF00));
-  block.add(new RenderSolidColorBlock(0x3300FFFF));
 
-  root.add(new RenderSolidColorFlex(0xFFFFFF00, 1));
-  root.add(block);
-  root.add(new RenderSolidColorFlex(0xFF0000FF, 1));
-  root.add(new RenderSolidColorFlex(0x77FF00FF, 2));
+  renderBlock.add(new RenderSolidColor(0xFF00FF00, desiredHeight: 50.0, desiredWidth: 100.0));
+  renderBlock.add(new RenderSolidColor(0x7700FFFF, desiredHeight: 100.0, desiredWidth: 50.0));
+
+  root.add(renderBlock);
+
+  var row = new RenderFlex(
+    direction: FlexDirection.Horizontal,
+    decoration: new BoxDecoration(backgroundColor: 0xFF333333));
+
+  // Purple and blue cells
+  addFlexChild(row, 0x77FF00FF, flex: 1);
+  addFlexChild(row, 0xFF0000FF, flex: 2);
+
+  root.add(row);
+  root.setParentData(row);
+  row.parentData.flex = 3;
 
   renderView = new RenderView(root: root);
   renderView.layout(newWidth: view.width, newHeight: view.height);
