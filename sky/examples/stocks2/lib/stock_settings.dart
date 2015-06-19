@@ -2,7 +2,6 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import 'package:sky/theme/colors.dart' as colors;
 import 'package:sky/theme/theme_info.dart';
 import 'package:sky/widgets/basic.dart';
 import 'package:sky/widgets/checkbox.dart';
