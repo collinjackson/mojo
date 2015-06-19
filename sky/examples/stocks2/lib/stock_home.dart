@@ -3,8 +3,6 @@
 // found in the LICENSE file.
 
 import 'package:sky/editing/input.dart';
-import 'package:sky/theme/colors.dart' as colors;
-import 'package:sky/theme/typography.dart' as typography;
 import 'package:sky/widgets/basic.dart';
 import 'package:sky/widgets/drawer.dart';
 import 'package:sky/widgets/drawer_header.dart';
@@ -18,6 +16,7 @@ import 'package:sky/widgets/navigator.dart';
 import 'package:sky/widgets/popup_menu.dart';
 import 'package:sky/widgets/radio.dart';
 import 'package:sky/widgets/scaffold.dart';
+import 'package:sky/widgets/theme.dart';
 import 'package:sky/widgets/tool_bar.dart';
 import 'package:sky/widgets/widget.dart';
 
@@ -161,7 +160,7 @@ class StockHome extends Component {
         left: new IconButton(
           icon: 'navigation/menu_white',
           onPressed: _handleOpenDrawer),
-        center: new Text('Stocks', style: typography.white.title),
+        center: new Text('Stocks', style: Theme.of(this).text.title),
         right: [
           new IconButton(
             icon: 'action/search_white',
@@ -170,7 +169,7 @@ class StockHome extends Component {
             icon: 'navigation/more_vert_white',
             onPressed: _handleMenuShow)
         ],
-        backgroundColor: colors.Purple[500]
+        backgroundColor: Theme.of(this).color[500]
       );
   }
 

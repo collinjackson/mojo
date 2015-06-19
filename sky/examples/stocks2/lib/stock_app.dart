@@ -3,8 +3,12 @@
 // found in the LICENSE file.
 
 import 'package:sky/rendering/sky_binding.dart';
+import 'package:sky/theme/theme_info.dart';
+import 'package:sky/theme/colors.dart' as colors;
+import 'package:sky/theme/typography.dart' as typography;
 import 'package:sky/widgets/basic.dart';
 import 'package:sky/widgets/navigator.dart';
+import 'package:sky/widgets/theme.dart';
 import 'package:sky/widgets/widget.dart';
 
 import 'stock_data.dart';
@@ -46,7 +50,10 @@ class StocksApp extends App {
   }
 
   Widget build() {
-    return new Navigator(_navigationState);
+    return new Theme(
+      child: new Navigator(_navigationState),
+      theme: new ThemeInfo(color: colors.Purple, text: typography.white)
+    );
   }
 }
 

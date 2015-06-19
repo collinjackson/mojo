@@ -37,16 +37,20 @@ abstract class Widget {
   bool get mounted => _mounted;
   static bool _notifyingMountStatus = false;
   static Set<Widget> _mountedChanged = new HashSet<Widget>();
+  Map<Type, Inherited> _inherited = new Map<Type, Inherited>();
+  Inherited inheritedForType(Type type) => _inherited[type];
 
   void setParent(Widget newParent) {
     assert(!_notifyingMountStatus);
     _parent = newParent;
     if (newParent == null) {
+      _inherited = null;
       if (_mounted) {
         _mounted = false;
         _mountedChanged.add(this);
       }
     } else {
+      _inherited = newParent._inherited;
       assert(newParent._mounted);
       if (_parent._mounted != _mounted) {
         _mounted = _parent._mounted;
@@ -196,6 +200,15 @@ class ParentDataNode extends TagNode {
   ParentDataNode(Widget child, this.parentData, { String key })
     : super(child, key: key);
   final ParentData parentData;
+}
+
+abstract class Inherited extends TagNode {
+  Inherited({ String key, Widget child }) : super(child, key: key);
+
+  Map<Type, Inherited> get _inherited {
+    return new Map<Type, Inherited>.from(super._inherited)
+                                   ..[runtimeType] = this;
+  }
 }
 
 typedef void GestureEventListener(sky.GestureEvent e);
