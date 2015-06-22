@@ -354,6 +354,7 @@ const Map<int, Color> Grey = const {
   600: const Color(0xFF757575),
   700: const Color(0xFF616161),
   800: const Color(0xFF424242),
+  850: const Color(0xFF303030), // only for background color in Dark theme
   900: const Color(0xFF212121),
 };
 

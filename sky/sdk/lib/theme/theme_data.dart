@@ -4,8 +4,8 @@
 
 import 'dart:sky';
 
-import 'typography.dart';
-import 'colors.dart';
+import 'typography.dart' as typography;
+import 'colors.dart' as colors;
 
 class ThemeData {
 
@@ -13,29 +13,29 @@ class ThemeData {
     this.primary,
     this.accent,
     bool darkToolbar: false })
-    : toolbarText = darkToolbar ? white : black,
-      text = black,
-      backgroundColor = const Color(0xFFFAFAFA),
-      dialogColor = const Color(0xFFFFFFFF);
+    : toolbarText = darkToolbar ? typography.white : typography.black,
+      text = typography.black,
+      backgroundColor = colors.Grey[50],
+      dialogColor = colors.White;
 
   ThemeData.dark({ this.primary, this.accent })
-    : toolbarText = white,
-      text = white,
-      backgroundColor = const Color(0xFF303030),
-      dialogColor = const Color(0xFF424242);
+    : toolbarText = typography.white,
+      text = typography.white,
+      backgroundColor = colors.Grey[850],
+      dialogColor = colors.Grey[800];
 
   ThemeData.fallback()
     : primary = Indigo,
       accent = PinkAccent,
-      toolbarText = white,
-      text = black,
-      backgroundColor = const Color(0xFFFAFAFA),
-      dialogColor = const Color(0xFFFFFFFF);
+      toolbarText = typography.white,
+      text = typography.black,
+      backgroundColor = colors.Grey[50],
+      dialogColor = colors.White;
 
   final Map<int, Color> primary;
   final Map<int, Color> accent;
-  final TextTheme text;
-  final TextTheme toolbarText;
+  final typography.TextTheme text;
+  final typography.TextTheme toolbarText;
   final Color backgroundColor;
   final Color dialogColor;
 }
