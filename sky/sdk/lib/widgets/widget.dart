@@ -28,6 +28,7 @@ abstract class Widget {
     assert(_isConstructedDuringBuild());
   }
 
+  // TODO(jackson): Remove this workaround for limitation of Dart mixins
   Widget._withKey(String key) : _key = key {
     assert(_isConstructedDuringBuild());
   }
@@ -181,6 +182,7 @@ abstract class TagNode extends Widget {
   TagNode(Widget child, { String key })
     : this.child = child, super(key: key);
 
+  // TODO(jackson): Remove this workaround for limitation of Dart mixins
   TagNode._withKey(Widget child, String key)
     : this.child = child, super._withKey(key);
 
@@ -235,15 +237,16 @@ abstract class _Heir implements Widget {
     _updateTraits(ancestor._traits);
   }
 
+  void _updateTraitsRecursively(Widget widget) {
+    if (widget is _Heir)
+      widget._updateTraits(_traits);
+    else
+      widget.walkChildren(_updateTraitsRecursively);
+  }
+
   void _updateTraits(Map<Type, Inherited> newTraits) {
     if (newTraits != _traits) {
       _traits = newTraits;
-      void _updateTraitsRecursively(Widget widget) {
-        if (widget is _Heir)
-          widget._updateTraits(_traits);
-        else
-          widget.walkChildren(_updateTraitsRecursively);
-      }
       walkChildren(_updateTraitsRecursively);
     }
   }
@@ -259,6 +262,7 @@ abstract class Inherited extends TagNode with _Heir {
                                             ..[runtimeType] = this;
   }
 
+  // TODO(jackson): When Dart supports super in mixins we can move to _Heir
   void setParent(Widget parent) {
     _updateTraitsFromParent(parent);
     super.setParent(parent);
@@ -378,6 +382,7 @@ abstract class Component extends Widget with _Heir {
     super.didMount();
   }
 
+  // TODO(jackson): When Dart supports super in mixins we can move to _Heir
   void setParent(Widget parent) {
     _updateTraitsFromParent(parent);
     super.setParent(parent);
