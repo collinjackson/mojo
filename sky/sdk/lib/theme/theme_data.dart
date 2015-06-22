@@ -5,6 +5,7 @@
 import 'dart:sky';
 
 import 'typography.dart';
+import 'colors.dart';
 
 class ThemeData {
 
@@ -23,10 +24,18 @@ class ThemeData {
       backgroundColor = const Color(0xFF303030),
       dialogColor = const Color(0xFF424242);
 
-  final TextTheme text;
-  final TextTheme toolbarText;
+  ThemeData.fallback()
+    : primary = Indigo,
+      accent = PinkAccent,
+      toolbarText = white,
+      text = black,
+      backgroundColor = const Color(0xFFFAFAFA),
+      dialogColor = const Color(0xFFFFFFFF);
+
   final Map<int, Color> primary;
   final Map<int, Color> accent;
+  final TextTheme text;
+  final TextTheme toolbarText;
   final Color backgroundColor;
   final Color dialogColor;
 }
