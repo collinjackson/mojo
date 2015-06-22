@@ -52,7 +52,7 @@ class StocksApp extends App {
     return new Theme(
       data: new ThemeData.light(
         primary: colors.Purple,
-        accent: colors.Red,
+        accent: colors.RedAccent,
         darkToolbar: true),
       child: new Navigator(_navigationState)
     );

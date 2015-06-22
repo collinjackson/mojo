@@ -77,7 +77,7 @@ class SectorApp extends App {
 
   Widget build() {
     return new Theme(
-      data: new ThemeData.light(primary: colors.Blue, accent: colors.Red, darkToolbar: true),
+      data: new ThemeData.light(primary: colors.Blue, darkToolbar: true),
       child: new Scaffold(
         toolbar: new ToolBar(
             center: new Text('Sector Layout in a Widget Tree')),
