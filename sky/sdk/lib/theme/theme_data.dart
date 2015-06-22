@@ -25,8 +25,8 @@ class ThemeData {
       dialogColor = colors.Grey[800];
 
   ThemeData.fallback()
-    : primary = Indigo,
-      accent = PinkAccent,
+    : primary = colors.Indigo,
+      accent = colors.PinkAccent,
       toolbarText = typography.white,
       text = typography.black,
       backgroundColor = colors.Grey[50],
