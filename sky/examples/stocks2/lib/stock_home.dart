@@ -18,7 +18,6 @@ import 'package:sky/widgets/navigator.dart';
 import 'package:sky/widgets/popup_menu.dart';
 import 'package:sky/widgets/radio.dart';
 import 'package:sky/widgets/scaffold.dart';
-import 'package:sky/widgets/theme.dart';
 import 'package:sky/widgets/tool_bar.dart';
 import 'package:sky/widgets/widget.dart';
 

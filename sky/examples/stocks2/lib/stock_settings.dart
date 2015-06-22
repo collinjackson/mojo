@@ -3,7 +3,6 @@
 // found in the LICENSE file.
 
 import 'package:sky/theme/colors.dart' as colors;
-import 'package:sky/theme/theme_data.dart';
 import 'package:sky/widgets/basic.dart';
 import 'package:sky/widgets/checkbox.dart';
 import 'package:sky/widgets/icon_button.dart';

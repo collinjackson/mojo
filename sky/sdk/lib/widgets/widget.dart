@@ -18,7 +18,7 @@ export '../rendering/object.dart' show Point, Size, Rect, Color, Paint, Path;
 
 final bool _shouldLogRenderDuration = false;
 
-typedef void _TreeWalker(Widget);
+typedef void WidgetTreeWalker(Widget);
 
 // All Effen nodes derive from Widget. All nodes have a _parent, a _key and
 // can be sync'd.
@@ -65,7 +65,7 @@ abstract class Widget {
   }
 
   // Override this if you have children and call walker on each child
-  void _walkChildren(_TreeWalker walker) { }
+  void walkChildren(WidgetTreeWalker walker) { }
 
   static void _notifyMountStatusChanged() {
     try {
@@ -186,7 +186,7 @@ abstract class TagNode extends Widget {
 
   Widget child;
 
-  void _walkChildren(_TreeWalker walker) {
+  void walkChildren(WidgetTreeWalker walker) {
     walker(child);
   }
 
@@ -219,10 +219,6 @@ class ParentDataNode extends TagNode {
 
 abstract class _Heir {
   Map<Type, Inherited> _traits;
-  void set traits(Map<Type, Inherited> value) {
-    _traits = value;
-  }
-
   Inherited inheritedOfType(Type type) => _traits[type];
 
   static _Heir _getHeirAncestor(Widget widget) {
@@ -244,11 +240,11 @@ abstract class _Heir {
       _traits = newTraits;
       void _updateTraitsRecursively(Widget widget) {
         if (widget is _Heir)
-          widget._updateTraits(_traits);
+          (widget as _Heir)._updateTraits(_traits);
         else
-          widget._walkChildren(_updateTraitsRecursively);
+          widget.walkChildren(_updateTraitsRecursively);
       }
-      _walkChildren(_updateTraitsRecursively);
+      walkChildren(_updateTraitsRecursively);
     }
   }
 }
@@ -648,7 +644,7 @@ abstract class OneChildRenderObjectWrapper extends RenderObjectWrapper {
   Widget _child;
   Widget get child => _child;
 
-  void _walkChildren(_TreeWalker walker) {
+  void walkChildren(WidgetTreeWalker walker) {
     walker(child);
   }
 
@@ -694,7 +690,7 @@ abstract class MultiChildRenderObjectWrapper extends RenderObjectWrapper {
 
   final List<Widget> children;
 
-  void _walkChildren(_TreeWalker walker) {
+  void walkChildren(WidgetTreeWalker walker) {
     for(Widget child in children)
       walker(child);
   }
