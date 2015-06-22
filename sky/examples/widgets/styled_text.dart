@@ -107,8 +107,7 @@ HAL: This mission is too important for me to allow you to jeopardize it.''';
       child: new Scaffold(
         body: new Material(child: interactiveBody),
         toolbar: new ToolBar(
-          center: new Text('Hal and Dave', style: white.title),
-          backgroundColor: Blue[500]
+          center: new Text('Hal and Dave', style: white.title)
         )
       )
     );
