@@ -4,6 +4,7 @@
 
 import 'package:sky/editing/input.dart';
 import 'package:sky/theme/colors.dart' as colors;
+import 'package:sky/theme/typography.dart' as typography;
 import 'package:sky/widgets/basic.dart';
 import 'package:sky/widgets/drawer.dart';
 import 'package:sky/widgets/drawer_header.dart';
@@ -161,7 +162,7 @@ class StockHome extends Component {
         left: new IconButton(
           icon: 'navigation/menu_white',
           onPressed: _handleOpenDrawer),
-        center: new Text('Stocks', style: Theme.of(this).text.title),
+        center: new Text('Stocks', style: typography.white.title),
         right: [
           new IconButton(
             icon: 'action/search_white',

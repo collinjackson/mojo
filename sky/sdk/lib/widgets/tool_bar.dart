@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+import 'package:sky/widgets/theme.dart';
+
 import '../rendering/flex.dart';
 import '../theme/shadows.dart';
 import '../theme/view_configuration.dart';
