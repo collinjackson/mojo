@@ -18,13 +18,22 @@ export '../rendering/object.dart' show Point, Size, Rect, Color, Paint, Path;
 
 final bool _shouldLogRenderDuration = false;
 
+typedef void _TreeWalker(Widget);
+
 // All Effen nodes derive from Widget. All nodes have a _parent, a _key and
 // can be sync'd.
 abstract class Widget {
 
   Widget({ String key }) : _key = key {
-    assert(this is AbstractWidgetRoot || this is App || _inRenderDirtyComponents); // you should not build the UI tree ahead of time, build it only during build()
+    assert(_isConstructedDuringBuild());
   }
+
+  Widget._withKey(String key) : _key = key {
+    assert(_isConstructedDuringBuild());
+  }
+
+  // you should not build the UI tree ahead of time, build it only during build()
+  bool _isConstructedDuringBuild() => this is AbstractWidgetRoot || this is App || _inRenderDirtyComponents;
 
   String _key;
   String get key => _key;
@@ -37,20 +46,16 @@ abstract class Widget {
   bool get mounted => _mounted;
   static bool _notifyingMountStatus = false;
   static Set<Widget> _mountedChanged = new HashSet<Widget>();
-  Map<Type, Inherited> _inherited = new Map<Type, Inherited>();
-  Inherited inheritedForType(Type type) => _inherited[type];
 
   void setParent(Widget newParent) {
     assert(!_notifyingMountStatus);
     _parent = newParent;
     if (newParent == null) {
-      _inherited = null;
       if (_mounted) {
         _mounted = false;
         _mountedChanged.add(this);
       }
     } else {
-      _inherited = newParent._inherited;
       assert(newParent._mounted);
       if (_parent._mounted != _mounted) {
         _mounted = _parent._mounted;
@@ -58,6 +63,9 @@ abstract class Widget {
       }
     }
   }
+
+  // Override this if you have children and call walker on each child
+  void _walkChildren(_TreeWalker walker) { }
 
   static void _notifyMountStatusChanged() {
     try {
@@ -173,7 +181,14 @@ abstract class TagNode extends Widget {
   TagNode(Widget child, { String key })
     : this.child = child, super(key: key);
 
+  TagNode._withKey(Widget child, String key)
+    : this.child = child, super._withKey(key);
+
   Widget child;
+
+  void _walkChildren(_TreeWalker walker) {
+    walker(child);
+  }
 
   void _sync(Widget old, dynamic slot) {
     Widget oldChild = old == null ? null : (old as TagNode).child;
@@ -202,12 +217,55 @@ class ParentDataNode extends TagNode {
   final ParentData parentData;
 }
 
-abstract class Inherited extends TagNode {
-  Inherited({ String key, Widget child }) : super(child, key: key);
+abstract class _Heir {
+  Map<Type, Inherited> _traits;
+  void set traits(Map<Type, Inherited> value) {
+    _traits = value;
+  }
 
-  Map<Type, Inherited> get _inherited {
-    return new Map<Type, Inherited>.from(super._inherited)
-                                   ..[runtimeType] = this;
+  Inherited inheritedOfType(Type type) => _traits[type];
+
+  static _Heir _getHeirAncestor(Widget widget) {
+    Widget ancestor = widget;
+    while (ancestor != null && !(ancestor is _Heir)) {
+      ancestor = ancestor.parent;
+    }
+    return ancestor as _Heir;
+  }
+
+  void _updateTraitsFromParent(Widget parent) {
+    _Heir ancestor = _getHeirAncestor(parent);
+    if (ancestor == null || ancestor._traits == null) return;
+    _updateTraits(ancestor._traits);
+  }
+
+  void _updateTraits(Map<Type, Inherited> newTraits) {
+    if (newTraits != _traits) {
+      _traits = newTraits;
+      void _updateTraitsRecursively(Widget widget) {
+        if (widget is _Heir)
+          widget._updateTraits(_traits);
+        else
+          widget._walkChildren(_updateTraitsRecursively);
+      }
+      _walkChildren(_updateTraitsRecursively);
+    }
+  }
+}
+
+abstract class Inherited extends TagNode with _Heir {
+  Inherited({ String key, Widget child }) : super._withKey(child, key) {
+    _traits = new Map<Type, Inherited>();
+  }
+
+  void set _traits(Map<Type, Inherited> value) {
+    super._traits = new Map<Type, Inherited>.from(value)
+                                            ..[runtimeType] = this;
+  }
+
+  void setParent(Widget parent) {
+    _updateTraitsFromParent(parent);
+    super.setParent(parent);
   }
 }
 
@@ -302,13 +360,12 @@ class Listener extends TagNode  {
 
 }
 
-
-abstract class Component extends Widget {
+abstract class Component extends Widget with _Heir {
 
   Component({ String key, bool stateful })
       : _stateful = stateful != null ? stateful : false,
         _order = _currentOrder + 1,
-        super(key: key);
+        super._withKey(key);
 
   static Component _currentlyBuilding;
   bool get _isBuilding => _currentlyBuilding == this;
@@ -323,6 +380,11 @@ abstract class Component extends Widget {
   void didMount() {
     assert(!_disqualifiedFromEverAppearingAgain);
     super.didMount();
+  }
+
+  void setParent(Widget parent) {
+    _updateTraitsFromParent(parent);
+    super.setParent(parent);
   }
 
   void remove() {
@@ -586,6 +648,10 @@ abstract class OneChildRenderObjectWrapper extends RenderObjectWrapper {
   Widget _child;
   Widget get child => _child;
 
+  void _walkChildren(_TreeWalker walker) {
+    walker(child);
+  }
+
   void syncRenderObject(RenderObjectWrapper old) {
     super.syncRenderObject(old);
     Widget oldChild = old == null ? null : (old as OneChildRenderObjectWrapper).child;
@@ -613,7 +679,6 @@ abstract class OneChildRenderObjectWrapper extends RenderObjectWrapper {
       removeChild(child);
     super.remove();
   }
-
 }
 
 abstract class MultiChildRenderObjectWrapper extends RenderObjectWrapper {
@@ -628,6 +693,11 @@ abstract class MultiChildRenderObjectWrapper extends RenderObjectWrapper {
   }
 
   final List<Widget> children;
+
+  void _walkChildren(_TreeWalker walker) {
+    for(Widget child in children)
+      walker(child);
+  }
 
   void insertChildRoot(RenderObjectWrapper child, dynamic slot) {
     final root = this.root; // TODO(ianh): Remove this once the analyzer is cleverer

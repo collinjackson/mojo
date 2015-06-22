@@ -6,8 +6,8 @@ import 'dart:sky';
 
 import 'typography.dart';
 
-class ThemeInfo {
-  const ThemeInfo({ this.text, this.color });
+class ThemeData {
+  const ThemeData({ this.text, this.color });
   final TextTheme text;
   final Map<int, Color> color;
 }

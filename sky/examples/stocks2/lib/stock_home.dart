@@ -3,6 +3,7 @@
 // found in the LICENSE file.
 
 import 'package:sky/editing/input.dart';
+import 'package:sky/theme/colors.dart' as colors;
 import 'package:sky/widgets/basic.dart';
 import 'package:sky/widgets/drawer.dart';
 import 'package:sky/widgets/drawer_header.dart';
@@ -168,8 +169,7 @@ class StockHome extends Component {
           new IconButton(
             icon: 'navigation/more_vert_white',
             onPressed: _handleMenuShow)
-        ],
-        backgroundColor: Theme.of(this).color[500]
+        ]
       );
   }
 

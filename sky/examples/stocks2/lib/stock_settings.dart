@@ -2,7 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import 'package:sky/theme/theme_info.dart';
+import 'package:sky/theme/colors.dart' as colors;
+import 'package:sky/theme/theme_data.dart';
 import 'package:sky/widgets/basic.dart';
 import 'package:sky/widgets/checkbox.dart';
 import 'package:sky/widgets/icon_button.dart';
@@ -30,8 +31,7 @@ class StockSettings extends Component {
       left: new IconButton(
         icon: 'navigation/arrow_back_white',
         onPressed: _navigator.pop),
-      center: new Text('Settings', style: Theme.of(this).text.title),
-      backgroundColor: Theme.of(this).color[500]
+      center: new Text('Settings', style: Theme.of(this).text.title)
     );
   }
 
