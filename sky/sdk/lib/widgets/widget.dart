@@ -217,7 +217,7 @@ class ParentDataNode extends TagNode {
   final ParentData parentData;
 }
 
-abstract class _Heir {
+abstract class _Heir implements Widget {
   Map<Type, Inherited> _traits;
   Inherited inheritedOfType(Type type) => _traits[type];
 
@@ -240,7 +240,7 @@ abstract class _Heir {
       _traits = newTraits;
       void _updateTraitsRecursively(Widget widget) {
         if (widget is _Heir)
-          (widget as _Heir)._updateTraits(_traits);
+          widget._updateTraits(_traits);
         else
           widget.walkChildren(_updateTraitsRecursively);
       }
