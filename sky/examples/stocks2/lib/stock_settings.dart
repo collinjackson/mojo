@@ -11,7 +11,6 @@ import 'package:sky/widgets/icon_button.dart';
 import 'package:sky/widgets/menu_item.dart';
 import 'package:sky/widgets/navigator.dart';
 import 'package:sky/widgets/scaffold.dart';
-import 'package:sky/widgets/theme.dart';
 import 'package:sky/widgets/tool_bar.dart';
 
 import 'stock_types.dart';
