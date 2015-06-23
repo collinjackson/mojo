@@ -25,7 +25,6 @@ abstract class MaterialButton extends ButtonBase {
     child = source.child;
     enabled = source.enabled;
     onPressed = source.onPressed;
-    theme = source.theme;
     super.syncFields(source);
   }
 
