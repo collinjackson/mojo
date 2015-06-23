@@ -95,20 +95,20 @@ class StockSettings extends Component {
       layers.add(new Dialog(
         title: new Text("Change mode?"),
         content: new Text("Optimistic mode means everything is awesome. Are you sure you can handle that?"),
-        actions: new Flex([
+        onDismiss: navigator.pop,
+        actions: [
           new FlatButton(
-            child: new ShrinkWrapWidth(child: new Text('NO THANKS')),
+            child: new Text('NO THANKS'),
             onPressed: navigator.pop
           ),
           new FlatButton(
-            child: new ShrinkWrapWidth(child: new Text('AGREE')),
+            child: new Text('AGREE'),
             onPressed: () {
               _handleStockModeChanged(true);
               navigator.pop();
             }
           ),
-        ], justifyContent: FlexJustifyContent.flexEnd),
-        onDismiss: navigator.pop
+        ]
       ));
     }
     return new Stack(layers);

@@ -19,7 +19,7 @@ class Dialog extends Component {
 
   final Widget title;
   final Widget content;
-  final Widget actions;
+  final List<Widget> actions;
   final Function onDismiss;
 
   Color get color {
@@ -59,7 +59,7 @@ class Dialog extends Component {
     }
 
     if (actions != null)
-      children.add(actions);
+      children.add(new Flex(actions, justifyContent: FlexJustifyContent.flexEnd));
 
     return new Stack([
       new Listener(
