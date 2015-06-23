@@ -21,7 +21,7 @@ class Theme extends Inherited {
 
   final ThemeData data;
 
-  static ThemeData _kFallbackTheme = new ThemeData.fallback();
+  static final ThemeData _kFallbackTheme = new ThemeData.fallback();
 
   static ThemeData of(Component component) {
     Theme theme = component.inheritedOfType(Theme);
