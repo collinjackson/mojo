@@ -25,7 +25,7 @@ class StockSettings extends Component {
   Navigator navigator;
   StockMode stockMode;
   SettingsUpdater updater;
-  bool showDialog = false;
+  bool showModeDialog = false;
 
   void syncFields(StockSettings source) {
     navigator = source.navigator;
@@ -46,9 +46,9 @@ class StockSettings extends Component {
         _handleStockModeChanged(false);
         break;
       case StockMode.pessimistic:
-        showDialog = true;
+        showModeDialog = true;
         navigator.pushState("/settings/confirm", (_) {
-          showDialog = false;
+          showModeDialog = false;
         });
         break;
     }
@@ -92,47 +92,33 @@ class StockSettings extends Component {
         toolbar: buildToolBar(),
         body: buildSettingsPane()
     )];
-    if (showDialog)
-      layers.add(new _ConfirmDialog(navigator, updater));
+    if (showModeDialog) {
+      layers.add(new _ConfirmModeDialog(
+        navigator,
+        onAgree: () => _handleStockModeChanged(true))
+      );
+    }
     return new Stack(layers);
   }
 }
 
-class _ConfirmDialog extends Component {
+class _ConfirmModeDialog extends Dialog {
 
-  _ConfirmDialog(this.navigator, this.updater);
-
-  final Navigator navigator;
-  SettingsUpdater updater;
-
-  void onAgree() {
-    updater(mode: StockMode.optimistic);
-    navigator.pop();
-  }
-
-  void onDismiss() {
-    navigator.pop();
-  }
-
-  Widget build() {
-    return new Dialog(
-      onDismiss: onDismiss,
-      title: new Text("Change mode?"),
-      content: new Text("Optimistic mode means everything is awesome. Are you sure you can handle that?"),
-      actions: new Flex([
-        new FlatButton(
-          child: new ShrinkWrapWidth(
-            child: new Text('NO THANKS')
-          ),
-          onPressed: onDismiss
-        ),
-        new FlatButton(
-          child: new ShrinkWrapWidth(
-            child: new Text('AGREE')
-          ),
-          onPressed: onAgree
-        ),
-      ], justifyContent: FlexJustifyContent.flexEnd)
-    );
-  }
+  _ConfirmModeDialog(Navigator navigator, { Function onAgree }) : super(
+    title: new Text("Change mode?"),
+    content: new Text("Optimistic mode means everything is awesome. Are you sure you can handle that?"),
+    actions: new Flex([
+      new FlatButton(
+        child: new ShrinkWrapWidth(child: new Text('NO THANKS')),
+        onPressed: navigator.pop
+      ),
+      new FlatButton(
+        child: new ShrinkWrapWidth(child: new Text('AGREE')),
+        onPressed: () {
+          onAgree();
+          navigator.pop();
+        }
+      ),
+    ], justifyContent: FlexJustifyContent.flexEnd),
+    onDismiss: navigator.pop);
 }
