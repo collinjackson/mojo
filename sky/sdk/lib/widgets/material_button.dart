@@ -7,8 +7,6 @@ import 'button_base.dart';
 import 'ink_well.dart';
 import 'material.dart';
 
-enum MaterialButtonTheme { light, dark }
-
 // Rather than using this class directly, please use FlatButton or RaisedButton.
 abstract class MaterialButton extends ButtonBase {
 
@@ -16,14 +14,12 @@ abstract class MaterialButton extends ButtonBase {
     String key,
     this.child,
     this.enabled: true,
-    this.onPressed,
-    this.theme: MaterialButtonTheme.light
+    this.onPressed
   }) : super(key: key);
 
   Widget child;
   bool enabled;
   Function onPressed;
-  MaterialButtonTheme theme;
 
   void syncFields(MaterialButton source) {
     child = source.child;
