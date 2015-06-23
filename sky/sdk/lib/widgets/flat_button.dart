@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+import 'dart:sky' show Color;
+
 import '../theme/colors.dart';
 import 'basic.dart';
 import 'material_button.dart';
@@ -20,7 +22,7 @@ class FlatButton extends MaterialButton {
 
   Color get color {
     if (!enabled || !highlight)
-      return null;
+      return const Color(0x00000000);
     switch (Theme.of(this).brightness) {
       case ThemeBrightness.light:
         return Grey[400];

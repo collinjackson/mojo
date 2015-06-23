@@ -5,6 +5,8 @@
 import 'package:sky/theme/colors.dart' as colors;
 import 'package:sky/widgets/basic.dart';
 import 'package:sky/widgets/checkbox.dart';
+import 'package:sky/widgets/flat_button.dart';
+import 'package:sky/widgets/dialog.dart';
 import 'package:sky/widgets/icon_button.dart';
 import 'package:sky/widgets/menu_item.dart';
 import 'package:sky/widgets/navigator.dart';
@@ -23,6 +25,7 @@ class StockSettings extends Component {
   Navigator navigator;
   StockMode stockMode;
   SettingsUpdater updater;
+  bool showDialog = false;
 
   void syncFields(StockSettings source) {
     navigator = source.navigator;
@@ -37,6 +40,20 @@ class StockSettings extends Component {
     sendUpdates();
   }
 
+  void _confirmStockModeChange() {
+    switch (stockMode) {
+      case StockMode.optimistic:
+        _handleStockModeChanged(false);
+        break;
+      case StockMode.pessimistic:
+        showDialog = true;
+        navigator.pushState("/settings/confirm", (_) {
+          showDialog = false;
+        });
+        break;
+    }
+  }
+
   void sendUpdates() {
     if (updater != null)
       updater(
@@ -49,7 +66,7 @@ class StockSettings extends Component {
       left: new IconButton(
         icon: 'navigation/arrow_back_white',
         onPressed: navigator.pop),
-      center: new Text('Settings', style: Theme.of(this).text.title)
+      center: new Text('Settings')
     );
   }
 
@@ -60,7 +77,7 @@ class StockSettings extends Component {
       child: new Block([
         new MenuItem(
           icon: 'action/thumb_up',
-          onPressed: () => _handleStockModeChanged(stockMode == StockMode.optimistic ? false : true),
+          onPressed: () => _confirmStockModeChange(),
           children: [
             new Flexible(child: new Text('Everything is awesome')),
             new Checkbox(value: stockMode == StockMode.optimistic, onChanged: _handleStockModeChanged)
@@ -71,9 +88,51 @@ class StockSettings extends Component {
   }
 
   Widget build() {
-    return new Scaffold(
-      toolbar: buildToolBar(),
-      body: buildSettingsPane()
+    List<Widget> layers = [new Scaffold(
+        toolbar: buildToolBar(),
+        body: buildSettingsPane()
+    )];
+    if (showDialog)
+      layers.add(new _ConfirmDialog(navigator, updater));
+    return new Stack(layers);
+  }
+}
+
+class _ConfirmDialog extends Component {
+
+  _ConfirmDialog(this.navigator, this.updater);
+
+  final Navigator navigator;
+  SettingsUpdater updater;
+
+  void onAgree() {
+    updater(mode: StockMode.optimistic);
+    navigator.pop();
+  }
+
+  void onDismiss() {
+    navigator.pop();
+  }
+
+  Widget build() {
+    return new Dialog(
+      onDismiss: onDismiss,
+      title: new Text("Change mode?"),
+      content: new Text("Optimistic mode means everything is awesome. Are you sure you can handle that?"),
+      actions: new Flex([
+        new FlatButton(
+          child: new ShrinkWrapWidth(
+            child: new Text('NO THANKS')
+          ),
+          onPressed: onDismiss
+        ),
+        new FlatButton(
+          child: new ShrinkWrapWidth(
+            child: new Text('AGREE')
+          ),
+          onPressed: onAgree
+        ),
+      ], justifyContent: FlexJustifyContent.flexEnd)
     );
   }
 }

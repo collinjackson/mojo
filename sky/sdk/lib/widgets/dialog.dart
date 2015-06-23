@@ -4,6 +4,7 @@
 
 import '../theme/colors.dart' as colors;
 import 'basic.dart';
+import 'default_text_style.dart';
 import 'material.dart';
 import "theme.dart";
 
@@ -37,11 +38,25 @@ class Dialog extends Component {
 
     List<Widget> children = new List<Widget>();
 
-    if (title != null)
-      children.add(title);
+    if (title != null) {
+      children.add(new Padding(
+        padding: new EdgeDims(24.0, 24.0, content == null ? 20.0 : 0.0, 24.0),
+        child: new DefaultTextStyle(
+          style: Theme.of(this).text.title,
+          child: title
+        )
+      ));
+    }
 
-    if (content != null)
-      children.add(content);
+    if (content != null) {
+      children.add(new Padding(
+        padding: const EdgeDims(20.0, 24.0, 24.0, 24.0),
+        child: new DefaultTextStyle(
+          style: Theme.of(this).text.subhead,
+          child: content
+        )
+      ));
+    }
 
     if (actions != null)
       children.add(actions);
@@ -52,13 +67,16 @@ class Dialog extends Component {
         onGestureTap: (_) => onDismiss()
       ),
       new Center(
-        child: new ConstrainedBox(
-          constraints: new BoxConstraints(minWidth: 280.0),
-          child: new Material(
-            level: 4,
-            color: color,
-            child: new ShrinkWrapWidth(
-              child: new Block(children)
+        child: new Container(
+          margin: new EdgeDims.symmetric(horizontal: 40.0, vertical: 24.0),
+          child: new ConstrainedBox(
+            constraints: new BoxConstraints(minWidth: 280.0),
+            child: new Material(
+              level: 4,
+              color: color,
+              child: new ShrinkWrapWidth(
+                child: new Block(children)
+              )
             )
           )
         )
