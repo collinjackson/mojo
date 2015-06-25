@@ -4,7 +4,6 @@
 
 import 'package:sky/rendering/sky_binding.dart';
 import 'package:sky/theme/colors.dart' as colors;
-import 'package:sky/theme/theme_data.dart';
 import 'package:sky/widgets/basic.dart';
 import 'package:sky/widgets/navigator.dart';
 import 'package:sky/widgets/theme.dart';
