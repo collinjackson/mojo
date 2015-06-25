@@ -27,7 +27,7 @@ class Card extends Component {
 
   Widget build() {
     return new Container(
-      margin: const EdgeDims.symmetric(vertical: 4.0, horzontal: 8.0),
+      margin: const EdgeDims.symmetric(vertical: 4.0, horizontal: 8.0),
       child: new Material(
         color: materialColor,
         edge: MaterialEdge.card,
