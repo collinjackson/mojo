@@ -7,6 +7,7 @@ import 'dart:sky' as sky;
 import 'dart:sky' show Point, Offset, Size, Rect, Color, Paint, Path;
 
 import 'shadows.dart';
+import 'package:sky/mojo/net/image_cache.dart' as image_cache;
 
 class BorderSide {
   const BorderSide({
@@ -121,12 +122,53 @@ class RadialGradient extends Gradient {
   final sky.TileMode tileMode;
 }
 
+enum BackgroundFit { fill, contain, cover, none, scaleDown }
+
+enum BackgroundRepeat { repeat, repeatX, repeatY, noRepeat }
+
+class BackgroundImage {
+  final String src;
+  final BackgroundFit fit;
+  final BackgroundRepeat repeat;
+  BackgroundImage({
+    this.src,
+    this.fit: BackgroundFit.scaleDown,
+    this.repeat: BackgroundRepeat.noRepeat
+  }) {
+    image_cache.load(src, (image) {
+      _image = image;
+      _size = new Size(image.width.toDouble(), image.height.toDouble());
+      for (Function listener in _listeners) {
+        listener();
+      }
+    });
+  }
+
+  sky.Image _image;
+  sky.Image get image => _image;
+
+  Size _size;
+
+  final List<Function> _listeners = new List<Function>();
+
+  void addChangeListener(Function listener) {
+    _listeners.add(listener);
+  }
+
+  void removeChangeListener(Function listener) {
+    _listeners.remove(listener);
+  }
+
+  String toString() => 'BackgroundImage($image, $fit, $repeat)';
+}
+
 enum Shape { rectangle, circle }
 
 // This must be immutable, because we won't notice when it changes
 class BoxDecoration {
   const BoxDecoration({
-    this.backgroundColor, // null = don't draw background
+    this.backgroundColor, // null = don't draw background color
+    this.backgroundImage, // null = don't draw background image
     this.border, // null = don't draw border
     this.borderRadius, // null = use more efficient background drawing; note that this must be null for circles
     this.boxShadow, // null = don't draw shadows
@@ -135,6 +177,7 @@ class BoxDecoration {
   });
 
   final Color backgroundColor;
+  final BackgroundImage backgroundImage;
   final double borderRadius;
   final Border border;
   final List<BoxShadow> boxShadow;
@@ -145,6 +188,8 @@ class BoxDecoration {
     List<String> result = [];
     if (backgroundColor != null)
       result.add('${prefix}backgroundColor: $backgroundColor');
+    if (backgroundImage != null)
+      result.add('${prefix}backgroundImage: $backgroundImage');
     if (border != null)
       result.add('${prefix}border: $border');
     if (borderRadius != null)
@@ -217,6 +262,53 @@ class BoxPainter {
           else
             canvas.drawRRect(new sky.RRect()..setRectXY(rect, _decoration.borderRadius, _decoration.borderRadius), _backgroundPaint);
           break;
+      }
+    }
+
+    if (_decoration.backgroundImage != null) {
+      sky.Image image = _decoration.backgroundImage.image;
+      if (image != null) {
+        Rect src;
+        Rect dst;
+        switch(_decoration.backgroundImage.fit) {
+          case BackgroundFit.fill:
+            src = new Rect.fromSize(_decoration.backgroundImage._size);
+            dst = rect;
+            break;
+          case BackgroundFit.contain:
+            src = new Rect.fromSize(_decoration.backgroundImage._size);
+            if (rect.size.width / rect.size.height > src.size.width / rect.size.height) {
+              dst = new Rect.fromLTRB(0.0, 0.0, rect.size.width, src.size.height * rect.size.width / src.size.width);
+            } else {
+              dst = new Rect.fromLTRB(0.0, 0.0, src.size.width * rect.size.height / src.size.height, rect.size.height);
+            }
+            break;
+          case BackgroundFit.cover:
+            src = new Rect.fromSize(_decoration.backgroundImage._size);
+            if (rect.size.width / rect.size.height > src.size.width / src.size.height) {
+              src = new Rect.fromLTRB(0.0, 0.0, src.size.width, src.size.width * rect.size.height / rect.size.width);
+            } else {
+              src = new Rect.fromLTRB(0.0, 0.0, src.size.height * rect.size.width / rect.size.height, src.size.height);
+            }
+            dst = rect;
+            break;
+          case BackgroundFit.none:
+            assert(false);
+            // src = // new Rect.fromSize(;
+            // dst = // rect;
+            break;
+          case BackgroundFit.scaleDown:
+            src = new Rect.fromSize(_decoration.backgroundImage._size);
+            dst = rect;
+            if (src.size.height > dst.size.height) {
+              dst = new Rect.fromLTRB(0.0, 0.0, src.size.width * dst.size.height / src.size.height, src.size.height);
+            }
+            if (src.size.width > dst.size.width) {
+              dst = new Rect.fromLTRB(0.0, 0.0, dst.size.width, src.size.height * dst.size.width / src.size.width);
+            }
+            break;
+        }
+        canvas.drawImageRect(image, src, dst, new Paint());
       }
     }
 
