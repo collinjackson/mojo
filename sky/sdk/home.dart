@@ -48,7 +48,7 @@ List<Widget> demos = [
     textTheme: typography.black,
     decoration: new BoxDecoration(
       backgroundImage: new BackgroundImage(
-        src: 'examples/stocks2/res/thumbnail.png',
+        src: 'sdk/lib/example/stocks2/res/thumbnail.png',
         fit: BackgroundFit.cover
       ),
       shape: Shape.circle
@@ -61,7 +61,7 @@ List<Widget> demos = [
     textTheme: typography.white,
     decoration: new BoxDecoration(
       backgroundImage: new BackgroundImage(
-        src: 'examples/game/res/thumbnail.png',
+        src: 'sdk/lib/example/game/res/thumbnail.png',
         fit: BackgroundFit.cover
       )
     )
@@ -83,7 +83,7 @@ List<Widget> demos = [
     decoration: new BoxDecoration(
       backgroundColor: colors.Black,
       backgroundImage: new BackgroundImage(
-        src: 'examples/widgets/sector_thumbnail.png',
+        src: 'sdk/lib/example/widgets/sector_thumbnail.png',
         fit: BackgroundFit.cover
       )
     )
