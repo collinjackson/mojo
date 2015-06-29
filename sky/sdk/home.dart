@@ -43,7 +43,7 @@ class SkyDemo {
 List<Widget> demos = [
   new SkyDemo(
     name: 'Stocks',
-    href: 'example/stocks2/lib/stock_app.dart',
+    href: 'example/stocks/lib/main.dart',
     description: 'Multi-screen app with scrolling list',
     textTheme: typography.black,
     decoration: new BoxDecoration(
