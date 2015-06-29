@@ -43,12 +43,12 @@ class SkyDemo {
 List<Widget> demos = [
   new SkyDemo(
     name: 'Stocks',
-    href: 'examples/stocks2/lib/stock_app.dart',
+    href: 'lib/example/stocks2/lib/stock_app.dart',
     description: 'Multi-screen app with scrolling list',
     textTheme: typography.black,
     decoration: new BoxDecoration(
       backgroundImage: new BackgroundImage(
-        src: 'sdk/lib/example/stocks2/res/thumbnail.png',
+        src: 'lib/example/stocks2/thumbnail.png',
         fit: BackgroundFit.cover
       ),
       shape: Shape.circle
@@ -56,19 +56,19 @@ List<Widget> demos = [
   ),
   new SkyDemo(
     name: 'Asteroids',
-    href: 'examples/game/main.dart',
+    href: 'lib/example/game/main.dart',
     description: '2D game using sprite sheets to achieve high performance',
     textTheme: typography.white,
     decoration: new BoxDecoration(
       backgroundImage: new BackgroundImage(
-        src: 'sdk/lib/example/game/res/thumbnail.png',
+        src: 'lib/example/game/res/thumbnail.png',
         fit: BackgroundFit.cover
       )
     )
   ),
   new SkyDemo(
     name: 'Interactive Flex',
-    href: 'examples/rendering/interactive_flex.dart',
+    href: 'lib/example/rendering/interactive_flex.dart',
     description: 'Swipe to adjust the layout of the app',
     textTheme: typography.white,
     decoration: new BoxDecoration(
@@ -77,13 +77,13 @@ List<Widget> demos = [
   ),
   new SkyDemo(
     name: 'Sector',
-    href: 'examples/widgets/sector.dart',
+    href: 'lib/example/widgets/sector.dart',
     description: 'Demo of alternative layouts',
     textTheme: typography.black,
     decoration: new BoxDecoration(
       backgroundColor: colors.Black,
       backgroundImage: new BackgroundImage(
-        src: 'sdk/lib/example/widgets/sector_thumbnail.png',
+        src: 'lib/example/widgets/sector_thumbnail.png',
         fit: BackgroundFit.cover
       )
     )
@@ -92,7 +92,7 @@ List<Widget> demos = [
   //   'Touch Demo', 'examples/rendering/touch_demo.dart', 'Simple example showing handling of touch events at a low level'),
   new SkyDemo(
     name: 'Minedigger Game',
-    href: 'examples/mine_digger/mine_digger.dart',
+    href: 'lib/example/mine_digger/mine_digger.dart',
     description: 'Clone of the classic Minesweeper game',
     textTheme: typography.white
   ),
@@ -103,7 +103,7 @@ List<Widget> demos = [
   // new SkyDemo('Old Spinning Square', 'examples/raw/spinning-square.sky'),
 
   // TODO(jackson): This doesn't seem to be working
-  // new SkyDemo('Licences (Old)', 'LICENSES.sky'),
+  // new SkyDemo('Licenses', 'LICENSES.sky'),
 ];
 
 const double kCardHeight = 120.0;

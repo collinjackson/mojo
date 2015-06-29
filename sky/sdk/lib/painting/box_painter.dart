@@ -125,6 +125,11 @@ enum BackgroundFit { fill, contain, cover, none, scaleDown }
 
 enum BackgroundRepeat { repeat, repeatX, repeatY, noRepeat }
 
+// TODO(jackson): We should abstract this out into a separate class
+// that handles the image caching and so forth, which has callbacks
+// for "size changed" and "image changed". This would also enable us
+// to do animated images.
+
 class BackgroundImage {
   final String src;
   final BackgroundFit fit;
@@ -135,6 +140,8 @@ class BackgroundImage {
     this.repeat: BackgroundRepeat.noRepeat
   }) {
     image_cache.load(src, (image) {
+      if (image == null)
+        return;
       _image = image;
       _size = new Size(image.width.toDouble(), image.height.toDouble());
       for (Function listener in _listeners) {
@@ -158,7 +165,7 @@ class BackgroundImage {
     _listeners.remove(listener);
   }
 
-  String toString() => 'BackgroundImage($image, $fit, $repeat)';
+  String toString() => 'BackgroundImage($src, $fit, $repeat)';
 }
 
 enum Shape { rectangle, circle }
@@ -244,7 +251,7 @@ class BoxPainter {
     return _cachedBackgroundPaint;
   }
 
-  void paint(sky.Canvas canvas, Rect rect) {
+  void _paintBackgroundColor(sky.Canvas canvas, Rect rect) {
     if (_decoration.backgroundColor != null || _decoration.boxShadow != null ||
         _decoration.gradient != null) {
       switch (_decoration.shape) {
@@ -262,101 +269,111 @@ class BoxPainter {
           break;
       }
     }
+  }
 
-    if (_decoration.backgroundImage != null) {
-      sky.Image image = _decoration.backgroundImage.image;
-      if (image != null) {
-        Rect src;
-        Rect dst;
-        switch(_decoration.backgroundImage.fit) {
-          case BackgroundFit.fill:
-            src = new Rect.fromSize(_decoration.backgroundImage._size);
-            dst = rect;
-            break;
-          case BackgroundFit.contain:
-            src = new Rect.fromSize(_decoration.backgroundImage._size);
-            if (rect.size.width / rect.size.height > src.size.width / rect.size.height) {
-              dst = new Rect.fromLTRB(0.0, 0.0, rect.size.width, src.size.height * rect.size.width / src.size.width);
-            } else {
-              dst = new Rect.fromLTRB(0.0, 0.0, src.size.width * rect.size.height / src.size.height, rect.size.height);
-            }
-            break;
-          case BackgroundFit.cover:
-            src = new Rect.fromSize(_decoration.backgroundImage._size);
-            if (rect.size.width / rect.size.height > src.size.width / src.size.height) {
-              src = new Rect.fromLTRB(0.0, 0.0, src.size.width, src.size.width * rect.size.height / rect.size.width);
-            } else {
-              src = new Rect.fromLTRB(0.0, 0.0, src.size.height * rect.size.width / rect.size.height, src.size.height);
-            }
-            dst = rect;
-            break;
-          case BackgroundFit.none:
-            assert(false);
-            // src = // new Rect.fromSize(;
-            // dst = // rect;
-            break;
-          case BackgroundFit.scaleDown:
-            src = new Rect.fromSize(_decoration.backgroundImage._size);
-            dst = rect;
-            if (src.size.height > dst.size.height) {
-              dst = new Rect.fromLTRB(0.0, 0.0, src.size.width * dst.size.height / src.size.height, src.size.height);
-            }
-            if (src.size.width > dst.size.width) {
-              dst = new Rect.fromLTRB(0.0, 0.0, dst.size.width, src.size.height * dst.size.width / src.size.width);
-            }
-            break;
-        }
-        canvas.drawImageRect(image, src, dst, new Paint());
+  void _paintBackgroundImage(sky.Canvas canvas, Rect rect) {
+    if (_decoration.backgroundImage == null)
+      return;
+    sky.Image image = _decoration.backgroundImage.image;
+    if (image != null) {
+      Rect src;
+      Rect dst;
+      switch(_decoration.backgroundImage.fit) {
+        case BackgroundFit.fill:
+          src = new Rect.fromSize(_decoration.backgroundImage._size);
+          dst = rect;
+          break;
+        case BackgroundFit.contain:
+          src = new Rect.fromSize(_decoration.backgroundImage._size);
+          if (rect.size.width / rect.size.height > src.size.width / rect.size.height) {
+            dst = new Rect.fromLTRB(0.0, 0.0, rect.size.width, src.size.height * rect.size.width / src.size.width);
+          } else {
+            dst = new Rect.fromLTRB(0.0, 0.0, src.size.width * rect.size.height / src.size.height, rect.size.height);
+          }
+          break;
+        case BackgroundFit.cover:
+          src = new Rect.fromSize(_decoration.backgroundImage._size);
+          if (rect.size.width / rect.size.height > src.size.width / src.size.height) {
+            src = new Rect.fromLTRB(0.0, 0.0, src.size.width, src.size.width * rect.size.height / rect.size.width);
+          } else {
+            src = new Rect.fromLTRB(0.0, 0.0, src.size.height * rect.size.width / rect.size.height, src.size.height);
+          }
+          dst = rect;
+          break;
+        case BackgroundFit.none:
+          src = rect;
+          dst = rect;
+          break;
+        case BackgroundFit.scaleDown:
+          src = new Rect.fromSize(_decoration.backgroundImage._size);
+          dst = rect;
+          if (src.size.height > dst.size.height) {
+            dst = new Rect.fromLTRB(0.0, 0.0, src.size.width * dst.size.height / src.size.height, src.size.height);
+          }
+          if (src.size.width > dst.size.width) {
+            dst = new Rect.fromLTRB(0.0, 0.0, dst.size.width, src.size.height * dst.size.width / src.size.width);
+          }
+          break;
       }
+      canvas.drawImageRect(image, src, dst, new Paint());
     }
+  }
 
-    if (_decoration.border != null) {
-      assert(_decoration.borderRadius == null); // TODO(abarth): Implement borders with border radius.
-      assert(_decoration.shape == Shape.rectangle); // TODO(ianh): Implement borders on circles.
+  void _paintBorder(sky.Canvas canvas, Rect rect) {
+    if (_decoration.border == null)
+      return;
 
-      assert(_decoration.border.top != null);
-      assert(_decoration.border.right != null);
-      assert(_decoration.border.bottom != null);
-      assert(_decoration.border.left != null);
+    assert(_decoration.borderRadius == null); // TODO(abarth): Implement borders with border radius.
+    assert(_decoration.shape == Shape.rectangle); // TODO(ianh): Implement borders on circles.
 
-      Paint paint = new Paint();
-      Path path;
+    assert(_decoration.border.top != null);
+    assert(_decoration.border.right != null);
+    assert(_decoration.border.bottom != null);
+    assert(_decoration.border.left != null);
 
-      paint.color = _decoration.border.top.color;
-      path = new Path();
-      path.moveTo(rect.left, rect.top);
-      path.lineTo(rect.left + _decoration.border.left.width, rect.top + _decoration.border.top.width);
-      path.lineTo(rect.right - _decoration.border.right.width, rect.top + _decoration.border.top.width);
-      path.lineTo(rect.right, rect.top);
-      path.close();
-      canvas.drawPath(path, paint);
+    Paint paint = new Paint();
+    Path path;
 
-      paint.color = _decoration.border.right.color;
-      path = new Path();
-      path.moveTo(rect.right, rect.top);
-      path.lineTo(rect.right - _decoration.border.right.width, rect.top + _decoration.border.top.width);
-      path.lineTo(rect.right - _decoration.border.right.width, rect.bottom - _decoration.border.bottom.width);
-      path.lineTo(rect.right, rect.bottom);
-      path.close();
-      canvas.drawPath(path, paint);
+    paint.color = _decoration.border.top.color;
+    path = new Path();
+    path.moveTo(rect.left, rect.top);
+    path.lineTo(rect.left + _decoration.border.left.width, rect.top + _decoration.border.top.width);
+    path.lineTo(rect.right - _decoration.border.right.width, rect.top + _decoration.border.top.width);
+    path.lineTo(rect.right, rect.top);
+    path.close();
+    canvas.drawPath(path, paint);
 
-      paint.color = _decoration.border.bottom.color;
-      path = new Path();
-      path.moveTo(rect.right, rect.bottom);
-      path.lineTo(rect.right - _decoration.border.right.width, rect.bottom - _decoration.border.bottom.width);
-      path.lineTo(rect.left + _decoration.border.left.width, rect.bottom - _decoration.border.bottom.width);
-      path.lineTo(rect.left, rect.bottom);
-      path.close();
-      canvas.drawPath(path, paint);
+    paint.color = _decoration.border.right.color;
+    path = new Path();
+    path.moveTo(rect.right, rect.top);
+    path.lineTo(rect.right - _decoration.border.right.width, rect.top + _decoration.border.top.width);
+    path.lineTo(rect.right - _decoration.border.right.width, rect.bottom - _decoration.border.bottom.width);
+    path.lineTo(rect.right, rect.bottom);
+    path.close();
+    canvas.drawPath(path, paint);
 
-      paint.color = _decoration.border.left.color;
-      path = new Path();
-      path.moveTo(rect.left, rect.bottom);
-      path.lineTo(rect.left + _decoration.border.left.width, rect.bottom - _decoration.border.bottom.width);
-      path.lineTo(rect.left + _decoration.border.left.width, rect.top + _decoration.border.top.width);
-      path.lineTo(rect.left, rect.top);
-      path.close();
-      canvas.drawPath(path, paint);
-    }
+    paint.color = _decoration.border.bottom.color;
+    path = new Path();
+    path.moveTo(rect.right, rect.bottom);
+    path.lineTo(rect.right - _decoration.border.right.width, rect.bottom - _decoration.border.bottom.width);
+    path.lineTo(rect.left + _decoration.border.left.width, rect.bottom - _decoration.border.bottom.width);
+    path.lineTo(rect.left, rect.bottom);
+    path.close();
+    canvas.drawPath(path, paint);
+
+    paint.color = _decoration.border.left.color;
+    path = new Path();
+    path.moveTo(rect.left, rect.bottom);
+    path.lineTo(rect.left + _decoration.border.left.width, rect.bottom - _decoration.border.bottom.width);
+    path.lineTo(rect.left + _decoration.border.left.width, rect.top + _decoration.border.top.width);
+    path.lineTo(rect.left, rect.top);
+    path.close();
+    canvas.drawPath(path, paint);
+  }
+
+  void paint(sky.Canvas canvas, Rect rect) {
+    _paintBackgroundColor(canvas, rect);
+    _paintBackgroundImage(canvas, rect);
+    _paintBorder(canvas, rect);
   }
 }
