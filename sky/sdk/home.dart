@@ -50,7 +50,7 @@ List<Widget> demos = [
       backgroundImage: new BackgroundImage(
         src: 'example/stocks/thumbnail.png',
         fit: BackgroundFit.cover
-      ),
+      )
     )
   ),
   new SkyDemo(
