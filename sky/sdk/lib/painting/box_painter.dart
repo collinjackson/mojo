@@ -317,7 +317,7 @@ class BoxPainter {
           }
           break;
       }
-      canvas.drawImageRect(image, Point.origin & src, Point.origin & dst, new Paint());
+      canvas.drawImageRect(image, Point.origin & src, rect.topLeft & dst, new Paint());
     }
   }
 
