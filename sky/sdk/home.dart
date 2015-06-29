@@ -43,12 +43,12 @@ class SkyDemo {
 List<Widget> demos = [
   new SkyDemo(
     name: 'Stocks',
-    href: 'lib/example/stocks2/lib/stock_app.dart',
+    href: 'example/stocks2/lib/stock_app.dart',
     description: 'Multi-screen app with scrolling list',
     textTheme: typography.black,
     decoration: new BoxDecoration(
       backgroundImage: new BackgroundImage(
-        src: 'lib/example/stocks2/thumbnail.png',
+        src: 'example/stocks/thumbnail.png',
         fit: BackgroundFit.cover
       ),
       shape: Shape.circle
@@ -56,19 +56,19 @@ List<Widget> demos = [
   ),
   new SkyDemo(
     name: 'Asteroids',
-    href: 'lib/example/game/main.dart',
+    href: 'example/game/main.dart',
     description: '2D game using sprite sheets to achieve high performance',
     textTheme: typography.white,
     decoration: new BoxDecoration(
       backgroundImage: new BackgroundImage(
-        src: 'lib/example/game/res/thumbnail.png',
+        src: 'example/game/res/thumbnail.png',
         fit: BackgroundFit.cover
       )
     )
   ),
   new SkyDemo(
     name: 'Interactive Flex',
-    href: 'lib/example/rendering/interactive_flex.dart',
+    href: 'example/rendering/interactive_flex.dart',
     description: 'Swipe to adjust the layout of the app',
     textTheme: typography.white,
     decoration: new BoxDecoration(
@@ -77,13 +77,13 @@ List<Widget> demos = [
   ),
   new SkyDemo(
     name: 'Sector',
-    href: 'lib/example/widgets/sector.dart',
+    href: 'example/widgets/sector.dart',
     description: 'Demo of alternative layouts',
     textTheme: typography.black,
     decoration: new BoxDecoration(
       backgroundColor: colors.Black,
       backgroundImage: new BackgroundImage(
-        src: 'lib/example/widgets/sector_thumbnail.png',
+        src: 'example/widgets/sector_thumbnail.png',
         fit: BackgroundFit.cover
       )
     )
@@ -92,7 +92,7 @@ List<Widget> demos = [
   //   'Touch Demo', 'examples/rendering/touch_demo.dart', 'Simple example showing handling of touch events at a low level'),
   new SkyDemo(
     name: 'Minedigger Game',
-    href: 'lib/example/mine_digger/mine_digger.dart',
+    href: 'example/mine_digger/mine_digger.dart',
     description: 'Clone of the classic Minesweeper game',
     textTheme: typography.white
   ),
