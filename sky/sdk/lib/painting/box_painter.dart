@@ -276,46 +276,48 @@ class BoxPainter {
       return;
     sky.Image image = _decoration.backgroundImage.image;
     if (image != null) {
-      Rect src;
-      Rect dst;
+      Size bounds = rect.size;
+      Size imageSize = _decoration.backgroundImage._size;
+      Size src;
+      Size dst;
       switch(_decoration.backgroundImage.fit) {
         case BackgroundFit.fill:
-          src = new Rect.fromSize(_decoration.backgroundImage._size);
-          dst = rect;
+          src = imageSize;
+          dst = bounds;
           break;
         case BackgroundFit.contain:
-          src = new Rect.fromSize(_decoration.backgroundImage._size);
-          if (rect.size.width / rect.size.height > src.size.width / rect.size.height) {
-            dst = new Rect.fromLTRB(0.0, 0.0, rect.size.width, src.size.height * rect.size.width / src.size.width);
+          src = imageSize;
+          if (bounds.width / bounds.height > src.width / src.height) {
+            dst = new Size(bounds.width, src.height * bounds.width / src.width);
           } else {
-            dst = new Rect.fromLTRB(0.0, 0.0, src.size.width * rect.size.height / src.size.height, rect.size.height);
+            dst = new Size(src.width * bounds.height / src.height, bounds.height);
           }
           break;
         case BackgroundFit.cover:
-          src = new Rect.fromSize(_decoration.backgroundImage._size);
-          if (rect.size.width / rect.size.height > src.size.width / src.size.height) {
-            src = new Rect.fromLTRB(0.0, 0.0, src.size.width, src.size.width * rect.size.height / rect.size.width);
+          if (bounds.width / bounds.height > imageSize.width / imageSize.height) {
+            src = new Size(imageSize.width, imageSize.width * bounds.height / bounds.width);
           } else {
-            src = new Rect.fromLTRB(0.0, 0.0, src.size.height * rect.size.width / rect.size.height, src.size.height);
+            src = new Size(imageSize.height * bounds.width / bounds.height, imageSize.height);
           }
-          dst = rect;
+          dst = bounds;
           break;
         case BackgroundFit.none:
-          src = rect;
-          dst = rect;
+          src = new Size(math.min(imageSize.width, bounds.width),
+                         math.min(imageSize.height, bounds.height));
+          dst = src;
           break;
         case BackgroundFit.scaleDown:
-          src = new Rect.fromSize(_decoration.backgroundImage._size);
-          dst = rect;
-          if (src.size.height > dst.size.height) {
-            dst = new Rect.fromLTRB(0.0, 0.0, src.size.width * dst.size.height / src.size.height, src.size.height);
+          src = imageSize;
+          dst = bounds;
+          if (src.height > dst.height) {
+            dst = new Size(src.width * dst.height / src.height, src.height);
           }
-          if (src.size.width > dst.size.width) {
-            dst = new Rect.fromLTRB(0.0, 0.0, dst.size.width, src.size.height * dst.size.width / src.size.width);
+          if (src.width > dst.size.width) {
+            dst = new Size(dst.width, src.height * dst.width / src.width);
           }
           break;
       }
-      canvas.drawImageRect(image, src, dst, new Paint());
+      canvas.drawImageRect(image, Point.origin & src, Point.origin & dst, new Paint());
     }
   }
 
