@@ -51,7 +51,6 @@ List<Widget> demos = [
         src: 'example/stocks/thumbnail.png',
         fit: BackgroundFit.cover
       ),
-      shape: Shape.circle
     )
   ),
   new SkyDemo(
