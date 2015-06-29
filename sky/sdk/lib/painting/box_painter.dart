@@ -312,7 +312,7 @@ class BoxPainter {
           if (src.height > dst.height) {
             dst = new Size(src.width * dst.height / src.height, src.height);
           }
-          if (src.width > dst.size.width) {
+          if (src.width > dst.width) {
             dst = new Size(dst.width, src.height * dst.width / src.width);
           }
           break;
