@@ -12,6 +12,7 @@ import '../theme/colors.dart' as colors;
 import '../theme/theme_data.dart';
 import '../theme/view_configuration.dart' as config;
 import 'basic.dart';
+import 'canvas.dart';
 import 'material.dart';
 import 'theme.dart';
 
@@ -37,17 +38,6 @@ abstract class Scrollable extends Component {
     backgroundColor = source.backgroundColor;
   }
 
-  Color get _nonNullBackgroundColor {
-    if (backgroundColor != null)
-      return backgroundColor;
-    switch (Theme.of(this).brightness) {
-      case ThemeBrightness.light:
-        return colors.Grey[50];
-      case ThemeBrightness.dark:
-        return colors.Grey[850];
-    }
-  }
-
   double _scrollOffset = 0.0;
   double get scrollOffset => _scrollOffset;
 
@@ -66,9 +56,9 @@ abstract class Scrollable extends Component {
   Widget build() {
     return new Listener(
       child: new Material(
+        type: MaterialType.canvas,
         child: buildContent(),
-        edge: MaterialEdge.canvas,
-        color: _nonNullBackgroundColor
+        color: backgroundColor
       ),
       onPointerDown: _handlePointerDown,
       onPointerUp: _handlePointerUpOrCancel,

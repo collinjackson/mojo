@@ -76,7 +76,7 @@ class StocksApp extends App {
     } else {
       theme = new ThemeData(
         brightness: ThemeBrightness.dark,
-        primarySwatch: colors.Red
+        accentColor: colors.Red[500]
       );
     }
 

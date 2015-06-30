@@ -8,7 +8,6 @@ import 'package:mojom/intents/intents.mojom.dart';
 import 'package:sky/mojo/shell.dart' as shell;
 import 'package:sky/painting/box_painter.dart';
 import 'package:sky/theme/colors.dart' as colors;
-import 'package:sky/theme/edges.dart';
 import 'package:sky/theme/typography.dart' as typography;
 import 'package:sky/widgets/basic.dart';
 import 'package:sky/widgets/card.dart';
@@ -109,7 +108,7 @@ List<Widget> demos = [
     href: 'example/mine_digger/lib/main.dart',
     bundle: 'mine_digger.skyx',
     description: 'Clone of the classic Minesweeper game',
-    textTheme: typography.white
+    textTheme: typography.black
   ),
 
   // TODO(eseidel): We could use to separate these groups?
@@ -170,11 +169,14 @@ class DemoList extends FixedHeightScrollable {
 class SkyHome extends App {
   Widget build() {
     return new Theme(
-      data: new ThemeData.light(),
+      data: new ThemeData(
+        brightness: ThemeBrightness.dark,
+        primarySwatch: colors.Teal
+      ),
       child: new Scaffold(
         toolbar: new ToolBar(center: new Text('Sky Demos')),
         body: new Material(
-          edge: MaterialEdge.canvas,
+          type: MaterialType.canvas,
           child: new DemoList()
         )
       )

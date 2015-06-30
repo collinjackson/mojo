@@ -4,14 +4,19 @@
 
 import '../animation/animated_value.dart';
 import '../painting/box_painter.dart';
-import '../theme/edges.dart';
 import '../theme/shadows.dart';
 import 'animated_component.dart';
 import 'basic.dart';
 import 'default_text_style.dart';
 import 'theme.dart';
 
-export '../theme/edges.dart' show MaterialEdge;
+enum MaterialType { canvas, card, circle }
+
+const Map<MaterialType, double> edges = const {
+  MaterialType.canvas: null,
+  MaterialType.card: 2.0,
+  MaterialType.circle: null,
+};
 
 const double _kAnimateShadowDurationMS = 100.0;
 
@@ -34,18 +39,18 @@ class Material extends AnimatedComponent {
   Material({
     String key,
     this.child,
-    this.edge: MaterialEdge.card,
-    int level: 0,
+    this.type: MaterialType.card,
+    this.level: 0,
     this.color
   }) : super(key: key) {
     this.level = new AnimatedValue(level == null ? 0.0 : level.toDouble());
     watch(this.level);
   }
 
-  Widget child;
-  MaterialEdge edge;
+  final Widget child;
+  final MaterialType type;
   AnimatedValue level;
-  Color color;
+  final Color color;
 
   void syncFields(Material source) {
     child = source.child;
@@ -58,15 +63,28 @@ class Material extends AnimatedComponent {
     super.syncFields(source);
   }
 
+  Color get backgroundColor {
+    if (color != null)
+      return color;
+    switch(type) {
+      case MaterialType.canvas:
+        return Theme.of(this).canvasColor;
+      case MaterialType.card:
+        return Theme.of(this).cardColor;
+      case MaterialType.circle:
+        return Theme.of(this).cardColor;
+    }
+  }
+
   // TODO(mpcomplete): make this animate color changes.
 
   Widget build() {
     return new Container(
       decoration: new BoxDecoration(
         boxShadow: _computeShadow(level.value),
-        borderRadius: edges[edge],
-        backgroundColor: color,
-        shape: edge == MaterialEdge.circle ? Shape.circle : Shape.rectangle
+        borderRadius: edges[type],
+        backgroundColor: backgroundColor,
+        shape: type == MaterialType.circle ? Shape.circle : Shape.rectangle
       ),
       child: new DefaultTextStyle(style: Theme.of(this).text.body1, child: child)
     );
