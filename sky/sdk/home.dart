@@ -92,7 +92,7 @@ List<Widget> demos = [
     name: 'Minedigger Game',
     href: 'example/mine_digger/mine_digger.dart',
     description: 'Clone of the classic Minesweeper game',
-    textTheme: typography.white
+    textTheme: typography.black
   ),
 
   // TODO(eseidel): We could use to separate these groups?
