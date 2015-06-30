@@ -108,7 +108,7 @@ List<Widget> demos = [
     href: 'example/mine_digger/lib/main.dart',
     bundle: 'mine_digger.skyx',
     description: 'Clone of the classic Minesweeper game',
-    textTheme: typography.black
+    textTheme: typography.white
   ),
 
   // TODO(eseidel): We could use to separate these groups?
