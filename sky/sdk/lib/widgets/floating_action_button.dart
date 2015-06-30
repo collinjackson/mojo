@@ -32,7 +32,7 @@ class FloatingActionButton extends ButtonBase {
   Widget buildContent() {
     return new Material(
       color: Theme.of(this).floatingActionButtonColor,
-      edge: MaterialEdge.circle,
+      type: MaterialType.circle,
       level: highlight ? 3 : 2,
       child: new ClipOval(
         child: new Listener(

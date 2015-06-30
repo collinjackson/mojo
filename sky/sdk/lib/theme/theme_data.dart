@@ -20,6 +20,8 @@ class ThemeData {
     typography.TextTheme toolbarText })
     : this.brightness = brightness,
       this.primarySwatch = primarySwatch,
+      canvasColor = brightness == ThemeBrightness.dark ? colors.Grey[850] : colors.Grey[50],
+      cardColor = brightness == ThemeBrightness.dark ? colors.Grey[800] : colors.White,
       text = brightness == ThemeBrightness.dark ? typography.white : typography.black {
     assert(brightness != null);
 
@@ -57,7 +59,8 @@ class ThemeData {
 
   final ThemeBrightness brightness;
   final Map<int, Color> primarySwatch;
-  final Color toolBarColor;
+  final Color canvasColor;
+  final Color cardColor;
   final typography.TextTheme text;
 
   Color _primaryColor;
