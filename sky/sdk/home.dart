@@ -170,10 +170,7 @@ class DemoList extends FixedHeightScrollable {
 class SkyHome extends App {
   Widget build() {
     return new Theme(
-      data: new ThemeData.dark(
-        primary: colors.Teal,
-        accent: colors.Orange
-      ),
+      data: new ThemeData.light(),
       child: new Scaffold(
         toolbar: new ToolBar(center: new Text('Sky Demos')),
         body: new Material(

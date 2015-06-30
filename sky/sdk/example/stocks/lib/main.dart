@@ -68,15 +68,15 @@ class StocksApp extends App {
 
     ThemeData theme;
     if (optimismSetting == StockMode.optimistic) {
-      theme = new ThemeData.light(
-        primary: colors.Purple,
-        accent: colors.RedAccent,
-        darkToolbar: true
+      theme = new ThemeData(
+        brightness: ThemeBrightness.light,
+        primarySwatch: colors.Purple,
+        floatingActionButtonColor: colors.Red[500]
       );
     } else {
-      theme = new ThemeData.dark(
-        primary: colors.Red,
-        accent: colors.PurpleAccent
+      theme = new ThemeData(
+        brightness: ThemeBrightness.dark,
+        primarySwatch: colors.Red
       );
     }
 
