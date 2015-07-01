@@ -32,7 +32,7 @@ class ThemeData {
     }
 
     if (accentColor == null) {
-      _accentColor = primarySwatch == null ? colors.Indigo[500] : primarySwatch[500];
+      _accentColor = primarySwatch == null ? colors.Blue[500] : primarySwatch[500];
     } else {
       _accentColor = accentColor;
     }
@@ -53,7 +53,7 @@ class ThemeData {
     }
   }
 
-  factory ThemeData.light() => new ThemeData(primarySwatch: colors.Indigo, brightness: ThemeBrightness.light);
+  factory ThemeData.light() => new ThemeData(primarySwatch: colors.Blue, brightness: ThemeBrightness.light);
   factory ThemeData.dark() => new ThemeData(brightness: ThemeBrightness.dark);
   factory ThemeData.fallback() => new ThemeData.light();
 
