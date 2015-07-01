@@ -42,9 +42,8 @@ class MenuItem extends ButtonBase {
 
   TextStyle get textStyle {
     TextStyle result = Theme.of(this).text.body2;
-    if (highlight) {
+    if (highlight)
       result = result.copyWith(color: Theme.of(this).primaryColor);
-    }
     return result;
   }
 
