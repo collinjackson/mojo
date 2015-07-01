@@ -49,7 +49,7 @@ class SnackBar extends Component {
       color: const Color(0xFF323232),
       type: MaterialType.canvas,
       child: new Container(
-        margin: const EdgeDims.only(left: 24.0, top: 14.0, bottom: 14.0),
+        margin: const EdgeDims.symmetric(horizontal: 24.0, vertical: 14.0),
         child: new DefaultTextStyle(
           style: new TextStyle(color: Theme.of(this).accentColor),
           child: new Flex(children)
