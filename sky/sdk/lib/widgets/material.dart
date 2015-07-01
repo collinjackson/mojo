@@ -10,12 +10,13 @@ import 'basic.dart';
 import 'default_text_style.dart';
 import 'theme.dart';
 
-enum MaterialType { canvas, card, circle }
+enum MaterialType { canvas, card, circle, custom }
 
 const Map<MaterialType, double> edges = const {
   MaterialType.canvas: null,
   MaterialType.card: 2.0,
   MaterialType.circle: null,
+  MaterialType.custom: null,
 };
 
 const double _kAnimateShadowDurationMS = 100.0;
@@ -71,8 +72,8 @@ class Material extends AnimatedComponent {
         return Theme.of(this).canvasColor;
       case MaterialType.card:
         return Theme.of(this).cardColor;
-      case MaterialType.circle:
-        return Theme.of(this).cardColor;
+      default: 
+        return null;
     }
   }
 
