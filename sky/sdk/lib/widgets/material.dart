@@ -14,7 +14,7 @@ const Map<MaterialType, double> edges = const {
   MaterialType.canvas: null,
   MaterialType.card: 2.0,
   MaterialType.circle: null,
-  MaterialType.custom: null,
+  MaterialType.button: 2.0,
 };
 
 class Material extends Component {
