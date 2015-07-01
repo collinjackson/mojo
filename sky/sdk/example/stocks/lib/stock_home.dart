@@ -231,10 +231,10 @@ class StockHome extends Component {
     if (!_isShowingSnackBar)
       return null;
     return new SnackBar(
-      content: new Text("Stock purchased"),
+      content: new Text("Stock purchased!"),
       actions: [new Listener(
         child: new Text("UNDO"),
-        onPressed: (_) {
+        onGestureTap: (_) {
           setState(() {
             _isShowingSnackBar = false;
           });
@@ -243,14 +243,16 @@ class StockHome extends Component {
     );
   }
 
+  void _handleStockPurchased() {
+    setState(() {
+      _isShowingSnackBar = true;
+    });
+  }
+
   Widget buildFloatingActionButton() {
-    new FloatingActionButton(
+    return new FloatingActionButton(
       child: new Icon(type: 'content/add_white', size: 24),
-      onPressed: (_) {
-        setState(() {
-          _isShowingSnackBar = true;
-        });
-      }
+      onPressed: _handleStockPurchased
     );
   }
 
