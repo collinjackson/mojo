@@ -12,6 +12,32 @@ import 'default_text_style.dart';
 import 'material.dart';
 import 'theme.dart';
 
+class SnackBarAction extends Component {
+  SnackBarAction({String key, this.label, this.onPressed }) : super(key: key) {
+    assert(label != null);
+  }
+
+  final String label;
+  final Function onPressed;
+
+  void syncFields(SnackBarAction source) {
+    label = source.label;
+    onPressed = source.onPressed;
+    super.syncFields(source);
+  }
+
+  Widget build() {
+    return new Listener(
+      onGestureTap: (_) => onPressed(),
+      child: new Container(
+        margin: const EdgeDims.only(left: 24.0),
+        padding: const EdgeDims.only(top: 14.0, bottom: 14.0),
+        child: new Text(label)
+      )
+    );
+  }
+}
+
 class SnackBar extends Component {
 
   SnackBar({
@@ -22,14 +48,12 @@ class SnackBar extends Component {
     assert(content != null);
   }
 
-  Widget content;
-  List<Widget> actions;
-  Color actionsColor;
+  final Widget content;
+  final List<SnackBarAction> actions;
 
   void syncFields(SnackBar source) {
     content = source.children;
     actions = source.actions;
-    actionsColor = source.actionsColor;
     super.syncFields(source);
   }
 
@@ -37,6 +61,7 @@ class SnackBar extends Component {
     List<Widget> children = [
       new Flexible(
         child: new Container(
+          margin: const EdgeDims.symmetric(vertical: 14.0),
           child: new DefaultTextStyle(
             style: typography.white.subhead,
             child: content
@@ -49,7 +74,7 @@ class SnackBar extends Component {
       color: const Color(0xFF323232),
       type: MaterialType.canvas,
       child: new Container(
-        margin: const EdgeDims.symmetric(horizontal: 24.0, vertical: 14.0),
+        margin: const EdgeDims.symmetric(horizontal: 24.0),
         child: new DefaultTextStyle(
           style: new TextStyle(color: Theme.of(this).accentColor),
           child: new Flex(children)
