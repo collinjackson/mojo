@@ -10,7 +10,7 @@ import 'basic.dart';
 import 'default_text_style.dart';
 import 'theme.dart';
 
-enum MaterialType { canvas, card, circle, custom }
+enum MaterialType { canvas, card, circle, button }
 
 const Map<MaterialType, double> edges = const {
   MaterialType.canvas: null,
