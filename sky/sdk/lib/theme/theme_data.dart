@@ -38,7 +38,7 @@ class ThemeData {
     }
 
     if (floatingActionButtonColor == null) {
-      _floatingActionButtonColor = accentColor;
+      _floatingActionButtonColor = accentColor == null ? colors.RedAccent[200] : accentColor;
     } else {
       _floatingActionButtonColor = floatingActionButtonColor;
     }
