@@ -95,14 +95,11 @@ class RenderScaffold extends RenderBox {
   void performLayout() {
     double bodyHeight = size.height;
     double bodyPosition = 0.0;
-    if (_slots[ScaffoldSlots.toolbar] != null) {
-      RenderBox toolbar = _slots[ScaffoldSlots.toolbar];
-      double toolbarHeight = kToolBarHeight + kNotificationAreaHeight;
-      toolbar.layout(new BoxConstraints.tight(new Size(size.width, toolbarHeight)));
-      assert(toolbar.parentData is BoxParentData);
-      toolbar.parentData.position = Point.origin;
-      bodyPosition += toolbarHeight;
-      bodyHeight -= toolbarHeight;
+    if (_slots[ScaffoldSlots.body] != null) {
+      RenderBox body = _slots[ScaffoldSlots.body];
+      body.layout(new BoxConstraints.tight(new Size(size.width, bodyHeight)));
+      assert(body.parentData is BoxParentData);
+      body.parentData.position = new Point(0.0, bodyPosition);
     }
     if (_slots[ScaffoldSlots.statusBar] != null) {
       RenderBox statusBar = _slots[ScaffoldSlots.statusBar];
@@ -111,17 +108,14 @@ class RenderScaffold extends RenderBox {
       statusBar.parentData.position = new Point(0.0, size.height - kStatusBarHeight);
       bodyHeight -= kStatusBarHeight;
     }
-    if (_slots[ScaffoldSlots.body] != null) {
-      RenderBox body = _slots[ScaffoldSlots.body];
-      body.layout(new BoxConstraints.tight(new Size(size.width, bodyHeight)));
-      assert(body.parentData is BoxParentData);
-      body.parentData.position = new Point(0.0, bodyPosition);
-    }
-    if (_slots[ScaffoldSlots.drawer] != null) {
-      RenderBox drawer = _slots[ScaffoldSlots.drawer];
-      drawer.layout(new BoxConstraints(minWidth: 0.0, maxWidth: size.width, minHeight: size.height, maxHeight: size.height));
-      assert(drawer.parentData is BoxParentData);
-      drawer.parentData.position = Point.origin;
+    if (_slots[ScaffoldSlots.toolbar] != null) {
+      RenderBox toolbar = _slots[ScaffoldSlots.toolbar];
+      double toolbarHeight = kToolBarHeight + kNotificationAreaHeight;
+      toolbar.layout(new BoxConstraints.tight(new Size(size.width, toolbarHeight)));
+      assert(toolbar.parentData is BoxParentData);
+      toolbar.parentData.position = Point.origin;
+      bodyPosition += toolbarHeight;
+      bodyHeight -= toolbarHeight;
     }
     double snackBarHeight = 0.0;
     if (_slots[ScaffoldSlots.snackBar] != null) {
@@ -139,6 +133,12 @@ class RenderScaffold extends RenderBox {
       floatingActionButton.layout(new BoxConstraints.loose(area), parentUsesSize: true);
       assert(floatingActionButton.parentData is BoxParentData);
       floatingActionButton.parentData.position = (area - floatingActionButton.size).toPoint();
+    }
+    if (_slots[ScaffoldSlots.drawer] != null) {
+      RenderBox drawer = _slots[ScaffoldSlots.drawer];
+      drawer.layout(new BoxConstraints(minWidth: 0.0, maxWidth: size.width, minHeight: size.height, maxHeight: size.height));
+      assert(drawer.parentData is BoxParentData);
+      drawer.parentData.position = Point.origin;
     }
   }
 
@@ -227,8 +227,7 @@ class Scaffold extends RenderObjectWrapper {
     super.syncRenderObject(old);
     for (ScaffoldSlots slot in ScaffoldSlots.values) {
       Widget widget = this[slot];
-      if (widget != null)
-        this[slot] = syncChild(widget, old is Scaffold ? old[slot] : null, slot);
+      this[slot] = syncChild(widget, old is Scaffold ? old[slot] : null, slot);
     }
   }
 
