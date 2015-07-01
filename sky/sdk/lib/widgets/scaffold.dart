@@ -22,19 +22,19 @@ enum ScaffoldSlots {
 class RenderScaffold extends RenderBox {
 
   RenderScaffold({
-    RenderBox toolbar,
     RenderBox body,
     RenderBox statusBar,
-    RenderBox drawer,
+    RenderBox toolbar,
     RenderBox snackBar,
-    RenderBox floatingActionButton
+    RenderBox floatingActionButton,
+    RenderBox drawer
   }) {
-    this[ScaffoldSlots.toolbar] = toolbar;
     this[ScaffoldSlots.body] = body;
     this[ScaffoldSlots.statusBar] = statusBar;
-    this[ScaffoldSlots.drawer] = drawer;
+    this[ScaffoldSlots.toolbar] = toolbar;
     this[ScaffoldSlots.snackBar] = snackBar;
     this[ScaffoldSlots.floatingActionButton] = floatingActionButton;
+    this[ScaffoldSlots.drawer] = drawer;
   }
 
   Map<ScaffoldSlots, RenderBox> _slots = new Map<ScaffoldSlots, RenderBox>();
@@ -174,19 +174,19 @@ class Scaffold extends RenderObjectWrapper {
 
   Scaffold({
     String key,
-    Widget toolbar,
     Widget body,
     Widget statusBar,
-    Widget drawer,
+    Widget toolbar,
     Widget snackBar,
-    Widget floatingActionButton
+    Widget floatingActionButton,
+    Widget drawer
   }) : super(key: key) {
-    this[ScaffoldSlots.toolbar] = toolbar;
     this[ScaffoldSlots.body] = body;
     this[ScaffoldSlots.statusBar] = statusBar;
-    this[ScaffoldSlots.drawer] = drawer;
+    this[ScaffoldSlots.toolbar] = toolbar;
     this[ScaffoldSlots.snackBar] = snackBar;
     this[ScaffoldSlots.floatingActionButton] = floatingActionButton;
+    this[ScaffoldSlots.drawer] = drawer;
   }
 
   Map<ScaffoldSlots, Widget> _slots = new Map<ScaffoldSlots, Widget>();
