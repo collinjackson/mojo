@@ -227,19 +227,18 @@ class StockHome extends Component {
     );
   }
 
+  void _handleUndo() {
+    setState(() {
+      _isShowingSnackBar = false;
+    });
+  }
+
   Widget buildSnackBar() {
     if (!_isShowingSnackBar)
       return null;
     return new SnackBar(
       content: new Text("Stock purchased!"),
-      actions: [new Listener(
-        child: new Text("UNDO"),
-        onGestureTap: (_) {
-          setState(() {
-            _isShowingSnackBar = false;
-          });
-        }
-      )]
+      actions: [new SnackBarAction(label: "UNDO", onPressed: _handleUndo)]
     );
   }
 
