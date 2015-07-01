@@ -2,17 +2,21 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+import 'dart:math' as math;
+
 import '../rendering/box.dart';
 import '../rendering/object.dart';
 import '../theme/view_configuration.dart';
 import 'widget.dart';
 
+// Slots are painted in this order and hit tested in reverse of this order
 enum ScaffoldSlots {
-  toolbar,
   body,
   statusBar,
-  drawer,
-  floatingActionButton
+  toolbar,
+  snackBar,
+  floatingActionButton,
+  drawer
 }
 
 class RenderScaffold extends RenderBox {
@@ -22,12 +26,14 @@ class RenderScaffold extends RenderBox {
     RenderBox body,
     RenderBox statusBar,
     RenderBox drawer,
+    RenderBox snackBar,
     RenderBox floatingActionButton
   }) {
     this[ScaffoldSlots.toolbar] = toolbar;
     this[ScaffoldSlots.body] = body;
     this[ScaffoldSlots.statusBar] = statusBar;
     this[ScaffoldSlots.drawer] = drawer;
+    this[ScaffoldSlots.snackBar] = snackBar;
     this[ScaffoldSlots.floatingActionButton] = floatingActionButton;
   }
 
@@ -117,9 +123,19 @@ class RenderScaffold extends RenderBox {
       assert(drawer.parentData is BoxParentData);
       drawer.parentData.position = Point.origin;
     }
+    double snackBarHeight = 0.0;
+    if (_slots[ScaffoldSlots.snackBar] != null) {
+      RenderBox snackBar = _slots[ScaffoldSlots.snackBar];
+      // TODO(jackson): On tablet/desktop, minWidth = 288, maxWidth = 568
+      snackBar.layout(new BoxConstraints(minWidth: size.width, maxWidth: size.width, minHeight: 0.0, maxHeight: size.height),
+                      parentUsesSize: true);
+      assert(snackBar.parentData is BoxParentData);
+      snackBar.parentData.position = new Point(0.0, size.height - snackBar.size.height);
+      snackBarHeight = snackBar.size.height;
+    }
     if (_slots[ScaffoldSlots.floatingActionButton] != null) {
       RenderBox floatingActionButton = _slots[ScaffoldSlots.floatingActionButton];
-      Size area = new Size(size.width - kButtonX, size.height - kButtonY);
+      Size area = new Size(size.width - kButtonX, size.height - kButtonY - snackBarHeight);
       floatingActionButton.layout(new BoxConstraints.loose(area), parentUsesSize: true);
       assert(floatingActionButton.parentData is BoxParentData);
       floatingActionButton.parentData.position = (area - floatingActionButton.size).toPoint();
@@ -127,7 +143,7 @@ class RenderScaffold extends RenderBox {
   }
 
   void paint(PaintingCanvas canvas, Offset offset) {
-    for (ScaffoldSlots slot in [ScaffoldSlots.body, ScaffoldSlots.statusBar, ScaffoldSlots.toolbar, ScaffoldSlots.floatingActionButton, ScaffoldSlots.drawer]) {
+    for (ScaffoldSlots slot in ScaffoldSlots.values) {
       RenderBox box = _slots[slot];
       if (box != null) {
         assert(box.parentData is BoxParentData);
@@ -137,7 +153,7 @@ class RenderScaffold extends RenderBox {
   }
 
   void hitTestChildren(HitTestResult result, { Point position }) {
-    for (ScaffoldSlots slot in [ScaffoldSlots.drawer, ScaffoldSlots.floatingActionButton, ScaffoldSlots.toolbar, ScaffoldSlots.statusBar, ScaffoldSlots.body]) {
+    for (ScaffoldSlots slot in ScaffoldSlots.values.reversed) {
       RenderBox box = _slots[slot];
       if (box != null) {
         assert(box.parentData is BoxParentData);
@@ -156,44 +172,38 @@ class RenderScaffold extends RenderBox {
 
 class Scaffold extends RenderObjectWrapper {
 
-  // static final Style _style = new Style('''
-  //   ${typography.typeface};
-  //   ${typography.black.body1};''');
-
   Scaffold({
     String key,
     Widget toolbar,
     Widget body,
     Widget statusBar,
     Widget drawer,
+    Widget snackBar,
     Widget floatingActionButton
-  }) : _toolbar = toolbar,
-       _body = body,
-       _statusBar = statusBar,
-       _drawer = drawer,
-       _floatingActionButton = floatingActionButton,
-       super(key: key);
+  }) : super(key: key) {
+    this[ScaffoldSlots.toolbar] = toolbar;
+    this[ScaffoldSlots.body] = body;
+    this[ScaffoldSlots.statusBar] = statusBar;
+    this[ScaffoldSlots.drawer] = drawer;
+    this[ScaffoldSlots.snackBar] = snackBar;
+    this[ScaffoldSlots.floatingActionButton] = floatingActionButton;
+  }
 
-  Widget _toolbar;
-  Widget _body;
-  Widget _statusBar;
-  Widget _drawer;
-  Widget _floatingActionButton;
+  Map<ScaffoldSlots, Widget> _slots = new Map<ScaffoldSlots, Widget>();
+  Widget operator[] (ScaffoldSlots slot) => _slots[slot];
+  void operator[]= (ScaffoldSlots slot, Widget value) {
+    _slots[slot] = value;
+  }
 
   RenderScaffold get root => super.root;
   RenderScaffold createNode() => new RenderScaffold();
 
   void walkChildren(WidgetTreeWalker walker) {
-    if (_toolbar != null)
-      walker(_toolbar);
-    if (_body != null)
-      walker(_body);
-    if (_statusBar != null)
-      walker(_statusBar);
-    if (_drawer != null)
-      walker(_drawer);
-    if (_floatingActionButton != null)
-      walker(_floatingActionButton);
+    for (ScaffoldSlots slot in ScaffoldSlots.values) {
+      Widget widget = _slots[slot];
+      if (widget != null)
+        walker(widget);
+    }
   }
 
   void insertChildRoot(RenderObjectWrapper child, ScaffoldSlots slot) {
@@ -215,11 +225,11 @@ class Scaffold extends RenderObjectWrapper {
 
   void syncRenderObject(Widget old) {
     super.syncRenderObject(old);
-    _toolbar = syncChild(_toolbar, old is Scaffold ? old._toolbar : null, ScaffoldSlots.toolbar);
-    _body = syncChild(_body, old is Scaffold ? old._body : null, ScaffoldSlots.body);
-    _statusBar = syncChild(_statusBar, old is Scaffold ? old._statusBar : null, ScaffoldSlots.statusBar);
-    _drawer = syncChild(_drawer, old is Scaffold ? old._drawer : null, ScaffoldSlots.drawer);
-    _floatingActionButton = syncChild(_floatingActionButton, old is Scaffold ? old._floatingActionButton : null, ScaffoldSlots.floatingActionButton);
+    for (ScaffoldSlots slot in ScaffoldSlots.values) {
+      Widget widget = this[slot];
+      if (widget != null)
+        this[slot] = syncChild(widget, old is Scaffold ? old[slot] : null, slot);
+    }
   }
 
 }
