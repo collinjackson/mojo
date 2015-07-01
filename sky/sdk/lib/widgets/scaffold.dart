@@ -95,12 +95,6 @@ class RenderScaffold extends RenderBox {
   void performLayout() {
     double bodyHeight = size.height;
     double bodyPosition = 0.0;
-    if (_slots[ScaffoldSlots.body] != null) {
-      RenderBox body = _slots[ScaffoldSlots.body];
-      body.layout(new BoxConstraints.tight(new Size(size.width, bodyHeight)));
-      assert(body.parentData is BoxParentData);
-      body.parentData.position = new Point(0.0, bodyPosition);
-    }
     if (_slots[ScaffoldSlots.statusBar] != null) {
       RenderBox statusBar = _slots[ScaffoldSlots.statusBar];
       statusBar.layout(new BoxConstraints.tight(new Size(size.width, kStatusBarHeight)));
@@ -116,6 +110,12 @@ class RenderScaffold extends RenderBox {
       toolbar.parentData.position = Point.origin;
       bodyPosition += toolbarHeight;
       bodyHeight -= toolbarHeight;
+    }
+    if (_slots[ScaffoldSlots.body] != null) {
+      RenderBox body = _slots[ScaffoldSlots.body];
+      body.layout(new BoxConstraints.tight(new Size(size.width, bodyHeight)));
+      assert(body.parentData is BoxParentData);
+      body.parentData.position = new Point(0.0, bodyPosition);
     }
     double snackBarHeight = 0.0;
     if (_slots[ScaffoldSlots.snackBar] != null) {
