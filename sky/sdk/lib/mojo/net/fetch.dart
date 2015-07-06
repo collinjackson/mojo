@@ -42,7 +42,6 @@ Future<UrlResponse> fetch(UrlRequest request) async {
 
 Future<UrlResponse> fetchUrl(String relativeUrl) async {
   String url = Uri.base.resolve(relativeUrl).toString();
-  print ("COLLIN ${url}");
   UrlRequest request = new UrlRequest()
     ..url = url
     ..autoFollowRedirects = true;
