@@ -432,6 +432,13 @@ abstract class Component extends Widget {
     _sync(null, _slot);
   }
 
+  void scheduleBuild() {
+    if (_isBuilding || _dirty || !_mounted)
+      return;
+    _dirty = true;
+    _scheduleComponentForRender(this);
+  }
+
   Widget build();
 
 }
@@ -493,16 +500,9 @@ abstract class StatefulComponent extends Component {
   void syncFields(Component source);
 
   void setState(Function fn()) {
+    assert(!_disqualifiedFromEverAppearingAgain);
     fn();
     scheduleBuild();
-  }
-
-  void scheduleBuild() {
-    assert(!_disqualifiedFromEverAppearingAgain);
-    if (_isBuilding || _dirty || !_mounted)
-      return;
-    _dirty = true;
-    _scheduleComponentForRender(this);
   }
 }
 
