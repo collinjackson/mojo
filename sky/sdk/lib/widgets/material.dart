@@ -55,7 +55,7 @@ class Material extends AnimatedComponent {
 
   void syncFields(Material source) {
     child = source.child;
-    edge = source.edge;
+    type = source.type;
     // TODO(mpcomplete): duration is wrong, because the current level may be
     // anything. We really want |rate|.
     if (level.value != source.level.value)
