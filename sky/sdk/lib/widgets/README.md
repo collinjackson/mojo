@@ -298,8 +298,8 @@ component persists for the lifetime of the application.
 The `MyDialog` component is more complicated because it is a stateful component.
 Let's walk through the differences in `MyDialog` caused by its being stateful:
 
- * `MyDialog` inherits from StatefulComponent instead of Component.
- 
+ * `MyDialog` extends StatefulComponent instead of Component.
+
  * `MyDialog` has non-`final` member variables. Over the lifetime of the dialog,
    we'll need to modify the values of these member variables, which means we
    cannot mark them `final`.
