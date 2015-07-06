@@ -14,7 +14,7 @@ import 'package:mojom/mojo/url_response.mojom.dart';
 import '../shell.dart' as shell;
 
 class Response {
-  Response(this.body, this.statusCode);
+  Response({ this.body, this.statusCode });
 
   final ByteData body;
   final int statusCode;
@@ -50,8 +50,9 @@ Future<UrlResponse> fetchUrl(String relativeUrl) async {
 
 Future<Response> fetchBody(String relativeUrl) async {
   UrlResponse response = await fetchUrl(relativeUrl);
-  if (response.body == null) return new Response(null);
+  ByteData data = null;
+  if (response.body != null) 
+    data = await core.DataPipeDrainer.drainHandle(response.body);
 
-  ByteData data = await core.DataPipeDrainer.drainHandle(response.body);
-  return new Response(data, response.statusCode);
+  return new Response(body: data, statusCode: response.statusCode);
 }
