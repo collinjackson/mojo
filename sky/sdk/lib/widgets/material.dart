@@ -48,10 +48,10 @@ class Material extends AnimatedComponent {
     watch(this.level);
   }
 
-  final Widget child;
-  final MaterialType type;
+  Widget child;
+  MaterialType type;
   AnimatedValue level;
-  final Color color;
+  Color color;
 
   void syncFields(Material source) {
     child = source.child;
