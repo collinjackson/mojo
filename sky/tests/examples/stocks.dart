@@ -27,7 +27,9 @@ main() async {
   await testRenderView.checkFrame();
   await app.isMounted;
   await testRenderView.checkFrame();
-  app.optimismSetting = StockMode.pessimistic;
+  app.setState(() { 
+    optimismSetting = StockMode.pessimistic;
+  });
   await testRenderView.checkFrame();
   testRenderView.endTest();
 }
