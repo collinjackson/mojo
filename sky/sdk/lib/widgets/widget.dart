@@ -490,7 +490,7 @@ abstract class StatefulComponent extends Component {
   // classes should override this method to update `this` to
   // account for the new values the parent passed to `source`.
   // Make sure to call super.syncFields(source) unless you are
-  // inheriting from StatefulComponent directly.
+  // extending StatefulComponent directly.
   void syncFields(Component source);
 
   void setState(Function fn()) {
