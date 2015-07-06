@@ -23,10 +23,9 @@ abstract class ScrollClient {
   bool ancestorScrolled(Scrollable ancestor);
 }
 
-abstract class Scrollable extends Component {
+abstract class Scrollable extends StatefulComponent {
 
-  Scrollable({ String key, Color this.backgroundColor })
-    : super(key: key, stateful: true);
+  Scrollable({ String key, Color this.backgroundColor }) : super(key: key);
 
   Color backgroundColor;
 
