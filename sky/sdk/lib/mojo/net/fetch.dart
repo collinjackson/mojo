@@ -14,11 +14,14 @@ import 'package:mojom/mojo/url_response.mojom.dart';
 import '../shell.dart' as shell;
 
 class Response {
-  ByteData body;
+  Response(this.body, this.statusCode);
 
-  Response(this.body);
+  final ByteData body;
+  final int statusCode;
 
   String bodyAsString() {
+    if (body == null || statusCode != 200)
+      return null;
     return new String.fromCharCodes(new Uint8List.view(body.buffer));
   }
 }
@@ -39,6 +42,7 @@ Future<UrlResponse> fetch(UrlRequest request) async {
 
 Future<UrlResponse> fetchUrl(String relativeUrl) async {
   String url = Uri.base.resolve(relativeUrl).toString();
+  print ("COLLIN ${url}");
   UrlRequest request = new UrlRequest()
     ..url = url
     ..autoFollowRedirects = true;
@@ -50,5 +54,5 @@ Future<Response> fetchBody(String relativeUrl) async {
   if (response.body == null) return new Response(null);
 
   ByteData data = await core.DataPipeDrainer.drainHandle(response.body);
-  return new Response(data);
+  return new Response(data, response.statusCode);
 }
