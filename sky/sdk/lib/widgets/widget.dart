@@ -479,7 +479,6 @@ abstract class StatefulComponent extends Component {
     assert(key == old.key);
 
     // Make |this|, the newly-created object, into the "old" Component, and kill it
-    _stateful = false;
     _built = old._built;
     assert(_built != null);
     _disqualifiedFromEverAppearingAgain = true;
