@@ -59,9 +59,11 @@ class StockDataFetcher {
     _fetchNextChunk();
   }
 
-  void _fetchNextChunk() {
-    fetchBody('../data/stock_data_${_currentChunk++}.json').then((Response response) {
+  void _fetchNextChunk() {http://localhost:9888/sky/tests/data/stock_data_0.json
+    fetchBody('/sky/sdk/example/stocks/data/stock_data_${_currentChunk++}.json').then((Response response) {
+      assert(response.statusCode == 200);
       String json = response.bodyAsString();
+
       JsonDecoder decoder = new JsonDecoder();
 
       callback(new StockData(decoder.convert(json)));
