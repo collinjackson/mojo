@@ -221,6 +221,24 @@ PAINT FOR FRAME #4 ----------------------------------------------
 4 |  |  |  |  |  |  |  |  |  | TestPaintingCanvas() constructor: 800.0 x 600.0
 4 |  |  |  |  |  |  |  |  |  | translate(742.0, 162.0)
 4 |  |  |  |  |  |  |  |  |  | drawRRect(Instance of 'RRect', Paint(color:Color(0x42000000)))
-4 |  |  |  |  |  |  
+4 |  |  |  |  |  |  |  |  |  | drawCircle(Point(7.0, 10.0), 9.0, Paint(color:Color(0xfffafafa), drawLooper:true))
+4 |  |  |  |  |  |  |  |  |  | translate(-742.0, -162.0)
+4 |  |  | paintChild RenderDecoratedBox at Point(0.0, 0.0)
+4 |  |  |  | TestPaintingCanvas() constructor: 800.0 x 600.0
+4 |  |  |  | drawRect(Rect.fromLTRB(0.0, 0.0, 800.0, 81.0), Paint(color:Color(0xff9c27b0), drawLooper:true))
+4 |  |  |  | paintChild RenderFlex at Point(8.0, 0.0)
+4 |  |  |  |  | TestPaintingCanvas() constructor: 800.0 x 600.0
+4 |  |  |  |  | paintChild RenderConstrainedBox at Point(8.0, 25.0)
+4 |  |  |  |  |  | TestPaintingCanvas() constructor: 800.0 x 600.0
+4 |  |  |  |  |  | paintChild RenderPadding at Point(8.0, 33.0)
+4 |  |  |  |  |  |  | TestPaintingCanvas() constructor: 800.0 x 600.0
+4 |  |  |  |  |  |  | paintChild RenderImage at Point(16.0, 41.0)
+4 |  |  |  |  |  |  |  | TestPaintingCanvas() constructor: 800.0 x 600.0
+4 |  |  |  |  |  | paintChild RenderPadding at Point(48.0, 39.0)
+4 |  |  |  |  |  |  | TestPaintingCanvas() constructor: 800.0 x 600.0
+4 |  |  |  |  |  |  | paintChild RenderParagraph at Point(72.0, 39.0)
+4 |  |  |  |  |  |  |  | TestPaintingCanvas() constructor: 800.0 x 600.0
+4 |  |  |  |  |  |  |  | translate(72.0, 39.0)
+4 |  |  |  |  |  |  |  | translate(-72.0, -39.0)
 ------------------------------------------------------------------------
 PAINTED 4 FRAMES
