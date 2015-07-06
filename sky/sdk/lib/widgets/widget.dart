@@ -938,6 +938,8 @@ abstract class App extends StatefulComponent {
     SkyBinding.instance.removeEventListener(_handleEvent);
   }
 
+  void syncFields() { }
+
   // Override this to handle back button behavior in your app
   void onBack() { }
 }
@@ -978,6 +980,7 @@ class AppContainer extends AbstractWidgetRoot {
 }
 
 void runApp(App app, { RenderView renderViewOverride, bool enableProfilingLoop: false }) {
+  assert(SkyBinding.instance == null);
   WidgetSkyBinding.initWidgetSkyBinding(renderViewOverride: renderViewOverride);
   new AppContainer(app);
   if (enableProfilingLoop) {
