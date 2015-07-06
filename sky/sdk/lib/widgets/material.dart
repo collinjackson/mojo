@@ -41,7 +41,7 @@ class Material extends AnimatedComponent {
     String key,
     this.child,
     this.type: MaterialType.card,
-    this.level: 0,
+    int level: 0,
     this.color
   }) : super(key: key) {
     this.level = new AnimatedValue(level == null ? 0.0 : level.toDouble());
