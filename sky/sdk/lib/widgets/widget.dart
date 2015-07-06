@@ -979,7 +979,6 @@ class AppContainer extends AbstractWidgetRoot {
 }
 
 void runApp(App app, { RenderView renderViewOverride, bool enableProfilingLoop: false }) {
-  assert(SkyBinding.instance == null);
   WidgetSkyBinding.initWidgetSkyBinding(renderViewOverride: renderViewOverride);
   new AppContainer(app);
   if (enableProfilingLoop) {
