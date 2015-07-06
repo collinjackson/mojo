@@ -70,8 +70,8 @@ class StocksApp extends App {
     if (optimismSetting == StockMode.optimistic) {
       theme = new ThemeData(
         brightness: ThemeBrightness.light,
-        primarySwatch: colors.DeepPurple,
-        accentColor: colors.AmberAccent[200]
+        primarySwatch: colors.Purple,
+        accentColor: colors.Green[500]
       );
     } else {
       theme = new ThemeData(
