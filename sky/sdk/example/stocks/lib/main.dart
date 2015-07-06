@@ -17,9 +17,8 @@ import 'stock_types.dart';
 
 class StocksApp extends App {
 
-  NavigationState _navigationState;
   StocksApp() {
-    _navigationState = new NavigationState([
+    navigationState = new NavigationState([
       new Route(
         name: '/', 
         builder: (navigator, route) => new StockHome(navigator, _stocks, optimismSetting, modeUpdater)
@@ -31,9 +30,11 @@ class StocksApp extends App {
     ]);
   }
 
+  NavigationState navigationState;
+
   void onBack() {
     setState(() {
-      _navigationState.pop();
+      navigationState.pop();
     });
     // TODO(jackson): Need a way to invoke default back behavior here
   }
@@ -84,7 +85,7 @@ class StocksApp extends App {
       data: theme,
         child: new DefaultTextStyle(
           style: typography.error, // if you see this, you've forgotten to correctly configure the text style!
-          child: new Navigator(_navigationState)
+          child: new Navigator(navigationState)
         )
      );
    }

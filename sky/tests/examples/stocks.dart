@@ -27,5 +27,9 @@ main() async {
   await testRenderView.checkFrame();
   await app.isMounted;
   await testRenderView.checkFrame();
+  app.setState(() {
+    app.navigationState.pushNamed("/settings");
+  });
+  await testRenderView.checkFrame();
   testRenderView.endTest();
 }
