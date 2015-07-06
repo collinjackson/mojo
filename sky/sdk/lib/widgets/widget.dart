@@ -938,7 +938,7 @@ abstract class App extends StatefulComponent {
     SkyBinding.instance.removeEventListener(_handleEvent);
   }
 
-  void syncFields() { }
+  void syncFields(Component source) { }
 
   // Override this to handle back button behavior in your app
   void onBack() { }
