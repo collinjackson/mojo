@@ -957,7 +957,7 @@ abstract class App extends Component {
   // Call super.onBack() to finish the activity
   void onBack() {
     ActivityManagerProxy activityManager = new ActivityManagerProxy.unbound();
-    shell.requestService(null, activityManager);
+    shell.requestService('mojo:sky_viewer', activityManager);
     activityManager.ptr.finishCurrentActivity();
   }
 }
