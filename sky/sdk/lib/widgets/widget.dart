@@ -7,6 +7,9 @@ import 'dart:collection';
 import 'dart:mirrors';
 import 'dart:sky' as sky;
 
+import 'package:mojom/intents/intents.mojom.dart';
+import 'package:sky/mojo/shell.dart' as shell;
+
 import '../base/hit_test.dart';
 import '../rendering/box.dart';
 import '../rendering/object.dart';
@@ -951,7 +954,12 @@ abstract class App extends Component {
   }
 
   // Override this to handle back button behavior in your app
-  void onBack() { }
+  // Call super.onBack() to finish the activity
+  void onBack() {
+    ActivityManagerProxy activityManager = new ActivityManagerProxy.unbound();
+    shell.requestService(null, activityManager);
+    activityManager.ptr.finishCurrentActivity();
+  }
 }
 
 abstract class AbstractWidgetRoot extends Component {
