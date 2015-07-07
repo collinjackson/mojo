@@ -19,6 +19,15 @@ class StockRow extends Component {
 
   static const double kHeight = 79.0;
 
+  Color get dividerColor {
+    switch(Theme.of(this).brightness) {
+      case ThemeBrightness.light:
+        return const Color.fromARGB(31, 0, 0, 0);
+      case ThemeBrightness.dark:
+        return const Color.fromARGB(31, 255, 255, 255);
+    }
+  }
+
   Widget build() {
     String lastSale = "\$${stock.lastSale.toStringAsFixed(2)}";
 
@@ -53,9 +62,9 @@ class StockRow extends Component {
       child: new Container(
         padding: const EdgeDims(16.0, 16.0, 20.0, 16.0),
         height: kHeight,
-        decoration: const BoxDecoration(
-          border: const Border(
-            bottom: const BorderSide(color: const Color(0xFFF4F4F4))
+        decoration: new BoxDecoration(
+          border: new Border(
+            bottom: new BorderSide(color: dividerColor)
           )
         ),
         child: new Flex(children)
