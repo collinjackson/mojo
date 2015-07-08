@@ -116,7 +116,7 @@ class HomeFragment extends StatefulComponent {
   Widget buildToolBar() {
     return new ToolBar(
       left: new IconButton(
-        icon: 'navigation/menu_white',
+        icon: "navigation/menu_${Theme.of(this).toolbarIconSuffix}",
         onPressed: _handleOpenDrawer),
       center: new Text(fitnessModeTitle)
     );

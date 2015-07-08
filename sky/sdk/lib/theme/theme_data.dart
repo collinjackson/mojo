@@ -23,6 +23,7 @@ class ThemeData {
       canvasColor = brightness == ThemeBrightness.dark ? colors.Grey[850] : colors.Grey[50],
       cardColor = brightness == ThemeBrightness.dark ? colors.Grey[800] : colors.White,
       dividerColor = brightness == ThemeBrightness.dark ? const Color(0x1FFFFFFF) : const Color(0x1F000000),
+      iconSuffix = brightness == ThemeBrightness.dark ? "white" : "black",
       text = brightness == ThemeBrightness.dark ? typography.white : typography.black {
     assert(brightness != null);
 
@@ -44,11 +45,10 @@ class ThemeData {
       _floatingActionButtonColor = floatingActionButtonColor;
     }
 
+    bool darkToolbar = colors.DarkColors.contains(primarySwatch) || _primaryColor == colors.Grey[900];
+    _toolbarIconSuffix = darkToolbar ? "white" : "black";
     if (toolbarText == null) {
-      if (colors.DarkColors.contains(primarySwatch) || _primaryColor == colors.Grey[900])
-        _toolbarText = typography.white;
-      else
-        _toolbarText = typography.black;
+      _toolbarText = darkToolbar ? typography.white : typography.black;
     } else {
       _toolbarText = toolbarText;
     }
@@ -63,6 +63,7 @@ class ThemeData {
   final Color canvasColor;
   final Color cardColor;
   final Color dividerColor;
+  final String iconSuffix;
   final typography.TextTheme text;
 
   Color _primaryColor;
@@ -76,4 +77,7 @@ class ThemeData {
 
   typography.TextTheme _toolbarText;
   typography.TextTheme get toolbarText => _toolbarText;
+
+  String _toolbarIconSuffix;
+  String get toolbarIconSuffix => _toolbarIconSuffix;
 }

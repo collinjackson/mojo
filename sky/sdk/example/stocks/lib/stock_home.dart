@@ -55,12 +55,21 @@ class StockHome extends StatefulComponent {
   bool _isShowingSnackBar = false;
 
   void _handleSearchBegin() {
+    navigator.pushState("/search", (_) {
+      setState(() {
+        _isSearching = false;
+        _searchQuery = null;
+      });
+    });
     setState(() {
       _isSearching = true;
     });
   }
 
   void _handleSearchEnd() {
+    assert(navigator.currentRoute.name == '/search');
+    navigator.pop();
+    assert(navigator.currentRoute.name == '/');
     setState(() {
       _isSearching = false;
       _searchQuery = null;
@@ -174,17 +183,18 @@ class StockHome extends StatefulComponent {
   }
 
   Widget buildToolBar() {
+    String suffix = Theme.of(this).toolbarIconSuffix;
     return new ToolBar(
         left: new IconButton(
-          icon: 'navigation/menu_white',
+          icon: "navigation/menu_${suffix}",
           onPressed: _handleOpenDrawer),
         center: new Text('Stocks'),
         right: [
           new IconButton(
-            icon: 'action/search_white',
+            icon: "action/search_${suffix}",
             onPressed: _handleSearchBegin),
           new IconButton(
-            icon: 'navigation/more_vert_white',
+            icon: "navigation/more_vert_${suffix}",
             onPressed: _handleMenuShow)
         ]
       );
@@ -236,7 +246,7 @@ class StockHome extends StatefulComponent {
   Widget buildSearchBar() {
     return new ToolBar(
       left: new IconButton(
-        icon: 'navigation/arrow_back_grey600',
+        icon: "navigation/arrow_back_${Theme.of(this).iconSuffix}",
         onPressed: _handleSearchEnd),
       center: new Input(
         focused: true,
