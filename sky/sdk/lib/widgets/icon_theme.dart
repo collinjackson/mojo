@@ -4,9 +4,13 @@
 
 import 'basic.dart';
 import 'widget.dart';
-import '../theme/icon_theme_data.dart';
 
-export '../theme/icon_theme_data.dart' show IconThemeData, IconThemeColor;
+enum IconThemeColor { white, black }
+
+class IconThemeData {
+  const IconThemeData({ this.color });
+  final IconThemeColor color;
+}
 
 class IconTheme extends Inherited {
 
@@ -23,7 +27,7 @@ class IconTheme extends Inherited {
 
   static IconThemeData of(Component component) {
     IconTheme result = component.inheritedOfType(IconTheme);
-    return result == null ? const IconThemeData.fallback() : result.data;
+    return result == null ? null : result.data;
   }
 
   bool syncShouldNotify(IconTheme old) => data != old.data;

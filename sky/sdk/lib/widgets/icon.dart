@@ -5,6 +5,7 @@
 import '../mojo/asset_bundle.dart';
 import 'basic.dart';
 import 'icon_theme.dart';
+import 'theme.dart';
 
 AssetBundle _initIconBundle() {
   if (rootBundle != null)
@@ -23,7 +24,16 @@ class Icon extends Component {
   final IconThemeColor color;
 
   String get colorSuffix {
-    switch(color == null ? IconTheme.of(this).color : color) {
+    IconThemeColor iconThemeColor = color;
+    if (iconThemeColor == null) {
+      IconThemeData iconThemeData = IconTheme.of(this);
+      iconThemeColor = iconThemeData == null ? null : iconThemeData.color;
+    }
+    if (iconThemeColor == null) {
+      ThemeBrightness themeBrightness = Theme.of(this).brightness;
+      iconThemeColor = themeBrightness == ThemeBrightness.dark ? IconThemeColor.white : IconThemeColor.black;
+    }
+    switch(iconThemeColor) {
       case IconThemeColor.white:
         return "white";
       case IconThemeColor.black:
