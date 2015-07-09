@@ -4,6 +4,7 @@
 
 import '../mojo/asset_bundle.dart';
 import 'basic.dart';
+import 'icon_theme.dart';
 
 AssetBundle _initIconBundle() {
   if (rootBundle != null)
@@ -15,10 +16,20 @@ AssetBundle _initIconBundle() {
 final AssetBundle _iconBundle = _initIconBundle();
 
 class Icon extends Component {
-  Icon({ String key, this.size, this.type: '' }) : super(key: key);
+  Icon({ String key, this.size, this.type: '', this.color }) : super(key: key);
 
   final int size;
   final String type;
+  final IconThemeColor color;
+
+  String get colorSuffix {
+    switch(color == null ? IconTheme.of(this).color : color) {
+      case IconThemeColor.white:
+        return "white";
+      case IconThemeColor.black:
+        return "black";
+    }
+  }
 
   Widget build() {
     String category = '';
@@ -33,7 +44,7 @@ class Icon extends Component {
     String density = 'drawable-xxhdpi';
     return new AssetImage(
       bundle: _iconBundle,
-      name: '${category}/${density}/ic_${subtype}_${size}dp.png',
+      name: '${category}/${density}/ic_${subtype}_${colorSuffix}_${size}dp.png',
       size: new Size(size.toDouble(), size.toDouble())
     );
   }

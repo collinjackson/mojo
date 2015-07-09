@@ -12,8 +12,11 @@ import 'package:sky/rendering/box.dart';
 import 'package:sky/rendering/object.dart';
 import 'package:vector_math/vector_math.dart';
 import 'package:sky/theme/colors.dart' as colors;
+import 'package:sky/theme/typography.dart' as typography;
 import 'package:sky/widgets/basic.dart';
+import 'package:sky/widgets/default_text_style.dart';
 import 'package:sky/widgets/icon.dart';
+import 'package:sky/widgets/icon_theme.dart';
 import 'package:sky/widgets/ink_well.dart';
 import 'package:sky/widgets/scrollable.dart';
 import 'package:sky/widgets/theme.dart';
@@ -301,7 +304,7 @@ class Tab extends Component {
 
   Widget _buildLabelText() {
     assert(label.text != null);
-    TextStyle textStyle = Theme.of(this).toolbarText.button.merge(_kTabTextStyle);
+    TextStyle textStyle = DefaultTextStyle.of(this).merge(_kTabTextStyle);
     return new Text(label.text, style: textStyle);
   }
 
@@ -434,25 +437,45 @@ class TabBar extends Scrollable {
         textAndIcons = true;
     }
 
-    Color backgroundColor = Theme.of(this).primaryColor;
-    Color indicatorColor = Theme.of(this).accentColor;
+    ThemeData theme_data = Theme.of(this);
+    Color backgroundColor = theme_data.primaryColor;
+    Color indicatorColor = theme_data.accentColor;
     if (indicatorColor == backgroundColor) {
       indicatorColor = colors.White;
     }
-
-    TabBarWrapper tabBarWrapper = new TabBarWrapper(
-      children: tabs, 
-      selectedIndex: selectedIndex,
-      backgroundColor: backgroundColor,
-      indicatorColor: indicatorColor,
-      textAndIcons: textAndIcons,
-      scrollable: scrollable,
-      onLayoutChanged: scrollable ? _layoutChanged : null
-    );
+    TextStyle textStyle;
+    IconThemeColor iconThemeColor;
+    switch (theme_data.primaryColorBrightness) {
+      case ThemeBrightness.light:
+        textStyle = typography.black.button;
+        iconThemeColor = IconThemeColor.black;
+        break;
+      case ThemeBrightness.dark:
+        textStyle = typography.white.button;
+        iconThemeColor = IconThemeColor.white;
+        break;
+    }
 
     Matrix4 transform = new Matrix4.identity();
     transform.translate(-scrollOffset, 0.0);
-    return new Transform(child: tabBarWrapper, transform: transform);
+    return new Transform(
+      transform: transform,
+      child: new IconTheme(
+        data: new IconThemeData(color: iconThemeColor),
+        child: new DefaultTextStyle(
+          style: textStyle,
+          child: new TabBarWrapper(
+            children: tabs, 
+            selectedIndex: selectedIndex,
+            backgroundColor: backgroundColor,
+            indicatorColor: indicatorColor,
+            textAndIcons: textAndIcons,
+            scrollable: scrollable,
+            onLayoutChanged: scrollable ? _layoutChanged : null
+          )
+        )
+      )
+    );
   }
 }
 

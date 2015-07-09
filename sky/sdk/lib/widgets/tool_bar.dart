@@ -5,10 +5,13 @@
 import 'package:sky/widgets/theme.dart';
 
 import '../rendering/flex.dart';
+import '../theme/colors.dart' as colors;
 import '../theme/shadows.dart';
+import '../theme/typography.dart' as typography;
 import '../theme/view_configuration.dart';
 import 'basic.dart';
 import 'default_text_style.dart';
+import 'icon_theme.dart';
 
 class ToolBar extends Component {
 
@@ -26,6 +29,14 @@ class ToolBar extends Component {
   final Color backgroundColor;
 
   Widget build() {
+    Color toolbarColor = backgroundColor;
+    IconThemeColor iconThemeColor = IconThemeColor.white;
+    if (toolbarColor == null) {
+      ThemeData theme_data = Theme.of(this);
+      toolbarColor = theme_data.primaryColor;
+      iconThemeColor = theme_data.primaryColorBrightness == ThemeBrightness.dark ? IconThemeColor.white : IconThemeColor.black;
+    }
+
     List<Widget> children = new List<Widget>();
     if (left != null)
       children.add(left);
@@ -35,7 +46,7 @@ class ToolBar extends Component {
         new Flexible(
           child: new Padding(
             child: new DefaultTextStyle(
-              style: Theme.of(this).toolbarText.title,
+              style: typography.white.title,
               child: center
             ),
             padding: new EdgeDims.only(left: 24.0)
@@ -48,13 +59,16 @@ class ToolBar extends Component {
       children.addAll(right);
 
     return new Container(
-      child: new Flex(
-        [new Container(child: new Flex(children), height: kToolBarHeight)],
-        alignItems: FlexAlignItems.flexEnd
+      child: new IconTheme(
+        data: new IconThemeData(color: iconThemeColor),
+        child: new Flex(
+          [new Container(child: new Flex(children), height: kToolBarHeight)],
+          alignItems: FlexAlignItems.flexEnd
+        )
       ),
       padding: new EdgeDims.symmetric(horizontal: 8.0),
       decoration: new BoxDecoration(
-        backgroundColor: backgroundColor == null ? Theme.of(this).primaryColor : backgroundColor,
+        backgroundColor: toolbarColor,
         boxShadow: shadows[2]
       )
     );

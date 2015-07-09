@@ -3,6 +3,7 @@
 // found in the LICENSE file.
 
 import 'package:sky/editing/input.dart';
+import 'package:sky/theme/colors.dart' as colors;
 import 'package:sky/widgets/basic.dart';
 import 'package:sky/widgets/drawer.dart';
 import 'package:sky/widgets/drawer_header.dart';
@@ -183,18 +184,17 @@ class StockHome extends StatefulComponent {
   }
 
   Widget buildToolBar() {
-    String suffix = Theme.of(this).toolbarIconSuffix;
     return new ToolBar(
         left: new IconButton(
-          icon: "navigation/menu_${suffix}",
+          icon: "navigation/menu",
           onPressed: _handleOpenDrawer),
         center: new Text('Stocks'),
         right: [
           new IconButton(
-            icon: "action/search_${suffix}",
+            icon: "action/search",
             onPressed: _handleSearchBegin),
           new IconButton(
-            icon: "navigation/more_vert_${suffix}",
+            icon: "navigation/more_vert",
             onPressed: _handleMenuShow)
         ]
       );
@@ -246,7 +246,7 @@ class StockHome extends StatefulComponent {
   Widget buildSearchBar() {
     return new ToolBar(
       left: new IconButton(
-        icon: "navigation/arrow_back_${Theme.of(this).iconSuffix}",
+        icon: "navigation/arrow_back",
         onPressed: _handleSearchEnd),
       center: new Input(
         focused: true,
@@ -279,7 +279,8 @@ class StockHome extends StatefulComponent {
 
   Widget buildFloatingActionButton() {
     return new FloatingActionButton(
-      child: new Icon(type: 'content/add_white', size: 24),
+      child: new Icon(type: 'content/add', size: 24),
+      backgroundColor: colors.RedAccent[200],
       onPressed: _handleStockPurchased
     );
   }
