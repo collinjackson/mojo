@@ -304,8 +304,7 @@ class Tab extends Component {
 
   Widget _buildLabelText() {
     assert(label.text != null);
-    TextStyle textStyle = DefaultTextStyle.of(this).merge(_kTabTextStyle);
-    return new Text(label.text, style: textStyle);
+    return new Text(label.text, style: _kTabTextStyle);
   }
 
   Widget _buildLabelIcon() {
