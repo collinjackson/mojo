@@ -68,6 +68,7 @@ dart_pkg("sky") {
     "lib/widgets/floating_action_button.dart",
     "lib/widgets/icon.dart",
     "lib/widgets/icon_button.dart",
+    "lib/widgets/icon_theme.dart",
     "lib/widgets/ink_well.dart",
     "lib/widgets/material.dart",
     "lib/widgets/material_button.dart",
