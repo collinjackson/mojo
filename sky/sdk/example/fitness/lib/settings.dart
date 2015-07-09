@@ -36,7 +36,7 @@ class SettingsFragment extends Component {
   Widget buildToolBar() {
     return new ToolBar(
       left: new IconButton(
-        icon: "navigation/arrow_back_${Theme.of(this).toolbarIconSuffix}",
+        icon: "navigation/arrow_back",
         onPressed: navigator.pop),
       center: new Text('Settings')
     );
