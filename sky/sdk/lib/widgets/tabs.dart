@@ -16,7 +16,6 @@ import 'package:sky/theme/typography.dart' as typography;
 import 'package:sky/widgets/basic.dart';
 import 'package:sky/widgets/default_text_style.dart';
 import 'package:sky/widgets/icon.dart';
-import 'package:sky/widgets/icon_theme.dart';
 import 'package:sky/widgets/ink_well.dart';
 import 'package:sky/widgets/scrollable.dart';
 import 'package:sky/widgets/theme.dart';

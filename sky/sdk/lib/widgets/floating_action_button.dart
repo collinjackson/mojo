@@ -4,7 +4,7 @@
 
 import 'basic.dart';
 import 'button_base.dart';
-import 'icon_theme.dart';
+import 'icon.dart';
 import 'ink_well.dart';
 import 'material.dart';
 import 'theme.dart';

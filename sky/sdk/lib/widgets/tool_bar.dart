@@ -12,7 +12,7 @@ import '../theme/typography.dart' as typography;
 import '../theme/view_configuration.dart';
 import 'basic.dart';
 import 'default_text_style.dart';
-import 'icon_theme.dart';
+import 'icon.dart';
 
 class ToolBar extends Component {
 

@@ -4,8 +4,36 @@
 
 import '../mojo/asset_bundle.dart';
 import 'basic.dart';
-import 'icon_theme.dart';
 import 'theme.dart';
+
+enum IconThemeColor { white, black }
+
+class IconThemeData {
+  const IconThemeData({ this.color });
+  final IconThemeColor color;
+}
+
+class IconTheme extends Inherited {
+
+  IconTheme({
+    String key,
+    this.data,
+    Widget child
+  }) : super(key: key, child: child) {
+    assert(data != null);
+    assert(child != null);
+  }
+
+  final IconThemeData data;
+
+  static IconThemeData of(Component component) {
+    IconTheme result = component.inheritedOfType(IconTheme);
+    return result == null ? null : result.data;
+  }
+
+  bool syncShouldNotify(IconTheme old) => data != old.data;
+
+}
 
 AssetBundle _initIconBundle() {
   if (rootBundle != null)
