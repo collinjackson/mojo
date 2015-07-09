@@ -4,6 +4,7 @@
 
 import 'package:sky/widgets/theme.dart';
 
+import '../painting/text_style.dart';
 import '../rendering/flex.dart';
 import '../theme/colors.dart' as colors;
 import '../theme/shadows.dart';
