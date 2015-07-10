@@ -446,17 +446,18 @@ class TabBar extends Scrollable {
     IconThemeColor iconThemeColor;
     switch (themeData.primaryColorBrightness) {
       case ThemeBrightness.light:
-        textStyle = typography.black.button;
+        textStyle = typography.black.body1;
         iconThemeColor = IconThemeColor.black;
         break;
       case ThemeBrightness.dark:
-        textStyle = typography.white.button;
+        textStyle = typography.white.body1;
         iconThemeColor = IconThemeColor.white;
         break;
     }
 
     Matrix4 transform = new Matrix4.identity();
     transform.translate(-scrollOffset, 0.0);
+
     return new Transform(
       transform: transform,
       child: new IconTheme(
