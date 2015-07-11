@@ -169,10 +169,8 @@ class StockHome extends AnimatedComponent {
   }
 
   void _handleShowSettings() {
-    setState(() {
-      _drawerShowing = false;
-      navigator.pushNamed('/settings');
-    });
+    navigator.pop();
+    navigator.pushNamed('/settings');
   }
 
   void _handleOpenDrawer() {
