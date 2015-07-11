@@ -31,13 +31,6 @@ class HomeFragment extends StatefulComponent {
 
   FitnessMode _fitnessMode = FitnessMode.measure;
 
-  void initState {
-    // if (debug)
-    //   new Timer(new Duration(seconds: 1), dumpState);
-    _drawerController = new DrawerController(_handleDrawerStatusChanged);
-    super.initState();
-  }
-
   void syncFields(HomeFragment source) {
     navigator = source.navigator;
     userData = source.userData;
@@ -46,29 +39,17 @@ class HomeFragment extends StatefulComponent {
   bool _isShowingSnackBar = false;
   bool _isRunning = false;
 
-  DrawerController _drawerController;
   bool _drawerShowing = false;
-
-  void _handleDrawerStatusChanged(bool showing) {
-    if (!showing && navigator.currentRoute.name == "/drawer") {
-      navigator.pop();
-    }
-    setState(() {
-      _drawerShowing = showing;
-    });
-  }
 
   void _handleFitnessModeChange(FitnessMode value) {
     setState(() {
       _fitnessMode = value;
     });
-    assert(navigator.currentRoute.name == '/drawer');
-    navigator.pop();
   }
 
   Drawer buildDrawer() {
     return new Drawer(
-      controller: _drawerController,
+      showing: _drawerShowing,
       level: 3,
       onStatusChange: _handleDrawerStatusChange,
       navigator: navigator,

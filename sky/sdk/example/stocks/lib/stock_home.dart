@@ -37,10 +37,7 @@ const Duration _kSnackbarSlideDuration = const Duration(milliseconds: 200);
 
 class StockHome extends AnimatedComponent {
 
-  StockHome(this.navigator, this.stocks, this.stockMode, this.modeUpdater) {
-    // if (debug)
-    //   new Timer(new Duration(seconds: 1), dumpState);
-  }
+  StockHome(this.navigator, this.stocks, this.stockMode, this.modeUpdater);
 
   Navigator navigator;
   List<Stock> stocks;
