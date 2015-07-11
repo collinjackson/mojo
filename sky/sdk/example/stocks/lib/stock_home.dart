@@ -40,7 +40,6 @@ class StockHome extends AnimatedComponent {
   StockHome(this.navigator, this.stocks, this.stockMode, this.modeUpdater) {
     // if (debug)
     //   new Timer(new Duration(seconds: 1), dumpState);
-    _drawerController = new DrawerController(_handleDrawerStatusChanged);
   }
 
   Navigator navigator;
@@ -88,17 +87,7 @@ class StockHome extends AnimatedComponent {
     });
   }
 
-  DrawerController _drawerController;
   bool _drawerShowing = false;
-
-  void _handleDrawerStatusChanged(bool showing) {
-    if (!showing && navigator.currentRoute.name == "/drawer") {
-      navigator.pop();
-    }
-    setState(() {
-      _drawerShowing = showing;
-    });
-  }
 
   PopupMenuController _menuController;
 
@@ -136,8 +125,10 @@ class StockHome extends AnimatedComponent {
 
   Drawer buildDrawer() {
     return new Drawer(
-      controller: _drawerController,
       level: 3,
+      showing: _drawerShowing,
+      onStatusChange: _handleDrawerStatusChange,
+      navigator: navigator,
       children: [
         new DrawerHeader(children: [new Text('Stocks')]),
         new MenuItem(
@@ -174,17 +165,22 @@ class StockHome extends AnimatedComponent {
     );
   }
 
+  void _handleDrawerStatusChange(bool showing) {
+    setState(() {
+      _drawerShowing = showing;
+    });
+  }
+
   void _handleShowSettings() {
-    assert(navigator.currentRoute.name == '/drawer');
-    navigator.pop();
-    assert(navigator.currentRoute.name == '/');
-    navigator.pushNamed('/settings');
+    setState(() {
+      _drawerShowing = false;
+      navigator.pushNamed('/settings');
+    });
   }
 
   void _handleOpenDrawer() {
-    _drawerController.open();
-    navigator.pushState("/drawer", (_) {
-      _drawerController.close();
+    setState(() {
+      _drawerShowing = true;
     });
   }
 
@@ -321,7 +317,7 @@ class StockHome extends AnimatedComponent {
         body: buildTabNavigator(),
         snackBar: buildSnackBar(),
         floatingActionButton: buildFloatingActionButton(),
-        drawer: _drawerShowing ? buildDrawer() : null
+        drawer: buildDrawer()
       ),
     ];
     addMenuToOverlays(overlays);

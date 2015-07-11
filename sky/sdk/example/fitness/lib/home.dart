@@ -70,6 +70,8 @@ class HomeFragment extends StatefulComponent {
     return new Drawer(
       controller: _drawerController,
       level: 3,
+      onStatusChange: _handleDrawerStatusChange,
+      navigator: navigator,
       children: [
         new DrawerHeader(children: [new Text('Fitness')]),
         new MenuItem(
@@ -94,17 +96,22 @@ class HomeFragment extends StatefulComponent {
     );
   }
 
+  void _handleDrawerStatusChange(bool showing) {
+    setState(() {
+      _drawerShowing = showing;
+    });
+  }
+
   void _handleShowSettings() {
-    assert(navigator.currentRoute.name == '/drawer');
-    navigator.pop();
-    assert(navigator.currentRoute.name == '/');
-    navigator.pushNamed('/settings');
+    setState(() {
+      _drawerShowing = false;
+      navigator.pushNamed('/settings');
+    });
   }
 
   void _handleOpenDrawer() {
-    _drawerController.open();
-    navigator.pushState("/drawer", (_) {
-      _drawerController.close();
+    setState(() {
+      _drawerShowing = true;
     });
   }
 
@@ -203,7 +210,7 @@ class HomeFragment extends StatefulComponent {
       body: buildBody(),
       snackBar: buildSnackBar(),
       floatingActionButton: buildFloatingActionButton(),
-      drawer: _drawerShowing ? buildDrawer() : null
+      drawer: buildDrawer()
     );
   }
 }
