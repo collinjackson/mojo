@@ -84,10 +84,8 @@ class HomeFragment extends StatefulComponent {
   }
 
   void _handleShowSettings() {
-    setState(() {
-      _drawerShowing = false;
-      navigator.pushNamed('/settings');
-    });
+    navigator.pop();
+    navigator.pushNamed('/settings');
   }
 
   void _handleOpenDrawer() {
