@@ -10,11 +10,8 @@ import '../theme/shadows.dart';
 import 'animated_component.dart';
 import 'animation_builder.dart';
 import 'basic.dart';
-<<<<<<< HEAD
 import 'scrollable_viewport.dart';
-=======
 import 'navigator.dart';
->>>>>>> redo drawer
 import 'theme.dart';
 
 // TODO(eseidel): Draw width should vary based on device size:
