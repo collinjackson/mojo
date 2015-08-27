@@ -2,10 +2,11 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-group("dart") {
-  deps = [
-    "mojo",
-    "mojo_apptest",
-    "mojom",
+import("../rules.gni")
+
+dart_pkg("mojo_apptest") {
+  libs = [ "lib/apptest.dart" ]
+  sources = [
+    "pubspec.yaml",
   ]
 }
