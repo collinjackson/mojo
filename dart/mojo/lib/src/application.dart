@@ -35,8 +35,9 @@ class _ApplicationImpl implements application_mojom.Application {
 
   @override
   void acceptConnection(String requestorUrl, ServiceProviderStub services,
-      bindings.ProxyBase exposedServices, String resolvedUrl) => _application
-      ._acceptConnection(requestorUrl, services, exposedServices, resolvedUrl);
+          bindings.ProxyBase exposedServices, String resolvedUrl) =>
+      _application._acceptConnection(
+          requestorUrl, services, exposedServices, resolvedUrl);
 
   @override
   void requestQuit() => _application._requestQuitAndClose();
@@ -106,17 +107,21 @@ abstract class Application {
     });
   }
 
-  Future close({bool immediate: false}) {
+  Future close({bool immediate: false}) async {
     assert(_applicationImpl != null);
-    _applicationConnections.forEach((c) => c.close(immediate: immediate));
+    for (var ac in _applicationConnections) {
+      await ac.close(immediate: immediate);
+    }
     _applicationConnections.clear();
     return _applicationImpl.close(immediate: immediate);
   }
 
   // This method closes all the application connections. Used during apptesting.
-  void resetConnections() {
+  Future resetConnections() async {
     assert(_applicationImpl != null);
-    _applicationConnections.forEach((c) => c.close());
+    for (var ac in _applicationConnections) {
+      await ac.close();
+    }
     _applicationConnections.clear();
   }
 

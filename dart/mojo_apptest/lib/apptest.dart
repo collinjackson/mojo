@@ -45,12 +45,11 @@ class _ConnectionToShellApplication extends Application {
     });
   }
 
-  void testSetUp() {
-  }
+  void testSetUp() {}
 
-  void testTearDown() {
+  Future testTearDown() async {
     // Reset any connections between tests.
-    resetConnections();
+    await resetConnections();
   }
 }
 
@@ -63,5 +62,6 @@ runAppTests(var incomingHandle, List<AppTestFunction> testFunctions) {
   var appHandle = new MojoHandle(incomingHandle);
   var application =
       new _ConnectionToShellApplication.fromHandle(appHandle, testFunctions);
+
   /// [Application]'s [initialize] will be called.
 }

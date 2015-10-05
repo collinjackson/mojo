@@ -14,6 +14,7 @@ abstract class Proxy extends core.MojoEventStreamListener {
   Map<int, Completer> _completerMap;
   int _nextId = 0;
   int _version = 0;
+
   /// Version of this interface that the remote side supports. Updated when a
   /// call to [queryVersion] or [requireVersion] is made.
   int get version => _version;
@@ -69,14 +70,19 @@ abstract class Proxy extends core.MojoEventStreamListener {
     }
     var header = new MessageHeader(name);
     var serviceMessage = message.serializeWithHeader(header);
-    endpoint.write(serviceMessage.buffer,
-        serviceMessage.buffer.lengthInBytes, serviceMessage.handles);
+    endpoint.write(serviceMessage.buffer, serviceMessage.buffer.lengthInBytes,
+        serviceMessage.handles);
     if (!endpoint.status.isOk) {
       throw "message pipe write failed - ${endpoint.status}";
     }
   }
 
   Future sendMessageWithRequestId(Struct message, int name, int id, int flags) {
+    var completer = new Completer();
+    if (!isBound) {
+      completer.completeError(new ProxyCloseException('Proxy closed'));
+      return completer.future;
+    }
     if (!isOpen) {
       listen();
     }
@@ -86,14 +92,14 @@ abstract class Proxy extends core.MojoEventStreamListener {
 
     var header = new MessageHeader.withRequestId(name, flags, id);
     var serviceMessage = message.serializeWithHeader(header);
-    endpoint.write(serviceMessage.buffer,
-        serviceMessage.buffer.lengthInBytes, serviceMessage.handles);
-    if (!endpoint.status.isOk) {
-      throw "message pipe write failed - ${endpoint.status}";
-    }
+    endpoint.write(serviceMessage.buffer, serviceMessage.buffer.lengthInBytes,
+        serviceMessage.handles);
 
-    var completer = new Completer();
-    _completerMap[id] = completer;
+    if (endpoint.status.isOk) {
+      _completerMap[id] = completer;
+    } else {
+      completer.completeError(new ProxyCloseException('Proxy closed'));
+    }
     return completer.future;
   }
 
@@ -112,11 +118,8 @@ abstract class Proxy extends core.MojoEventStreamListener {
     params.reserved0 = 16;
     params.reserved1 = 0;
     params.queryVersion = new icm.QueryVersion();
-    var response = await
-        sendMessageWithRequestId(params,
-                                 icm.kRunMessageId,
-                                 -1,
-                                 MessageHeader.kMessageExpectsResponse);
+    var response = await sendMessageWithRequestId(
+        params, icm.kRunMessageId, -1, MessageHeader.kMessageExpectsResponse);
     _version = response.queryVersionResult.version;
     return _version;
   }
