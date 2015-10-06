@@ -9,5 +9,6 @@ mojom("bindings") {
     "interface_control_messages.mojom",
     "mojom_files.mojom",
     "mojom_types.mojom",
+    "service_describer.mojom",
   ]
 }

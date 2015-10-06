@@ -285,14 +285,7 @@ struct MojomInterface {
   string interface_name;
 
   // All the methods in the interface. The keys are the method ordinals.
-  // Note that in some uses of this structure, the |methods| field will
-  // not be populated and one must use |interface_name| in order to
-  // obtain an |InterfaceDescriber| to query for the methods of the
-  // interface. |InterfaceDescriber| is defined in "inerface_describer.mojom"
-  // which is not included by this file. The procedure for obtaining
-  // an |InterfaceDescriber| given an |interface_name| is outside the scope
-  // of these comments.
-  map<uint32, MojomMethod>? methods;
+  map<uint32, MojomMethod> methods;
 };
 
 ////////////////////////////////////////////////////////////////////////////
