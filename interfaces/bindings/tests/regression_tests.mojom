@@ -62,3 +62,19 @@ enum EnumWithINTERNALAllCaps {
 interface CheckEnumCaps {
   SetEnumWithINTERNALAllCaps(EnumWithINTERNALAllCaps e);
 };
+
+struct StructWithHandleCalledHandles {
+  handle handles;
+};
+
+struct StructWithArrayOfHandlesCalledHandles {
+  array<handle> handles;
+};
+
+interface TestInterface {
+  SomeMessage();
+};
+
+struct StructWithInterfaceCalledHandles {
+  TestInterface handles;
+};
