@@ -9,66 +9,74 @@ class MojoCoreNatives {
 }
 
 class MojoHandleNatives {
-  static int register(
-      Object eventStream, int handle) native "MojoHandle_Register";
+  static int register(Object eventStream, int handle)
+      native "MojoHandle_Register";
   static int close(int handle) native "MojoHandle_Close";
-  static List wait(
-      int handle, int signals, int deadline) native "MojoHandle_Wait";
-  static List waitMany(List<int> handles, List<int> signals,
-      int deadline) native "MojoHandle_WaitMany";
+  static List wait(int handle, int signals, int deadline)
+      native "MojoHandle_Wait";
+  static List waitMany(List<int> handles, List<int> signals, int deadline)
+      native "MojoHandle_WaitMany";
 }
 
 class MojoHandleWatcherNatives {
-  static int sendControlData(int controlHandle, int mojoHandle, SendPort port,
-      int data) native "MojoHandleWatcher_SendControlData";
-  static List recvControlData(
-      int controlHandle) native "MojoHandleWatcher_RecvControlData";
-  static int setControlHandle(
-      int controlHandle) native "MojoHandleWatcher_SetControlHandle";
+  static int sendControlData(
+      int controlHandle, int mojoHandle, SendPort port, int data)
+      native "MojoHandleWatcher_SendControlData";
+  static List recvControlData(int controlHandle)
+      native "MojoHandleWatcher_RecvControlData";
+  static int setControlHandle(int controlHandle)
+      native "MojoHandleWatcher_SetControlHandle";
   static int getControlHandle() native "MojoHandleWatcher_GetControlHandle";
+  static List growStateArrays(int newLength)
+      native "MojoHandleWatcher_GrowStateArrays";
+  static int waitMany(int length, int deadline)
+      native "MojoHandleWatcher_WaitMany";
 }
 
 class MojoMessagePipeNatives {
   static List MojoCreateMessagePipe(int flags) native "MojoMessagePipe_Create";
 
-  static int MojoWriteMessage(int handle, ByteData data, int numBytes,
-      List<int> handles, int flags) native "MojoMessagePipe_Write";
+  static int MojoWriteMessage(
+      int handle, ByteData data, int numBytes, List<int> handles, int flags)
+      native "MojoMessagePipe_Write";
 
-  static List MojoReadMessage(int handle, ByteData data, int numBytes,
-      List<int> handles, int flags) native "MojoMessagePipe_Read";
+  static List MojoReadMessage(
+      int handle, ByteData data, int numBytes, List<int> handles, int flags)
+      native "MojoMessagePipe_Read";
 }
 
 class MojoDataPipeNatives {
-  static List MojoCreateDataPipe(int elementBytes, int capacityBytes,
-      int flags) native "MojoDataPipe_Create";
+  static List MojoCreateDataPipe(int elementBytes, int capacityBytes, int flags)
+      native "MojoDataPipe_Create";
 
-  static List MojoWriteData(int handle, ByteData data, int numBytes,
-      int flags) native "MojoDataPipe_WriteData";
+  static List MojoWriteData(int handle, ByteData data, int numBytes, int flags)
+      native "MojoDataPipe_WriteData";
 
-  static List MojoBeginWriteData(int handle, int bufferBytes,
-      int flags) native "MojoDataPipe_BeginWriteData";
+  static List MojoBeginWriteData(int handle, int bufferBytes, int flags)
+      native "MojoDataPipe_BeginWriteData";
 
-  static int MojoEndWriteData(
-      int handle, int bytesWritten) native "MojoDataPipe_EndWriteData";
+  static int MojoEndWriteData(int handle, int bytesWritten)
+      native "MojoDataPipe_EndWriteData";
 
-  static List MojoReadData(int handle, ByteData data, int numBytes,
-      int flags) native "MojoDataPipe_ReadData";
+  static List MojoReadData(int handle, ByteData data, int numBytes, int flags)
+      native "MojoDataPipe_ReadData";
 
-  static List MojoBeginReadData(int handle, int bufferBytes,
-      int flags) native "MojoDataPipe_BeginReadData";
+  static List MojoBeginReadData(int handle, int bufferBytes, int flags)
+      native "MojoDataPipe_BeginReadData";
 
-  static int MojoEndReadData(
-      int handle, int bytesRead) native "MojoDataPipe_EndReadData";
+  static int MojoEndReadData(int handle, int bytesRead)
+      native "MojoDataPipe_EndReadData";
 }
 
 class MojoSharedBufferNatives {
   static List Create(int numBytes, int flags) native "MojoSharedBuffer_Create";
 
-  static List Duplicate(
-      int bufferHandle, int flags) native "MojoSharedBuffer_Duplicate";
+  static List Duplicate(int bufferHandle, int flags)
+      native "MojoSharedBuffer_Duplicate";
 
-  static List Map(Object buffer, int bufferHandle, int offset, int numBytes,
-      int flags) native "MojoSharedBuffer_Map";
+  static List Map(
+      Object buffer, int bufferHandle, int offset, int numBytes, int flags)
+      native "MojoSharedBuffer_Map";
 
   static int Unmap(ByteData buffer) native "MojoSharedBuffer_Unmap";
 }

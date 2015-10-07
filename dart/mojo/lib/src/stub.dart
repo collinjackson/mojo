@@ -23,7 +23,7 @@ abstract class Stub extends core.MojoEventStreamListener {
     var result = endpoint.query();
     assert(result.status.isOk || result.status.isResourceExhausted);
     if (result.bytesRead == 0) {
-      throw new MojoCodecError('Unexpected empty message.');
+      throw new MojoCodecError('Unexpected empty message: $this');
     }
 
     // Read the data and view as a message.

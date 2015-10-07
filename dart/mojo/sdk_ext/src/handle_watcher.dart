@@ -30,6 +30,7 @@ class MojoHandleWatcher {
   static const int kDeadlineIndefinite = -1;
 
   static const int kMojoResultOk = 0;
+  static const int kMojoResultInvalidArgument = 3;
   static const int kMojoResultDeadlineExceeded = 4;
   static const int kMojoResultFailedPrecondition = 9;
 
@@ -45,6 +46,7 @@ class MojoHandleWatcher {
     assert(kMojoSignalsAll < 1 << 3);
     return cmd >> 3;
   }
+
   static int _decodeSignals(int cmd) {
     return cmd & kMojoSignalsAll;
   }
@@ -55,64 +57,64 @@ class MojoHandleWatcher {
   // Whether the handle watcher should shut down.
   bool _shutdown;
 
-  // The list of handles being watched.
-  List<int> _handles;
-  int _handleCount;
-
-  // A port for each handle on which to send events back to the isolate that
-  // owns the handle.
-  List<SendPort> _ports;
-
-  // The signals that we care about for each handle.
-  List<int> _signals;
-
-  // A mapping from Mojo handles to their indices in _handles.
-  Map<int, int> _handleIndices;
+  // External TypedData arrays for the call to MojoWaitMany.
+  WaitManyState _waitManyState;
 
   // Priority queue of timers registered with the watcher.
   TimerQueue _timerQueue;
 
   MojoHandleWatcher(this._controlHandle)
       : _shutdown = false,
-        _handles = new List<int>(),
-        _ports = new List<SendPort>(),
-        _signals = new List<int>(),
-        _handleIndices = new Map<int, int>(),
-        _handleCount = 1,
+        _waitManyState = new WaitManyState(),
         _timerQueue = new TimerQueue() {
     // Setup control handle.
-    _handles.add(_controlHandle);
-    _ports.add(null); // There is no port for the control handle.
-    _signals.add(kMojoSignalsReadable);
-    _handleIndices[_controlHandle] = 0;
+    _waitManyState.add(_controlHandle, kMojoSignalsReadable, null);
   }
 
   static void _handleWatcherIsolate(int consumerHandle) {
     MojoHandleWatcher watcher = new MojoHandleWatcher(consumerHandle);
     while (!watcher._shutdown) {
       int deadline = watcher._processTimerDeadlines();
-      // mwmr[0]: result, mwmr[1]: index, mwmr[2]: list of signal states.
-      List mwmr = MojoHandleNatives.waitMany(
-          watcher._handles, watcher._signals, deadline);
-      if ((mwmr[0] == kMojoResultOk) && (mwmr[1] == 0)) {
-        watcher._handleControlMessage();
-      } else if ((mwmr[0] == kMojoResultOk) && (mwmr[1] > 0)) {
-        int handle = watcher._handles[mwmr[1]];
-
-        // Route event.
-        watcher._routeEvent(mwmr[2][mwmr[1]][0], mwmr[1]);
-        // Remove the handle from the list.
-        watcher._removeHandle(handle);
-      } else if (mwmr[0] != kMojoResultDeadlineExceeded) {
-        // Some handle was closed, but not by us.
-        // Find it and close it on our side.
-        watcher._pruneClosedHandles(mwmr[2]);
-      }
+      watcher._waitManyState.waitMany(deadline);
+      watcher._processWaitManyState();
     }
   }
 
-  void _routeEvent(int satisfiedSignals, int idx) {
-    _ports[idx].send([_signals[idx], satisfiedSignals & _signals[idx]]);
+  // Look at the signals that are satisified for each handle. If a signal is
+  // of interest to the listener, route the event to it. Control messages are
+  // processed last, after signaled handles are removed.
+  void _processWaitManyState() {
+    int mojoResult = _waitManyState.mojoResult;
+    int idx = _waitManyState.outIndex;
+    if (mojoResult == kMojoResultOk) {
+      List<int> toRemove = [];
+      for (int i = _waitManyState.length - 1; i >= 0; i--) {
+        if (i == 0) {
+          toRemove.forEach(_removeHandleIdx);
+        }
+
+        int signals = _waitManyState.signals[i];
+        int outSignals = _waitManyState.outSignals(i);
+        int eventSignals = outSignals & signals;
+        if (eventSignals != 0) {
+          if (i == 0) {
+            _handleControlMessage();
+          } else {
+            _waitManyState.ports[i].send([signals, eventSignals]);
+            toRemove.add(i);
+          }
+        }
+      }
+    } else if (mojoResult != kMojoResultDeadlineExceeded) {
+      if (mojoResult == kMojoResultInvalidArgument) {
+        // If there was an invalid argument, then outSignals has no meaning.
+        _pruneClosedHandles(false);
+      } else {
+        // Some handle was closed, but not by us.
+        // Find it and close it on our side.
+        _pruneClosedHandles(true);
+      }
+    }
   }
 
   void _handleControlMessage() {
@@ -146,53 +148,35 @@ class MojoHandleWatcher {
   }
 
   void _addHandle(int mojoHandle, SendPort port, int signals) {
-    int idx = _handleIndices[mojoHandle];
+    int idx = _waitManyState.handleIndices[mojoHandle];
     if (idx == null) {
-      _handles.add(mojoHandle);
-      _ports.add(port);
-      _signals.add(signals);
-      _handleIndices[mojoHandle] = _handleCount;
-      _handleCount++;
+      _waitManyState.addFront(mojoHandle, signals, port);
     } else {
-      assert(_ports[idx] == port);
-      assert(_handles[idx] == mojoHandle);
-      _signals[idx] |= signals;
+      assert(_waitManyState.ports[idx] == port);
+      assert(_waitManyState.handles[idx] == mojoHandle);
+      _waitManyState.signals[idx] |= signals;
     }
   }
 
   void _removeHandle(int mojoHandle) {
-    int idx = _handleIndices[mojoHandle];
+    int idx = _waitManyState.handleIndices[mojoHandle];
     if (idx == null) {
       throw "Remove on a non-existent handle: idx = $idx.";
     }
     if (idx == 0) {
       throw "The control handle (idx = 0) cannot be removed.";
     }
-    // We don't use List.removeAt so that we know how to fix-up _handleIndices.
-    if (idx == _handleCount - 1) {
-      int handle = _handles[idx];
-      _handleIndices[handle] = null;
-      _handles.removeLast();
-      _signals.removeLast();
-      _ports.removeLast();
-      _handleCount--;
-    } else {
-      int last = _handleCount - 1;
-      _handleIndices[_handles[idx]] = null;
-      _handles[idx] = _handles[last];
-      _signals[idx] = _signals[last];
-      _ports[idx] = _ports[last];
-      _handles.removeLast();
-      _signals.removeLast();
-      _ports.removeLast();
-      _handleIndices[_handles[idx]] = idx;
-      _handleCount--;
-    }
+    _removeHandleIdx(idx);
+  }
+
+  // Assumes idx is a valid handle index.
+  void _removeHandleIdx(int idx) {
+    _waitManyState.remove(idx);
   }
 
   void _close(int mojoHandle, SendPort port, {bool pruning: false}) {
     assert(!pruning || (port == null));
-    int idx = _handleIndices[mojoHandle];
+    int idx = _waitManyState.handleIndices[mojoHandle];
     if (idx == null) {
       // An app isolate may request that the handle watcher close a handle that
       // has already been pruned. This happens when the app isolate has not yet
@@ -205,12 +189,13 @@ class MojoHandleWatcher {
     if (idx == 0) {
       throw "The control handle (idx = 0) cannot be closed.";
     }
-    MojoHandleNatives.close(_handles[idx]);
+    MojoHandleNatives.close(_waitManyState.handles[idx]);
     if (port != null) port.send(null); // Notify that close is done.
     if (pruning) {
       // If this handle is being pruned, notify the application isolate
       // by sending MojoHandleSignals.PEER_CLOSED.
-      _ports[idx].send([_signals[idx], kMojoSignalsPeerClosed]);
+      _waitManyState.ports[idx]
+          .send([_waitManyState.signals[idx], kMojoSignalsPeerClosed]);
     }
     _removeHandle(mojoHandle);
   }
@@ -232,25 +217,24 @@ class MojoHandleWatcher {
     _timerQueue.updateTimer(port, deadline);
   }
 
-  void _pruneClosedHandles(List<List<int>> states) {
+  void _pruneClosedHandles(bool gotStates) {
     List<int> closed = new List();
-    for (var i = 0; i < _handles.length; i++) {
-      if (states != null) {
-        int signals = states[i][0];
+    for (var i = 0; i < _waitManyState.length; i++) {
+      if (gotStates) {
+        int signals = _waitManyState.outSignals(i);
         if ((signals & kMojoSignalsPeerClosed) != 0) {
-          closed.add(_handles[i]);
+          closed.add(_waitManyState.handles[i]);
         }
       } else {
-        List mwr = MojoHandleNatives.wait(_handles[i], kMojoSignalsAll, 0);
+        List mwr = MojoHandleNatives.wait(
+            _waitManyState.handles[i], kMojoSignalsAll, 0);
         if ((mwr[0] != kMojoResultOk) &&
             (mwr[0] != kMojoResultDeadlineExceeded)) {
-          closed.add(_handles[i]);
+          closed.add(_waitManyState.handles[i]);
         }
       }
     }
-    for (var h in closed) {
-      _close(h, null, pruning: true);
-    }
+    closed.forEach((int h) => _close(h, null, pruning: true));
     // '_close' updated the '_handles' array, so at this point the '_handles'
     // array and the caller's 'states' array are mismatched.
   }

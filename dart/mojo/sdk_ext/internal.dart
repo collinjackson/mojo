@@ -12,3 +12,4 @@ import 'dart:typed_data';
 part 'src/handle_watcher.dart';
 part 'src/natives.dart';
 part 'src/timer_queue.dart';
+part 'src/wait_many_state.dart';
