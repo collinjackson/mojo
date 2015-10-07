@@ -78,3 +78,12 @@ interface TestInterface {
 struct StructWithInterfaceCalledHandles {
   TestInterface handles;
 };
+
+enum NormalEnum {
+  FIRST,
+  SECOND,
+};
+
+struct ContainsArrayOfEnum {
+  array<NormalEnum> array_of_enums;
+};
