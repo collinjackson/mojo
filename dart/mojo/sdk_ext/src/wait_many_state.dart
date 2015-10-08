@@ -43,37 +43,6 @@ class WaitManyState {
     mojoResult = MojoHandleWatcherNatives.waitMany(_occupied, deadline);
   }
 
-  // The control handle lives at entry zero. So we add new entries at
-  // index 1, shifting the existing entries down by 1. The idea here is that
-  // more active handles will tend to be at the front of the list.
-  void addFront(int handle, int signals, SendPort port) {
-    if (_occupied == 0) {
-      add(handle, signals, port);
-      return;
-    }
-
-    // Grow if needed.
-    if (_occupied == _handles.length) {
-      _grow();
-    }
-
-    // Shift existing entries down by one.
-    for (int i = _occupied - 1; i >= 1; i--) {
-      int h = _handles[i];
-      _handleIndices[h] = i + 1;
-      _handles[i + 1] = h;
-      _signals[i + 1] = _signals[i];
-      _ports[i + 1] = _ports[i];
-    }
-
-    // Insert new entry.
-    _handleIndices[handle] = 1;
-    _handles[1] = handle;
-    _signals[1] = signals;
-    _ports[1] = port;
-    _occupied++;
-  }
-
   void add(int handle, int signals, SendPort port) {
     if (_occupied == _handles.length) {
       _grow();
@@ -86,11 +55,12 @@ class WaitManyState {
   }
 
   void removeLast() {
-    int handle = _handles[_occupied - 1];
-    _handleIndices[handle] = null;
-    _handles[_occupied - 1] = 0;
-    _signals[_occupied - 1] = 0;
-    _ports[_occupied - 1] = null;
+    int lastIndex = _occupied - 1;
+    int handle = _handles[lastIndex];
+    _handleIndices.remove(handle);
+    _handles[lastIndex] = 0;
+    _signals[lastIndex] = 0;
+    _ports[lastIndex] = null;
     _occupied--;
   }
 
@@ -130,8 +100,8 @@ class WaitManyState {
       sigs = "$sigs ${_outSignals[i] & _signals[i]}";
     }
     return "length: $_occupied\n"
-        "status: $result\n"
-        "index: $index\n"
+        "status: $mojoResult\n"
+        "index: $outIndex\n"
         "handles: $hands\n"
         "signals: $sigs\n";
   }

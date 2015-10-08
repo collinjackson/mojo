@@ -150,7 +150,7 @@ class MojoHandleWatcher {
   void _addHandle(int mojoHandle, SendPort port, int signals) {
     int idx = _waitManyState.handleIndices[mojoHandle];
     if (idx == null) {
-      _waitManyState.addFront(mojoHandle, signals, port);
+      _waitManyState.add(mojoHandle, signals, port);
     } else {
       assert(_waitManyState.ports[idx] == port);
       assert(_waitManyState.handles[idx] == mojoHandle);

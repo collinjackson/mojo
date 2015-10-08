@@ -40,7 +40,12 @@ class MojoEventStream extends Stream<List<int>> {
   Future close({bool immediate: false}) {
     if (_handle != null) {
       if (_isListening) {
-        return _handleWatcherClose(immediate: immediate);
+        return _handleWatcherClose(immediate: immediate).then((result) {
+          // If the handle watcher is gone, then close the handle ourselves.
+          if (!result.isOk) {
+            _localClose();
+          }
+        });
       } else {
         _localClose();
       }
@@ -76,21 +81,19 @@ class MojoEventStream extends Stream<List<int>> {
         onError: onError, onDone: onDone, cancelOnError: cancelOnError);
   }
 
-  void enableSignals(MojoHandleSignals signals) {
+  bool enableSignals(MojoHandleSignals signals) {
     _signals = signals;
     if (_isListening) {
-      var res = new MojoResult(
-          MojoHandleWatcher.add(_handle.h, _sendPort, signals.value));
-      if (!res.isOk) {
-        throw "MojoHandleWatcher add failed: $res";
-      }
+      return MojoHandleWatcher.add(_handle.h, _sendPort, signals.value) ==
+          MojoResult.kOk;
     }
+    return false;
   }
 
-  void enableReadEvents() =>
+  bool enableReadEvents() =>
       enableSignals(MojoHandleSignals.PEER_CLOSED_READABLE);
-  void enableWriteEvents() => enableSignals(MojoHandleSignals.WRITABLE);
-  void enableAllEvents() => enableSignals(MojoHandleSignals.READWRITE);
+  bool enableWriteEvents() => enableSignals(MojoHandleSignals.WRITABLE);
+  bool enableAllEvents() => enableSignals(MojoHandleSignals.READWRITE);
 
   Future _handleWatcherClose({bool immediate: false}) {
     assert(_handle != null);
@@ -195,6 +198,7 @@ class MojoEventStreamListener {
         // immediately.
         return;
       }
+      bool streamShutdown = false;
       var signalsWatched = new MojoHandleSignals(event[0]);
       var signalsReceived = new MojoHandleSignals(event[1]);
       _isInHandler = true;
@@ -206,14 +210,11 @@ class MojoEventStreamListener {
         assert(_eventStream.readyWrite);
         handleWrite();
       }
-      if (!signalsReceived.isPeerClosed) {
-        _eventStream.enableSignals(signalsWatched);
-      }
+      streamShutdown = signalsReceived.isPeerClosed ||
+          !_eventStream.enableSignals(signalsWatched);
       _isInHandler = false;
-      if (signalsReceived.isPeerClosed) {
-        // immediate is true here because there is no need to wait to close
-        // until outstanding messages are sent. The other side is gone.
-        close(immediate: true).then((_) {
+      if (streamShutdown) {
+        close().then((_) {
           if (onError != null) {
             onError();
           }
