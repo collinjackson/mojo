@@ -8,25 +8,22 @@ library generate;
 
 import 'dart:async';
 import 'dart:convert';
+import 'dart:developer';
 import 'dart:io';
 
+import 'package:mojom/src/utils.dart';
 import 'package:path/path.dart' as path;
 
-import 'utils.dart';
-
-class _GenerateIterData extends SubDirIterData {
-  final Directory _packageRoot;
-  _GenerateIterData(this._packageRoot) : super(null);
-  Directory get packageRoot => _packageRoot;
-}
+part 'generate_dot_mojoms.dart';
 
 class MojomGenerator {
+  static Counter _genMs;
+  final bool _errorOnDuplicate;
+  final bool _verbose;
+  final bool _dryRun;
+  final Directory _mojoSdk;
+
   Map<String, String> _duplicateDetection;
-  bool _errorOnDuplicate;
-  bool _verbose;
-  bool _dryRun;
-  bool _profile;
-  Directory _mojoSdk;
   int _generationMs;
 
   MojomGenerator(this._mojoSdk,
@@ -37,73 +34,66 @@ class MojomGenerator {
       : _errorOnDuplicate = errorOnDuplicate,
         _verbose = verbose,
         _dryRun = dryRun,
-        _profile = profile,
         _generationMs = 0,
-        _duplicateDetection = new Map<String, String>();
+        _duplicateDetection = new Map<String, String>() {
+    if (_genMs == null) {
+      _genMs = new Counter("mojom generation",
+          "Time spent waiting for bindings generation script in ms.");
+      Metrics.register(_genMs);
+    }
+  }
 
   /// Generate bindings for [pacakge]. Fail if there is no .mojoms file, or if
   /// the .mojoms file refers to .mojom files lacking a DartPackage annotation
   /// for [pacakge]
   generateForPackage(Directory package) async {
-    Directory temp = await package.createTemp();
     Directory packageRoot = new Directory(path.join(package.path, 'packages'));
     File mojomsFile = new File(path.join(package.path, '.mojoms'));
     if (!(await mojomsFile.exists())) {
+      throw new FetchError("No .mojoms file found: $mojomsFile");
+    }
+
+    Directory temp = await package.createTemp();
+    try {
+      // Count the .mojom files and find the modification time of the most
+      // recently modified one.
+      List fetchedMojomsInfo =
+          await _fetchFromDotMojoms(package.uri, temp, mojomsFile);
+      DateTime mojomTime = fetchedMojomsInfo[0];
+      int mojomCount = fetchedMojomsInfo[1];
+
+      // Count the .mojom.dart files, and find the modification time of the
+      // least recently modified one.
+      List mojomDartInfo = await _findOldestMojomDart(package);
+      DateTime mojomDartTime = mojomDartInfo[0];
+      int mojomDartCount = mojomDartInfo[1];
+
+      // If we don't have enough .mojom.dart files, or if a .mojom file is
+      // newer than the oldest .mojom.dart file, then regenerate.
+      if ((mojomDartCount < mojomCount) ||
+          _shouldRegenerate(mojomTime, mojomDartTime)) {
+        if (_verbose) print("Regenerating for package $package");
+        await for (var dir in temp.list()) {
+          if (dir is! Directory) continue;
+          var mojomDir = new Directory(path.join(dir.path, 'mojom'));
+          if (_verbose) print("pathSegments = ${package.uri.pathSegments}");
+          await _generateForMojomDir(mojomDir, packageRoot,
+              packageName: package.uri.pathSegments.lastWhere((s) => s != ""));
+        }
+        // Delete any .mojom.dart files that are still older than mojomTime.
+        _deleteOldMojomDart(package, mojomTime);
+      } else if (_verbose) print("Not regenerating for package $package");
+    } finally {
+      // Fetching .mojom files and .mojom.dart generation can throw. If that
+      // happens, delete the temporary directory.
       await temp.delete(recursive: true);
-      throw new FetchError(
-          "--single-package specified but no .mojoms file found: $mojomsFile");
     }
-    DateTime dotMojomsTime = (await mojomsFile.stat()).modified;
-    DateTime mojomTime =
-        await _fetchFromDotMojoms(package.uri, temp, mojomsFile);
-    DateTime mojomDartTime = await _findOldestMojomDart(package);
-
-    if (_shouldRegenerate(dotMojomsTime, mojomTime, mojomDartTime)) {
-      await for (var dir in temp.list()) {
-        if (dir is! Directory) continue;
-        var mojomDir = new Directory(path.join(dir.path, 'mojom'));
-        if (_verbose) print("pathSegments = ${package.uri.pathSegments}");
-        await _generateForMojomDir(mojomDir, packageRoot,
-            packageName: package.uri.pathSegments.lastWhere((s) => s != ""));
-      }
-    }
-    await temp.delete(recursive: true);
-  }
-
-  generateForAllPackages(Directory packageRoot, Directory mojomPackage,
-      List<Directory> additionalDirs,
-      {bool fetch: false, bool generate: false}) async {
-    // Fetch .mojom files. These will be picked up by the generation step
-    // below.
-    if (fetch) {
-      await subDirIter(packageRoot, null, _fetchAction);
-    }
-
-    // Generate mojom files.
-    if (generate) {
-      await _generateDirIter(packageRoot, new _GenerateIterData(packageRoot));
-    }
-
-    // TODO(zra): As mentioned above, this should go away.
-    // Copy pregenerated files from specified external directories into the
-    // mojom package.
-    final data = new _GenerateIterData(packageRoot);
-    data.subdir = mojomPackage;
-    for (var mojomDir in additionalDirs) {
-      await _copyBindingsAction(data, mojomDir);
-      if (generate) {
-        await _generateAction(data, mojomDir);
-      }
-    }
-  }
-
-  void printProfile() {
-    print("Generation time: $_generationMs ms");
   }
 
   /// Under [package]/lib, returns the oldest modification time for a
   /// .mojom.dart file.
   _findOldestMojomDart(Directory package) async {
+    int mojomDartCount = 0;
     DateTime oldestModTime;
     Directory libDir = new Directory(path.join(package.path, 'lib'));
     if (!await libDir.exists()) return null;
@@ -114,18 +104,31 @@ class MojomGenerator {
       if ((oldestModTime == null) || oldestModTime.isAfter(modTime)) {
         oldestModTime = modTime;
       }
+      mojomDartCount++;
     }
-    return oldestModTime;
+    return [oldestModTime, mojomDartCount];
+  }
+
+  // Delete .mojom.dart files under package that are [olderThanThis].
+  _deleteOldMojomDart(Directory package, DateTime olderThanThis) async {
+    Directory libDir = new Directory(path.join(package.path, 'lib'));
+    assert(await libDir.exists());
+    await for (var file in libDir.list(recursive: true)) {
+      if (file is! File) continue;
+      if (!isMojomDart(file.path)) continue;
+      DateTime modTime = (await file.stat()).modified;
+      if (modTime.isBefore(olderThanThis)) {
+        if (_verbose) print("Deleting stale .mojom.dart: $file");
+        await file.delete();
+      }
+    }
   }
 
   /// If the .mojoms file or the newest .mojom is newer than the oldest
   /// .mojom.dart, then regenerate everything.
-  bool _shouldRegenerate(
-      DateTime dotMojomsTime, DateTime mojomTime, DateTime mojomDartTime) {
-    return (dotMojomsTime == null) ||
-        (mojomTime == null) ||
+  bool _shouldRegenerate(DateTime mojomTime, DateTime mojomDartTime) {
+    return (mojomTime == null) ||
         (mojomDartTime == null) ||
-        dotMojomsTime.isAfter(mojomDartTime) ||
         mojomTime.isAfter(mojomDartTime);
   }
 
@@ -161,17 +164,19 @@ class MojomGenerator {
     Directory mojomsDir;
     var httpClient = new HttpClient();
     int repoCount = 0;
-    int mojomCount = 0;
+    int rootMojomCount = 0;
+    int totalMojomCount = 0;
     Uri repoRoot;
     for (String line in await mojomsFile.readAsLines()) {
       line = line.trim();
       if (line.isEmpty || line.startsWith('#')) continue;
 
       if (line.startsWith('root:')) {
-        if ((mojomsDir != null) && (mojomCount == 0)) {
+        if (_verbose) print("Found root: $line");
+        if ((mojomsDir != null) && (rootMojomCount == 0)) {
           throw new FetchError("root with no mojoms: $repoRoot");
         }
-        mojomCount = 0;
+        rootMojomCount = 0;
         var rootWords = line.split(" ");
         if (rootWords.length != 2) {
           throw new FetchError("Malformed root: $line");
@@ -191,6 +196,7 @@ class MojomGenerator {
         await mojomsDir.create(recursive: true);
         repoCount++;
       } else {
+        if (_verbose) print("Found non-root: $line");
         if (mojomsDir == null) {
           throw new FetchError('Malformed .mojoms file: $mojomsFile');
         }
@@ -208,10 +214,20 @@ class MojomGenerator {
         if ((newestModTime == null) || newestModTime.isBefore(modTime)) {
           newestModTime = modTime;
         }
-        mojomCount++;
+        rootMojomCount++;
+        totalMojomCount++;
       }
     }
-    return newestModTime;
+    return [newestModTime, totalMojomCount];
+  }
+
+  _runBindingsGeneration(String script, List<String> arguments) async {
+    var result;
+    var stopwatch = new Stopwatch()..start();
+    result = await Process.run(script, arguments);
+    stopwatch.stop();
+    _genMs.value += stopwatch.elapsedMilliseconds;
+    return result;
   }
 
   /// Generate bindings for .mojom files found in [source].
@@ -250,16 +266,13 @@ class MojomGenerator {
         print('$script ${arguments.join(" ")}');
       }
       if (!_dryRun) {
-        var stopwatch;
-        if (_profile) stopwatch = new Stopwatch()..start();
-        final result = await Process.run(script, arguments);
-        if (_profile) {
-          stopwatch.stop();
-          _generationMs += stopwatch.elapsedMilliseconds;
-        }
+        final result = await _runBindingsGeneration(script, arguments);
         if (result.exitCode != 0) {
           await outputDir.delete(recursive: true);
-          throw new GenerationError("$script failed:\n${result.stderr}");
+          throw new GenerationError("$script failed:\n"
+              "code: ${result.exitCode}\n"
+              "stderr: ${result.stderr}\n"
+              "stdout: ${result.stdout}");
         }
 
         // Generated .mojom.dart is under $output/dart-pkg/$PACKAGE/lib/$X
@@ -278,9 +291,8 @@ class MojomGenerator {
           }
 
           var copyDest = new Directory(path.join(destination.path, name));
-          var copyData = new SubDirIterData(copyDest);
           if (_verbose) print("Copy $libDir to $copyDest");
-          await _copyBindingsAction(copyData, libDir);
+          await _copyBindings(copyDest, libDir);
         }
 
         await outputDir.delete(recursive: true);
@@ -289,15 +301,15 @@ class MojomGenerator {
   }
 
   /// Searches for .mojom.dart files under [sourceDir] and copies them to
-  /// [data.subdir].
-  _copyBindingsAction(SubDirIterData data, Directory sourceDir) async {
+  /// [destDir].
+  _copyBindings(Directory destDir, Directory sourceDir) async {
     await for (var mojom in sourceDir.list(recursive: true)) {
       if (mojom is! File) continue;
       if (!isMojomDart(mojom.path)) continue;
       if (_verbose) print("Found $mojom");
 
       final relative = path.relative(mojom.path, from: sourceDir.path);
-      final dest = path.join(data.subdir.path, relative);
+      final dest = path.join(destDir.path, relative);
       final destDirectory = new Directory(path.dirname(dest));
 
       if (_errorOnDuplicate && _duplicateDetection.containsKey(dest)) {
@@ -324,85 +336,65 @@ class MojomGenerator {
       }
     }
   }
-
-  /// Searches for .mojom files under [mojomDirectory], generates .mojom.dart
-  /// files for them, and copies them to the 'mojom' package.
-  _generateAction(_GenerateIterData data, Directory mojomDirectory) async {
-    if (_verbose) print(
-        "generateAction: $mojomDirectory, packageRoot: ${data.packageRoot}");
-    await _generateForMojomDir(mojomDirectory, data.packageRoot);
-  }
-
-  /// Iterates recurisvley over all subdirectories called "mojom" under
-  /// |packages| and applies bindings generation to them, placing the results
-  /// in the right place under |packages|.
-  _generateDirIter(Directory packages, _GenerateIterData data) async {
-    await subDirIter(packages, data, (d, s) async {
-      await subDirIter(s, d, _generateAction,
-          filter: (d) => path.basename(d.path) == "mojom");
-    });
-  }
-
-  /// Fetch mojoms for the package in |packageDirectory| if it has a .mojoms
-  /// file.
-  _fetchAction(SubDirIterData _, Directory packageDirectory) async {
-    var packageUri = packageDirectory.uri;
-    // TODO(zra): Also look in realpath(packageDirectory).parent for .mojoms
-    // file.
-    var mojomsPath = path.join(packageDirectory.path, '.mojoms');
-    var mojomsFile = new File(mojomsPath);
-    if (!await mojomsFile.exists()) return;
-    if (_verbose) print("Found .mojoms file: $mojomsPath");
-    await _fetchFromDotMojoms(packageUri, packageDirectory.parent, mojomsFile);
-  }
 }
 
 /// Given the location of the Mojo SDK and a root directory from which to begin
-/// a search. Find .mojoms files, and generate bindings for the containing
+/// a search. Find .mojom files, and generates bindings for the relevant
 /// packages.
 class TreeGenerator {
-  MojomGenerator _generator;
-  Directory _mojoSdk;
-  Directory _rootDir;
-  List<String> _skip;
-  bool _verbose;
-  bool _profile;
-  bool _dryRun;
+  final MojomGenerator _generator;
+  final Directory _mojoSdk;
+  final Directory _mojomRootDir;
+  final Directory _dartRootDir;
+  final List<String> _skip;
+  final bool _verbose;
+  final bool _dryRun;
+
+  Set<String> _processedPackages;
+
   int errors;
 
-  TreeGenerator(Directory mojoSdk, Directory rootDir, List<String> skip,
-      {bool verbose: false, bool profile: false, bool dryRun: false}) {
-    _mojoSdk = mojoSdk;
-    _rootDir = rootDir;
-    _skip = skip;
-    _verbose = verbose;
-    _profile = profile;
-    _dryRun = dryRun;
-    _generator = new MojomGenerator(_mojoSdk,
-        verbose: _verbose, profile: _profile, dryRun: _dryRun);
-    errors = 0;
-  }
+  TreeGenerator(
+      Directory mojoSdk, this._mojomRootDir, this._dartRootDir, this._skip,
+      {bool verbose: false, bool dryRun: false})
+      : _mojoSdk = mojoSdk,
+        _verbose = verbose,
+        _dryRun = dryRun,
+        _generator =
+            new MojomGenerator(mojoSdk, verbose: verbose, dryRun: dryRun),
+        _processedPackages = new Set<String>(),
+        errors = 0;
 
   findAndGenerate() async {
-    Set<String> alreadySeen = new Set<String>();
-    await for (var entry in _rootDir.list(recursive: true)) {
-      if (entry is! File) continue;
-      if (!isDotMojoms(entry.path)) continue;
-      if (alreadySeen.contains(entry.path)) continue;
-      if (_shouldSkip(entry)) continue;
-      alreadySeen.add(entry.path);
-      await _runGenerate(entry.parent);
-    }
-    if (_profile) {
-      _generator.printProfile();
+    // Generate missing .mojoms files.
+    var mojomsGenerator = new DotMojomsGenerator(
+        _mojomRootDir, _dartRootDir, _skip,
+        verbose: _verbose);
+    List<File> generatedDotMojoms = await mojomsGenerator.generate();
+
+    try {
+      // Use those .mojoms files to generate bindings.
+      await _findAndGenerateFromDotMojoms();
+    } finally {
+      // Delete the .mojoms files.
+      for (var dotMojoms in generatedDotMojoms) {
+        await dotMojoms.delete();
+      }
     }
   }
 
-  bool _shouldSkip(File f) {
-    if (_skip == null) return false;
-    var match =
-        _skip.firstWhere((p) => f.path.startsWith(p), orElse: () => null);
-    return match != null;
+  /// Find Dart packages with .mojoms files. Use them to direct bindings
+  /// generation.
+  _findAndGenerateFromDotMojoms() async {
+    await for (var entry in _dartRootDir.list(recursive: true)) {
+      if (entry is! File) continue;
+      if (_shouldSkip(entry)) continue;
+      if (!isDotMojoms(entry.path)) continue;
+      String package = path.basename(entry.parent.path);
+      if (_processedPackages.contains(package)) continue;
+      _processedPackages.add(package);
+      await _runGenerate(entry.parent);
+    }
   }
 
   _runGenerate(Directory package) async {
@@ -415,6 +407,8 @@ class TreeGenerator {
       errors += 1;
     }
   }
+
+  bool _shouldSkip(File f) => containsPrefix(f.path, _skip);
 }
 
 /// Given the root of a directory tree to check, and the root of a directory
@@ -423,27 +417,34 @@ class TreeGenerator {
 /// directory should contain a subdirectory for each package that might be
 /// encountered while traversing the directory tree being checked.
 class TreeChecker {
-  bool _verbose;
-  bool _profile;
-  Directory _mojoSdk;
-  Directory _root;
-  Directory _canonical;
-  List<String> _skip;
+  final bool _verbose;
+  final Directory _mojoSdk;
+  final Directory _mojomRootDir;
+  final Directory _dartRootDir;
+  final Directory _canonical;
+  final List<String> _skip;
   int _errors;
 
-  TreeChecker(this._mojoSdk, this._root, this._canonical, this._skip,
-      {bool verbose: false, bool profile: false})
+  TreeChecker(this._mojoSdk, this._mojomRootDir, this._dartRootDir,
+      this._canonical, this._skip,
+      {bool verbose: false})
       : _verbose = verbose,
-        _profile = profile,
         _errors = 0;
 
   check() async {
+    // Generate missing .mojoms files if needed.
+    var dotMojomsGenerator = new DotMojomsGenerator(
+        _mojomRootDir, _dartRootDir, _skip,
+        verbose: _verbose);
+    List<File> generatedMojoms = await dotMojomsGenerator.generate();
+
+    // Visit Dart packages with .mojoms files, checking their .mojom.dart files
+    // against those under _canonical.
     Set<String> alreadySeen = new Set<String>();
-    await for (var entry in _root.list(recursive: true)) {
+    await for (var entry in _dartRootDir.list(recursive: true)) {
       if (entry is! File) continue;
       if (!isDotMojoms(entry.path)) continue;
       if (entry.path.startsWith(_canonical.path)) continue;
-
       String realpath = await entry.resolveSymbolicLinks();
       if (alreadySeen.contains(realpath)) continue;
       alreadySeen.add(realpath);
@@ -455,15 +456,29 @@ class TreeChecker {
       await _checkAll(parent);
       await _checkSame(parent);
     }
+
+    // If there were multiple mismatches, explain how to regenerate the bindings
+    // for the whole tree.
     if (_errors > 1) {
       String dart = makeRelative(Platform.executable);
+      String packRoot = (Platform.packageRoot == "")
+          ? ""
+          : "-p " + makeRelative(Platform.packageRoot);
       String scriptPath = makeRelative(path.fromUri(Platform.script));
       String mojoSdk = makeRelative(_mojoSdk.path);
-      String root = makeRelative(_root.path);
+      String root = makeRelative(_mojomRootDir.path);
+      String dartRoot = makeRelative(_dartRootDir.path);
+      String skips = _skip.map((s) => "-s " + makeRelative(s)).join(" ");
       stderr.writeln('It looks like there were multiple problems. '
           'You can run the following command to regenerate bindings for your '
           'whole tree:\n'
-          '\t$dart $scriptPath tree -r $root -m $mojoSdk');
+          '\t$dart $packRoot $scriptPath gen -m $mojoSdk -r $root -o $dartRoot '
+          '$skips');
+    }
+
+    // Delete any .mojoms files we generated.
+    for (var mojoms in generatedMojoms) {
+      await mojoms.delete();
     }
   }
 
@@ -498,14 +513,20 @@ class TreeChecker {
               'and they are different. Regenerate canonical files?');
         } else {
           String dart = makeRelative(Platform.executable);
+          String packRoot = (Platform.packageRoot == "")
+              ? ""
+              : "-p " + makeRelative(Platform.packageRoot);
+          String root = makeRelative(_mojomRootDir.path);
           String packagePath = makeRelative(package.path);
           String scriptPath = makeRelative(path.fromUri(Platform.script));
           String mojoSdk = makeRelative(_mojoSdk.path);
+          String skips = _skip.map((s) => "-s " + makeRelative(s)).join(" ");
           stderr.writeln('For the package: $packagePath\n'
               'The generated file:\n\t$entryPath\n'
               'is older than the canonical file:\n\t$canonicalPath\n'
               'and they are different. Regenerate by running:\n'
-              '\t$dart $scriptPath single -p $packagePath -m $mojoSdk');
+              '\t$dart $packRoot $scriptPath single -m $mojoSdk -r $root '
+              '-p $packagePath $skips');
         }
         _errors++;
         return;
@@ -535,24 +556,24 @@ class TreeChecker {
       if (_verbose) print("Checking that $genFile exists");
       if (!await genFile.exists()) {
         String dart = makeRelative(Platform.executable);
+        String packRoot = (Platform.packageRoot == "")
+            ? ""
+            : "-p " + makeRelative(Platform.packageRoot);
+        String root = makeRelative(_mojomRootDir.path);
         String genFilePath = makeRelative(genFile.path);
         String packagePath = makeRelative(package.path);
         String scriptPath = makeRelative(path.fromUri(Platform.script));
         String mojoSdk = makeRelative(_mojoSdk.path);
+        String skips = _skip.map((s) => "-s " + makeRelative(s)).join(" ");
         stderr.writeln('The generated file:\n\t$genFilePath\n'
-            'is needed but does not exist. Make sure that the .mojom to '
-            'generate it is listed in the .mojoms file for package '
-            '$packageName, and run the command\n'
-            '\t$dart $scriptPath single -p $packagePath -m $mojoSdk');
+            'is needed but does not exist. Run the command\n'
+            '\t$dart $packRoot $scriptPath single -m $mojoSdk -r $root '
+            '-p $packagePath $skips');
         _errors++;
+        return;
       }
     }
   }
 
-  bool _shouldSkip(File f) {
-    if (_skip == null) return false;
-    var match =
-        _skip.firstWhere((p) => f.path.startsWith(p), orElse: () => null);
-    return match != null;
-  }
+  bool _shouldSkip(File f) => containsPrefix(f.path, _skip);
 }

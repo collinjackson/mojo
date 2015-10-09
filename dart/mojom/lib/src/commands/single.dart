@@ -9,16 +9,15 @@ import 'dart:io';
 
 import 'package:args/args.dart';
 import 'package:args/command_runner.dart';
+import 'package:mojom/src/commands/mojom_command.dart';
+import 'package:mojom/src/generate.dart';
+import 'package:mojom/src/utils.dart';
 import 'package:path/path.dart' as path;
-
-import 'mojom_command.dart';
-import '../generate.dart';
-import '../utils.dart';
 
 class SinglePackageCommand extends MojomCommand {
   String get name => 'single';
   String get description => 'Generate bindings for a package.';
-  String get invocation => 'mojom single';
+  String get invocation => 'mojom.dart single';
 
   Directory _package;
 
@@ -32,14 +31,18 @@ class SinglePackageCommand extends MojomCommand {
   run() async {
     await _validateArguments();
 
+    var dotMojomsGenerator = new DotMojomsGenerator(
+        mojomRoot, _package.parent, skips,
+        verbose: verbose);
+    List<File> dotMojoms = await dotMojomsGenerator.generate();
+
     var generator = new MojomGenerator(mojoSdk,
-        verbose: verbose,
-        dryRun: dryRun,
-        errorOnDuplicate: errorOnDuplicate,
-        profile: profile);
+        verbose: verbose, dryRun: dryRun, errorOnDuplicate: errorOnDuplicate);
     await generator.generateForPackage(_package);
-    if (profile) {
-      generator.printProfile();
+
+    // Delete the generated .mojoms file if one was created.
+    for (var mojoms in dotMojoms) {
+      await mojoms.delete();
     }
   }
 

@@ -9,28 +9,28 @@ import 'dart:io';
 
 import 'package:args/args.dart';
 import 'package:args/command_runner.dart';
+import 'package:mojom/src/utils.dart';
 import 'package:path/path.dart' as path;
-
-import '../utils.dart';
 
 abstract class MojomCommand extends Command {
   bool _verbose;
   bool _dryRun;
   bool _errorOnDuplicate;
-  bool _profile;
+  Directory _mojomRoot;
   Directory _mojoSdk;
+  List<String> _skips;
 
   bool get verbose => _verbose;
   bool get dryRun => _dryRun;
   bool get errorOnDuplicate => _errorOnDuplicate;
-  bool get profile => _profile;
+  Directory get mojomRoot => _mojomRoot;
   Directory get mojoSdk => _mojoSdk;
+  List<String> get skips => _skips;
 
   validateArguments() async {
     _verbose = globalResults['verbose'];
     _dryRun = globalResults['dry-run'];
     _errorOnDuplicate = !globalResults['ignore-duplicates'];
-    _profile = globalResults['profile'];
 
     final mojoSdkPath = globalResults['mojo-sdk'];
     if (mojoSdkPath == null) {
@@ -38,11 +38,22 @@ abstract class MojomCommand extends Command {
           "The Mojo SDK directory must be specified with the --mojo-sdk "
           "flag or the MOJO_SDK environment variable.");
     }
+    _mojomRoot = new Directory(makeAbsolute(globalResults['mojom-root']));
     _mojoSdk = new Directory(makeAbsolute(mojoSdkPath));
     if (_verbose) print("Mojo SDK = $_mojoSdk");
     if (!(await _mojoSdk.exists())) {
       throw new CommandLineError(
           "The specified Mojo SDK directory $_mojoSdk must exist.");
     }
+    if (globalResults['skip'] != null) {
+      _skips = globalResults['skip'].map(makeAbsolute).toList();
+    }
+  }
+
+  String toString() {
+    String dart = makeRelative(Platform.executable);
+    String script = makeRelative(path.fromUri(Platform.script));
+    String globals = globalResults.arguments.join(" ");
+    return "$dart $script $globals";
   }
 }

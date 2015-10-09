@@ -43,30 +43,6 @@ class FetchError {
   toString() => "Fetch Error: $_msg";
 }
 
-class SubDirIterData {
-  Directory subdir;
-  SubDirIterData(this.subdir);
-}
-
-typedef Future SubDirAction(SubDirIterData data, Directory subdir);
-
-typedef bool DirectoryFilter(Directory d);
-
-/// Iterates over subdirectories of |directory| that satisfy |filter| if one
-/// is given. Applies |action| to each subdirectory passing it |data| and the
-/// subdirectory. Recurses into further subdirectories if |recursive| is true.
-subDirIter(Directory directory, SubDirIterData data, SubDirAction action,
-    {DirectoryFilter filter, bool recursive: false}) async {
-  await for (var subdir in directory.list(recursive: recursive)) {
-    if (subdir is! Directory) continue;
-    if ((filter != null) && !filter(subdir)) continue;
-    if (data != null) {
-      data.subdir = subdir;
-    }
-    await action(data, subdir);
-  }
-}
-
 Future<String> _downloadUrl(HttpClient httpClient, Uri uri) async {
   try {
     var request = await httpClient.getUrl(uri);
@@ -150,4 +126,12 @@ Future<int> compareFiles(File f1, File f2) async {
     return (f1stat.modified.isBefore(f2stat.modified)) ? -1 : 1;
   }
   return 0;
+}
+
+/// Is any element of [haystack] a prefix of [needle]?
+bool containsPrefix(String needle, List<String> haystack) {
+  if (haystack == null) return false;
+  var match =
+      haystack.firstWhere((p) => needle.startsWith(p), orElse: () => null);
+  return match != null;
 }
