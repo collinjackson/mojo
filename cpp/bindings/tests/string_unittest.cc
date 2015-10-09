@@ -13,7 +13,7 @@ TEST(StringTest, DefaultIsNull) {
   EXPECT_TRUE(s.is_null());
 }
 
-TEST(StringTest, ConstructedWithNULL) {
+TEST(StringTest, ConstructedWithNull) {
   String s(nullptr);
   EXPECT_TRUE(s.is_null());
 }
@@ -24,10 +24,18 @@ TEST(StringTest, ConstructedWithNullCharPointer) {
   EXPECT_TRUE(s.is_null());
 }
 
-TEST(StringTest, AssignedNULL) {
+TEST(StringTest, AssignedNull) {
   String s("");
   EXPECT_FALSE(s.is_null());
   s = nullptr;
+  EXPECT_TRUE(s.is_null());
+}
+
+TEST(StringTest, AssignedNullCharPointer) {
+  String s("");
+  EXPECT_FALSE(s.is_null());
+  const char* null = nullptr;
+  s = null;
   EXPECT_TRUE(s.is_null());
 }
 
@@ -48,6 +56,42 @@ TEST(StringTest, Assignment) {
   EXPECT_FALSE(t.is_null());
   EXPECT_EQ(std::string("hello world"), t.get());
   EXPECT_FALSE(s.is_null());
+}
+
+TEST(StringTest, ConstAt) {
+  const String s("abc");
+  EXPECT_EQ('a', s.at(0));
+  EXPECT_EQ('b', s.at(1));
+  EXPECT_EQ('c', s.at(2));
+}
+
+TEST(StringTest, NonConstAt) {
+  String s("abc");
+  EXPECT_EQ('a', s.at(0));
+  EXPECT_EQ('b', s.at(1));
+  s.at(0) = 'x';
+  s.at(1) = 'y';
+  EXPECT_EQ('x', s.at(0));
+  EXPECT_EQ('y', s.at(1));
+  EXPECT_EQ('c', s.at(2));
+}
+
+TEST(StringTest, ConstArraySubscript) {
+  const String s("abc");
+  EXPECT_EQ('a', s[0]);
+  EXPECT_EQ('b', s[1]);
+  EXPECT_EQ('c', s[2]);
+}
+
+TEST(StringTest, NonConstArraySubscript) {
+  String s("abc");
+  EXPECT_EQ('a', s[0]);
+  EXPECT_EQ('b', s[1]);
+  s[0] = 'x';
+  s[1] = 'y';
+  EXPECT_EQ('x', s[0]);
+  EXPECT_EQ('y', s[1]);
+  EXPECT_EQ('c', s[2]);
 }
 
 TEST(StringTest, Equality) {

@@ -77,7 +77,10 @@ class String {
   const char* data() const { return value_.data(); }
 
   const char& at(size_t offset) const { return value_.at(offset); }
+  char& at(size_t offset) { return value_.at(offset); }
+
   const char& operator[](size_t offset) const { return value_[offset]; }
+  char& operator[](size_t offset) { return value_[offset]; }
 
   const std::string& get() const { return value_; }
   operator const std::string&() const { return value_; }
