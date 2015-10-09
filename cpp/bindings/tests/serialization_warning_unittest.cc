@@ -57,29 +57,21 @@ class SerializationWarningTest : public testing::Test {
   template <typename T, typename TPtr>
   void TestStructWarningImpl(TPtr obj,
                              mojo::internal::ValidationError expected_warning) {
-    warning_observer_.set_last_warning(mojo::internal::VALIDATION_ERROR_NONE);
-
     mojo::internal::FixedBufferForTesting buf(GetSerializedSize_(*obj));
     typename T::Data_* data;
-    Serialize_(obj.get(), &buf, &data);
-
-    EXPECT_EQ(expected_warning, warning_observer_.last_warning());
+    EXPECT_EQ(expected_warning, Serialize_(obj.get(), &buf, &data));
   }
 
   template <typename T>
   void TestArrayWarning(T obj,
                         mojo::internal::ValidationError expected_warning,
                         const ArrayValidateParams* validate_params) {
-    warning_observer_.set_last_warning(mojo::internal::VALIDATION_ERROR_NONE);
-
     mojo::internal::FixedBufferForTesting buf(GetSerializedSize_(obj));
     typename T::Data_* data;
-    SerializeArray_(&obj, &buf, &data, validate_params);
-
-    EXPECT_EQ(expected_warning, warning_observer_.last_warning());
+    EXPECT_EQ(expected_warning,
+              SerializeArray_(&obj, &buf, &data, validate_params));
   }
 
-  mojo::internal::SerializationWarningObserverForTesting warning_observer_;
   Environment env_;
 };
 

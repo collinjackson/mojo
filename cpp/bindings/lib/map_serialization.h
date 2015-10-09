@@ -121,6 +121,11 @@ inline size_t GetSerializedSize_(const Map<MapKey, MapValue>& input) {
          value_data_size;
 }
 
+// SerializeMap_ will return VALIDATION_ERROR_NONE on success and set
+// |output| accordingly.  On failure, |input| will be partially serialized into
+// |output| up until an error occurs (which is propagated up and returned by
+// SerializeMap_), in which case |buf| is also partially consumed.
+//
 // We don't need an ArrayValidateParams instance for key validation since
 // we can deduce it from the Key type. (which can only be primitive types or
 // non-nullable strings.)
@@ -128,45 +133,54 @@ template <typename MapKey,
           typename MapValue,
           typename DataKey,
           typename DataValue>
-inline void SerializeMap_(
+inline internal::ValidationError SerializeMap_(
     Map<MapKey, MapValue>* input,
     internal::Buffer* buf,
     internal::Map_Data<DataKey, DataValue>** output,
     const internal::ArrayValidateParams* value_validate_params) {
-  if (input && *input) {
-    internal::Map_Data<DataKey, DataValue>* result =
-        internal::Map_Data<DataKey, DataValue>::New(buf);
-    internal::Array_Data<DataKey>* keys_data =
-        internal::Array_Data<DataKey>::New(input->size(), buf);
+  if (input->is_null()) {
+    // |input| could be a nullable map, in which case |output| is serialized as
+    // null, which is valid.
+    *output = nullptr;
+    return internal::VALIDATION_ERROR_NONE;
+  }
 
-    if (result && keys_data) {
-      result->keys.ptr = keys_data;
+  internal::Map_Data<DataKey, DataValue>* result =
+      internal::Map_Data<DataKey, DataValue>::New(buf);
 
-      // We *must* serialize the keys before we allocate an Array_Data for the
-      // values.
-      internal::MapKeyIterator<MapKey, MapValue> key_iter(input);
-      const internal::ArrayValidateParams* key_validate_params =
-          internal::MapKeyValidateParamsFactory<DataKey>::Get();
+  // We *must* serialize the keys before we allocate an Array_Data for the
+  // values.
+  internal::Array_Data<DataKey>* keys_data =
+      internal::Array_Data<DataKey>::New(input->size(), buf);
+  result->keys.ptr = keys_data;
 
+  internal::MapKeyIterator<MapKey, MapValue> key_iter(input);
+  const internal::ArrayValidateParams* key_validate_params =
+      internal::MapKeyValidateParamsFactory<DataKey>::Get();
+
+  auto keys_retval =
       internal::ArraySerializer<MapKey, DataKey>::SerializeElements(
           key_iter.begin(), input->size(), buf, result->keys.ptr,
           key_validate_params);
+  if (keys_retval != internal::VALIDATION_ERROR_NONE)
+    return keys_retval;
 
-      // Now we try allocate an Array_Data for the values
-      internal::Array_Data<DataValue>* values_data =
-          internal::Array_Data<DataValue>::New(input->size(), buf);
-      if (values_data) {
-        result->values.ptr = values_data;
-        internal::MapValueIterator<MapKey, MapValue> value_iter(input);
-        internal::ArraySerializer<MapValue, DataValue>::SerializeElements(
-            value_iter.begin(), input->size(), buf, result->values.ptr,
-            value_validate_params);
-      }
-    }
-    *output = result;
-  } else {
-    *output = nullptr;
-  }
+  // Now we try allocate an Array_Data for the values
+  internal::Array_Data<DataValue>* values_data =
+      internal::Array_Data<DataValue>::New(input->size(), buf);
+  result->values.ptr = values_data;
+
+  internal::MapValueIterator<MapKey, MapValue> value_iter(input);
+
+  auto values_retval =
+      internal::ArraySerializer<MapValue, DataValue>::SerializeElements(
+          value_iter.begin(), input->size(), buf, result->values.ptr,
+          value_validate_params);
+  if (values_retval != internal::VALIDATION_ERROR_NONE)
+    return values_retval;
+
+  *output = result;
+  return internal::VALIDATION_ERROR_NONE;
 }
 
 template <typename MapKey,

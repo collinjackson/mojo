@@ -52,7 +52,9 @@ void SendRunMessage(MessageReceiverWithResponder* receiver,
   RequestMessageBuilder builder(kRunMessageId, size);
 
   RunMessageParams_Data* params = nullptr;
-  Serialize_(params_ptr.get(), builder.buffer(), &params);
+  auto result = Serialize_(params_ptr.get(), builder.buffer(), &params);
+  MOJO_DCHECK(result == VALIDATION_ERROR_NONE);
+
   params->EncodePointersAndHandles(builder.message()->mutable_handles());
   MessageReceiver* responder = new RunResponseForwardToCallback(callback);
   if (!receiver->AcceptWithResponder(builder.message(), responder))
@@ -70,7 +72,9 @@ void SendRunOrClosePipeMessage(MessageReceiverWithResponder* receiver,
   MessageBuilder builder(kRunOrClosePipeMessageId, size);
 
   RunOrClosePipeMessageParams_Data* params = nullptr;
-  Serialize_(params_ptr.get(), builder.buffer(), &params);
+  auto result = Serialize_(params_ptr.get(), builder.buffer(), &params);
+  MOJO_DCHECK(result == VALIDATION_ERROR_NONE);
+
   params->EncodePointersAndHandles(builder.message()->mutable_handles());
   bool ok = receiver->Accept(builder.message());
   MOJO_ALLOW_UNUSED_LOCAL(ok);

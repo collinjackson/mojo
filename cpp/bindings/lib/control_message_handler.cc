@@ -56,7 +56,10 @@ bool ControlMessageHandler::Run(Message* message,
   ResponseMessageBuilder builder(kRunMessageId, size, message->request_id());
 
   RunResponseMessageParams_Data* response_params = nullptr;
-  Serialize_(response_params_ptr.get(), builder.buffer(), &response_params);
+  auto result =
+      Serialize_(response_params_ptr.get(), builder.buffer(), &response_params);
+  MOJO_DCHECK(result == VALIDATION_ERROR_NONE);
+
   response_params->EncodePointersAndHandles(
       builder.message()->mutable_handles());
   bool ok = responder->Accept(builder.message());

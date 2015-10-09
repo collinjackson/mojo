@@ -26,10 +26,11 @@ template <typename MapKey,
           typename MapValue,
           typename DataKey,
           typename DataValue>
-void SerializeMap_(Map<MapKey, MapValue>* input,
-                   internal::Buffer* buf,
-                   internal::Map_Data<DataKey, DataValue>** output,
-                   const internal::ArrayValidateParams* value_validate_params);
+internal::ValidationError SerializeMap_(
+    Map<MapKey, MapValue>* input,
+    internal::Buffer* buf,
+    internal::Map_Data<DataKey, DataValue>** output,
+    const internal::ArrayValidateParams* value_validate_params);
 template <typename MapKey, typename MapValue>
 size_t GetSerializedSize_(const Map<MapKey, MapValue>& input);
 

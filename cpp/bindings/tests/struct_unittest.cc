@@ -5,6 +5,7 @@
 #include <string.h>
 
 #include "mojo/public/cpp/bindings/lib/fixed_buffer.h"
+#include "mojo/public/cpp/bindings/lib/validation_errors.h"
 #include "mojo/public/cpp/environment/environment.h"
 #include "mojo/public/cpp/system/message_pipe.h"
 #include "mojo/public/interfaces/bindings/tests/test_structs.mojom.h"
@@ -54,7 +55,8 @@ U SerializeAndDeserialize(T input) {
   size_t size = GetSerializedSize_(*input);
   mojo::internal::FixedBufferForTesting buf(size + 32);
   InputDataType data;
-  Serialize_(input.get(), &buf, &data);
+  EXPECT_EQ(mojo::internal::VALIDATION_ERROR_NONE,
+            Serialize_(input.get(), &buf, &data));
 
   std::vector<Handle> handles;
   data->EncodePointersAndHandles(&handles);
@@ -144,7 +146,8 @@ TEST_F(StructTest, Serialization_Basic) {
 
   mojo::internal::FixedBufferForTesting buf(size);
   internal::Rect_Data* data;
-  Serialize_(rect.get(), &buf, &data);
+  EXPECT_EQ(mojo::internal::VALIDATION_ERROR_NONE,
+            Serialize_(rect.get(), &buf, &data));
 
   RectPtr rect2(Rect::New());
   Deserialize_(data, rect2.get());
@@ -177,7 +180,8 @@ TEST_F(StructTest, Serialization_StructPointers) {
 
   mojo::internal::FixedBufferForTesting buf(size);
   internal::RectPair_Data* data;
-  Serialize_(pair.get(), &buf, &data);
+  EXPECT_EQ(mojo::internal::VALIDATION_ERROR_NONE,
+            Serialize_(pair.get(), &buf, &data));
 
   RectPairPtr pair2(RectPair::New());
   Deserialize_(data, pair2.get());
@@ -208,7 +212,8 @@ TEST_F(StructTest, Serialization_ArrayPointers) {
 
   mojo::internal::FixedBufferForTesting buf(size);
   internal::NamedRegion_Data* data;
-  Serialize_(region.get(), &buf, &data);
+  EXPECT_EQ(mojo::internal::VALIDATION_ERROR_NONE,
+            Serialize_(region.get(), &buf, &data));
 
   NamedRegionPtr region2(NamedRegion::New());
   Deserialize_(data, region2.get());
@@ -234,7 +239,8 @@ TEST_F(StructTest, Serialization_NullArrayPointers) {
 
   mojo::internal::FixedBufferForTesting buf(size);
   internal::NamedRegion_Data* data;
-  Serialize_(region.get(), &buf, &data);
+  EXPECT_EQ(mojo::internal::VALIDATION_ERROR_NONE,
+            Serialize_(region.get(), &buf, &data));
 
   NamedRegionPtr region2(NamedRegion::New());
   Deserialize_(data, region2.get());
