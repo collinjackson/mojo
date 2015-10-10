@@ -43,7 +43,7 @@ FooPtr MakeFoo() {
   bar->gamma = 60;
   bar->type = Bar::Type::VERTICAL;
 
-  mojo::Array<BarPtr> extra_bars(3);
+  auto extra_bars = mojo::Array<BarPtr>::New(3);
   for (size_t i = 0; i < extra_bars.size(); ++i) {
     Bar::Type type = i % 2 == 0 ? Bar::Type::VERTICAL : Bar::Type::HORIZONTAL;
     BarPtr bar(Bar::New());
@@ -55,12 +55,12 @@ FooPtr MakeFoo() {
     extra_bars[i] = bar.Pass();
   }
 
-  mojo::Array<uint8_t> data(10);
+  auto data = mojo::Array<uint8_t>::New(10);
   for (size_t i = 0; i < data.size(); ++i)
     data[i] = static_cast<uint8_t>(data.size() - i);
 
-  mojo::Array<mojo::ScopedDataPipeConsumerHandle> input_streams(2);
-  mojo::Array<mojo::ScopedDataPipeProducerHandle> output_streams(2);
+  auto input_streams = mojo::Array<mojo::ScopedDataPipeConsumerHandle>::New(2);
+  auto output_streams = mojo::Array<mojo::ScopedDataPipeProducerHandle>::New(2);
   for (size_t i = 0; i < input_streams.size(); ++i) {
     MojoCreateDataPipeOptions options;
     options.struct_size = sizeof(MojoCreateDataPipeOptions);
@@ -74,9 +74,9 @@ FooPtr MakeFoo() {
     output_streams[i] = producer.Pass();
   }
 
-  mojo::Array<mojo::Array<bool>> array_of_array_of_bools(2);
+  auto array_of_array_of_bools = mojo::Array<mojo::Array<bool>>::New(2);
   for (size_t i = 0; i < 2; ++i) {
-    mojo::Array<bool> array_of_bools(2);
+    auto array_of_bools = mojo::Array<bool>::New(2);
     for (size_t j = 0; j < 2; ++j)
       array_of_bools[j] = j;
     array_of_array_of_bools[i] = array_of_bools.Pass();

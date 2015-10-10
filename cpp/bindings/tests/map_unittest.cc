@@ -85,7 +85,7 @@ TEST_F(MapTest, TestIndexOperatorMoveOnly) {
 
   for (size_t i = 0; i < kStringIntDataSize; ++i) {
     const char* key = kStringIntData[i].string_data;
-    Array<int32_t> array(1);
+    auto array = Array<int32_t>::New(1);
     array[0] = kStringIntData[i].int_data;
     map[key] = array.Pass();
     EXPECT_TRUE(map);
@@ -101,8 +101,8 @@ TEST_F(MapTest, TestIndexOperatorMoveOnly) {
 }
 
 TEST_F(MapTest, ConstructedFromArray) {
-  Array<String> keys(kStringIntDataSize);
-  Array<int> values(kStringIntDataSize);
+  auto keys = Array<String>::New(kStringIntDataSize);
+  auto values = Array<int>::New(kStringIntDataSize);
   for (size_t i = 0; i < kStringIntDataSize; ++i) {
     keys[i] = kStringIntData[i].string_data;
     values[i] = kStringIntData[i].int_data;
@@ -238,7 +238,7 @@ TEST_F(MapTest, MapArrayClone) {
 
 TEST_F(MapTest, ArrayOfMap) {
   {
-    Array<Map<int32_t, int8_t>> array(1);
+    auto array = Array<Map<int32_t, int8_t>>::New(1);
     array[0].insert(1, 42);
 
     size_t size = GetSerializedSize_(array);
@@ -258,8 +258,8 @@ TEST_F(MapTest, ArrayOfMap) {
   }
 
   {
-    Array<Map<String, Array<bool>>> array(1);
-    Array<bool> map_value(2);
+    auto array = Array<Map<String, Array<bool>>>::New(1);
+    auto map_value = Array<bool>::New(2);
     map_value[0] = false;
     map_value[1] = true;
     array[0].insert("hello world", map_value.Pass());

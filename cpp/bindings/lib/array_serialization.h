@@ -115,7 +115,7 @@ struct ArraySerializer<bool, bool, false> {
 
   static void DeserializeElements(Array_Data<bool>* input,
                                   Array<bool>* output) {
-    Array<bool> result(input->size());
+    auto result = Array<bool>::New(input->size());
     // TODO(darin): Can this be a memcpy somehow instead of a bit-by-bit copy?
     for (size_t i = 0; i < input->size(); ++i)
       result.at(i) = input->at(i);
@@ -158,7 +158,7 @@ struct ArraySerializer<ScopedHandleBase<H>, H, false> {
 
   static void DeserializeElements(Array_Data<H>* input,
                                   Array<ScopedHandleBase<H>>* output) {
-    Array<ScopedHandleBase<H>> result(input->size());
+    auto result = Array<ScopedHandleBase<H>>::New(input->size());
     for (size_t i = 0; i < input->size(); ++i)
       result.at(i) = MakeScopedHandle(FetchAndReset(&input->at(i)));
     output->Swap(&result);
@@ -213,7 +213,7 @@ struct ArraySerializer<
 
   static void DeserializeElements(Array_Data<S_Data*>* input,
                                   Array<S>* output) {
-    Array<S> result(input->size());
+    auto result = Array<S>::New(input->size());
     for (size_t i = 0; i < input->size(); ++i) {
       DeserializeCaller::Run(input->at(i), &result[i]);
     }
@@ -335,7 +335,7 @@ struct ArraySerializer<U, U_Data, true> {
   }
 
   static void DeserializeElements(Array_Data<U_Data>* input, Array<U>* output) {
-    Array<U> result(input->size());
+    auto result = Array<U>::New(input->size());
     for (size_t i = 0; i < input->size(); ++i) {
       auto& elem = input->at(i);
       if (!elem.is_null()) {

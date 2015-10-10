@@ -36,7 +36,7 @@ MultiVersionStructPtr MakeMultiVersionStruct() {
   output->f_int32 = 123;
   output->f_rect = MakeRect(5);
   output->f_string = "hello";
-  output->f_array = Array<int8_t>(3);
+  output->f_array = Array<int8_t>::New(3);
   output->f_array[0] = 10;
   output->f_array[1] = 9;
   output->f_array[2] = 8;
@@ -124,7 +124,7 @@ TEST_F(StructTest, Clone) {
   clone_region = region.Clone();
   EXPECT_EQ(region->name, clone_region->name);
 
-  region->rects = Array<RectPtr>(2);
+  region->rects = Array<RectPtr>::New(2);
   region->rects[1] = MakeRect();
   clone_region = region.Clone();
   EXPECT_EQ(2u, clone_region->rects.size());
@@ -298,7 +298,7 @@ TEST_F(StructTest, Versioning_OldToNew) {
     input->f_int32 = 123;
     input->f_rect = MakeRect(5);
     input->f_string = "hello";
-    input->f_array = Array<int8_t>(3);
+    input->f_array = Array<int8_t>::New(3);
     input->f_array[0] = 10;
     input->f_array[1] = 9;
     input->f_array[2] = 8;
@@ -306,7 +306,7 @@ TEST_F(StructTest, Versioning_OldToNew) {
     expected_output->f_int32 = 123;
     expected_output->f_rect = MakeRect(5);
     expected_output->f_string = "hello";
-    expected_output->f_array = Array<int8_t>(3);
+    expected_output->f_array = Array<int8_t>::New(3);
     expected_output->f_array[0] = 10;
     expected_output->f_array[1] = 9;
     expected_output->f_array[2] = 8;
@@ -322,7 +322,7 @@ TEST_F(StructTest, Versioning_OldToNew) {
     input->f_int32 = 123;
     input->f_rect = MakeRect(5);
     input->f_string = "hello";
-    input->f_array = Array<int8_t>(3);
+    input->f_array = Array<int8_t>::New(3);
     input->f_array[0] = 10;
     input->f_array[1] = 9;
     input->f_array[2] = 8;
@@ -333,7 +333,7 @@ TEST_F(StructTest, Versioning_OldToNew) {
     expected_output->f_int32 = 123;
     expected_output->f_rect = MakeRect(5);
     expected_output->f_string = "hello";
-    expected_output->f_array = Array<int8_t>(3);
+    expected_output->f_array = Array<int8_t>::New(3);
     expected_output->f_array[0] = 10;
     expected_output->f_array[1] = 9;
     expected_output->f_array[2] = 8;
@@ -357,7 +357,7 @@ TEST_F(StructTest, Versioning_NewToOld) {
     expected_output->f_int32 = 123;
     expected_output->f_rect = MakeRect(5);
     expected_output->f_string = "hello";
-    expected_output->f_array = Array<int8_t>(3);
+    expected_output->f_array = Array<int8_t>::New(3);
     expected_output->f_array[0] = 10;
     expected_output->f_array[1] = 9;
     expected_output->f_array[2] = 8;
@@ -378,7 +378,7 @@ TEST_F(StructTest, Versioning_NewToOld) {
     expected_output->f_int32 = 123;
     expected_output->f_rect = MakeRect(5);
     expected_output->f_string = "hello";
-    expected_output->f_array = Array<int8_t>(3);
+    expected_output->f_array = Array<int8_t>::New(3);
     expected_output->f_array[0] = 10;
     expected_output->f_array[1] = 9;
     expected_output->f_array[2] = 8;

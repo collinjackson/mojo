@@ -98,7 +98,7 @@ TEST_F(VersioningApplicationTest, RequireVersion) {
 TEST_F(VersioningApplicationTest, CallNonexistentMethod) {
   EXPECT_EQ(0u, database_.version());
 
-  Array<uint8_t> new_finger_print(128);
+  auto new_finger_print = Array<uint8_t>::New(128);
   for (size_t i = 0; i < 128; ++i)
     new_finger_print[i] = i + 13;
 

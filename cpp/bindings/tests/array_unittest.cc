@@ -31,7 +31,7 @@ class ArrayTest : public testing::Test {
 
 // Tests that basic Array operations work.
 TEST_F(ArrayTest, Basic) {
-  Array<char> array(8);
+  auto array = Array<char>::New(8);
   for (size_t i = 0; i < array.size(); ++i) {
     char val = static_cast<char>(i * 2);
     array[i] = val;
@@ -41,7 +41,7 @@ TEST_F(ArrayTest, Basic) {
 
 // Tests that basic Array<bool> operations work.
 TEST_F(ArrayTest, Bool) {
-  Array<bool> array(64);
+  auto array = Array<bool>::New(64);
   for (size_t i = 0; i < array.size(); ++i) {
     bool val = i % 3 == 0;
     array[i] = val;
@@ -52,7 +52,7 @@ TEST_F(ArrayTest, Bool) {
 // Tests that Array<ScopedMessagePipeHandle> supports transferring handles.
 TEST_F(ArrayTest, Handle) {
   MessagePipe pipe;
-  Array<ScopedMessagePipeHandle> handles(2);
+  auto handles = Array<ScopedMessagePipeHandle>::New(2);
   handles[0] = pipe.handle0.Pass();
   handles[1].reset(pipe.handle1.release());
 
@@ -75,7 +75,7 @@ TEST_F(ArrayTest, HandlesAreClosed) {
   MojoHandle pipe1_value = pipe.handle0.get().value();
 
   {
-    Array<ScopedMessagePipeHandle> handles(2);
+    auto handles = Array<ScopedMessagePipeHandle>::New(2);
     handles[0] = pipe.handle0.Pass();
     handles[1].reset(pipe.handle0.release());
   }
@@ -88,7 +88,7 @@ TEST_F(ArrayTest, HandlesAreClosed) {
 TEST_F(ArrayTest, Clone) {
   {
     // Test POD.
-    Array<int32_t> array(3);
+    auto array = Array<int32_t>::New(3);
     for (size_t i = 0; i < array.size(); ++i)
       array[i] = static_cast<int32_t>(i);
 
@@ -100,7 +100,7 @@ TEST_F(ArrayTest, Clone) {
 
   {
     // Test copyable object.
-    Array<String> array(2);
+    auto array = Array<String>::New(2);
     array[0] = "hello";
     array[1] = "world";
 
@@ -112,7 +112,7 @@ TEST_F(ArrayTest, Clone) {
 
   {
     // Test struct.
-    Array<RectPtr> array(2);
+    auto array = Array<RectPtr>::New(2);
     array[1] = Rect::New();
     array[1]->x = 1;
     array[1]->y = 2;
@@ -130,8 +130,8 @@ TEST_F(ArrayTest, Clone) {
 
   {
     // Test array of array.
-    Array<Array<int8_t>> array(2);
-    array[1] = Array<int8_t>(2);
+    auto array = Array<Array<int8_t>>::New(2);
+    array[1] = Array<int8_t>::New(2);
     array[1][0] = 0;
     array[1][1] = 1;
 
@@ -145,13 +145,13 @@ TEST_F(ArrayTest, Clone) {
 
   {
     // Test that array of handles still works although Clone() is not available.
-    Array<ScopedMessagePipeHandle> array(10);
+    auto array = Array<ScopedMessagePipeHandle>::New(10);
     EXPECT_FALSE(array[0].is_valid());
   }
 }
 
 TEST_F(ArrayTest, Serialization_ArrayOfPOD) {
-  Array<int32_t> array(4);
+  auto array = Array<int32_t>::New(4);
   for (size_t i = 0; i < array.size(); ++i)
     array[i] = static_cast<int32_t>(i);
 
@@ -173,7 +173,7 @@ TEST_F(ArrayTest, Serialization_ArrayOfPOD) {
 }
 
 TEST_F(ArrayTest, Serialization_EmptyArrayOfPOD) {
-  Array<int32_t> array(0);
+  auto array = Array<int32_t>::New(0);
   size_t size = GetSerializedSize_(array);
   EXPECT_EQ(8U, size);
 
@@ -189,9 +189,9 @@ TEST_F(ArrayTest, Serialization_EmptyArrayOfPOD) {
 }
 
 TEST_F(ArrayTest, Serialization_ArrayOfArrayOfPOD) {
-  Array<Array<int32_t>> array(2);
+  auto array = Array<Array<int32_t>>::New(2);
   for (size_t j = 0; j < array.size(); ++j) {
-    Array<int32_t> inner(4);
+    auto inner = Array<int32_t>::New(4);
     for (size_t i = 0; i < inner.size(); ++i)
       inner[i] = static_cast<int32_t>(i + (j * 10));
     array[j] = inner.Pass();
@@ -220,7 +220,7 @@ TEST_F(ArrayTest, Serialization_ArrayOfArrayOfPOD) {
 }
 
 TEST_F(ArrayTest, Serialization_ArrayOfBool) {
-  Array<bool> array(10);
+  auto array = Array<bool>::New(10);
   for (size_t i = 0; i < array.size(); ++i)
     array[i] = i % 2 ? true : false;
 
@@ -242,7 +242,7 @@ TEST_F(ArrayTest, Serialization_ArrayOfBool) {
 }
 
 TEST_F(ArrayTest, Serialization_ArrayOfString) {
-  Array<String> array(10);
+  auto array = Array<String>::New(10);
   for (size_t i = 0; i < array.size(); ++i) {
     char c = 'A' + static_cast<char>(i);
     array[i] = String(&c, 1);
@@ -274,7 +274,7 @@ TEST_F(ArrayTest, Serialization_ArrayOfString) {
 
 TEST_F(ArrayTest, Resize_Copyable) {
   ASSERT_EQ(0u, CopyableType::num_instances());
-  mojo::Array<CopyableType> array(3);
+  auto array = mojo::Array<CopyableType>::New(3);
   std::vector<CopyableType*> value_ptrs;
   value_ptrs.push_back(array[0].ptr());
   value_ptrs.push_back(array[1].ptr());
@@ -326,7 +326,7 @@ TEST_F(ArrayTest, Resize_Copyable) {
 
 TEST_F(ArrayTest, Resize_MoveOnly) {
   ASSERT_EQ(0u, MoveOnlyType::num_instances());
-  mojo::Array<MoveOnlyType> array(3);
+  auto array = mojo::Array<MoveOnlyType>::New(3);
   std::vector<MoveOnlyType*> value_ptrs;
   value_ptrs.push_back(array[0].ptr());
   value_ptrs.push_back(array[1].ptr());
@@ -378,7 +378,7 @@ TEST_F(ArrayTest, Resize_MoveOnly) {
 
 TEST_F(ArrayTest, PushBack_Copyable) {
   ASSERT_EQ(0u, CopyableType::num_instances());
-  mojo::Array<CopyableType> array(2);
+  auto array = mojo::Array<CopyableType>::New(2);
   array.reset();
   std::vector<CopyableType*> value_ptrs;
   size_t capacity = array.storage().capacity();
@@ -413,7 +413,7 @@ TEST_F(ArrayTest, PushBack_Copyable) {
 
 TEST_F(ArrayTest, PushBack_MoveOnly) {
   ASSERT_EQ(0u, MoveOnlyType::num_instances());
-  mojo::Array<MoveOnlyType> array(2);
+  auto array = mojo::Array<MoveOnlyType>::New(2);
   array.reset();
   std::vector<MoveOnlyType*> value_ptrs;
   size_t capacity = array.storage().capacity();

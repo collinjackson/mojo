@@ -285,7 +285,7 @@ TEST_F(HandlePassingTest, PipesAreClosed) {
   MojoHandle handle1_value = extra_pipe.handle1.get().value();
 
   {
-    Array<ScopedMessagePipeHandle> pipes(2);
+    auto pipes = Array<ScopedMessagePipeHandle>::New(2);
     pipes[0] = extra_pipe.handle0.Pass();
     pipes[1] = extra_pipe.handle1.Pass();
 

@@ -387,7 +387,7 @@ TEST(UnionTest, StringValidateOOB) {
 // Array tests
 TEST(UnionTest, PodUnionInArray) {
   SmallStructPtr small_struct(SmallStruct::New());
-  small_struct->pod_union_array = Array<PodUnionPtr>(2);
+  small_struct->pod_union_array = Array<PodUnionPtr>::New(2);
   small_struct->pod_union_array[0] = PodUnion::New();
   small_struct->pod_union_array[1] = PodUnion::New();
 
@@ -400,7 +400,7 @@ TEST(UnionTest, PodUnionInArray) {
 
 TEST(UnionTest, PodUnionInArraySerialization) {
   Environment environment;
-  Array<PodUnionPtr> array(2);
+  auto array = Array<PodUnionPtr>::New(2);
   array[0] = PodUnion::New();
   array[1] = PodUnion::New();
 
@@ -427,7 +427,7 @@ TEST(UnionTest, PodUnionInArraySerialization) {
 
 TEST(UnionTest, PodUnionInArrayValidation) {
   Environment environment;
-  Array<PodUnionPtr> array(2);
+  auto array = Array<PodUnionPtr>::New(2);
   array[0] = PodUnion::New();
   array[1] = PodUnion::New();
 
@@ -455,7 +455,7 @@ TEST(UnionTest, PodUnionInArrayValidation) {
 }
 TEST(UnionTest, PodUnionInArraySerializationWithNull) {
   Environment environment;
-  Array<PodUnionPtr> array(2);
+  auto array = Array<PodUnionPtr>::New(2);
   array[0] = PodUnion::New();
 
   array[0]->set_f_int8(10);
@@ -808,7 +808,7 @@ TEST(UnionTest, StructInUnionValidationNullable) {
 TEST(UnionTest, ArrayInUnionGetterSetter) {
   Environment environment;
 
-  Array<int8_t> array(2);
+  auto array = Array<int8_t>::New(2);
   array[0] = 8;
   array[1] = 9;
 
@@ -822,7 +822,7 @@ TEST(UnionTest, ArrayInUnionGetterSetter) {
 TEST(UnionTest, ArrayInUnionSerialization) {
   Environment environment;
 
-  Array<int8_t> array(2);
+  auto array = Array<int8_t>::New(2);
   array[0] = 8;
   array[1] = 9;
 
@@ -850,7 +850,7 @@ TEST(UnionTest, ArrayInUnionSerialization) {
 TEST(UnionTest, ArrayInUnionValidation) {
   Environment environment;
 
-  Array<int8_t> array(2);
+  auto array = Array<int8_t>::New(2);
   array[0] = 8;
   array[1] = 9;
 

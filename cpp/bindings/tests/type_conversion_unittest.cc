@@ -158,7 +158,7 @@ TEST(TypeConversionTest, CustomTypeConverter_Array_Null) {
 TEST(TypeConversionTest, CustomTypeConverter_Array) {
   const RedmondRect kBase = {10, 20, 30, 40};
 
-  Array<RectPtr> rects(10);
+  auto rects = Array<RectPtr>::New(10);
   for (size_t i = 0; i < rects.size(); ++i) {
     RedmondRect rr = kBase;
     rr.left += static_cast<int32_t>(i);

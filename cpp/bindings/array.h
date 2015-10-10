@@ -56,7 +56,11 @@ class Array {
   // Creates a non-null array of the specified size. The elements will be
   // value-initialized (meaning that they will be initialized by their default
   // constructor, if any, or else zero-initialized).
-  static Array New(size_t size) { return Array(size).Pass(); }
+  static Array New(size_t size) {
+    Array ret;
+    ret.resize(size);
+    return ret;
+  }
 
   // Creates a new array with a copy of the contents of |other|.
   template <typename U>
@@ -256,7 +260,7 @@ class Array {
 template <typename T, typename E>
 struct TypeConverter<Array<T>, std::vector<E>> {
   static Array<T> Convert(const std::vector<E>& input) {
-    Array<T> result(input.size());
+    auto result = Array<T>::New(input.size());
     for (size_t i = 0; i < input.size(); ++i)
       result[i] = TypeConverter<T, E>::Convert(input[i]);
     return result.Pass();
@@ -285,7 +289,7 @@ struct TypeConverter<std::vector<E>, Array<T>> {
 template <typename T, typename E>
 struct TypeConverter<Array<T>, std::set<E>> {
   static Array<T> Convert(const std::set<E>& input) {
-    Array<T> result(0u);
+    Array<T> result = Array<T>::New(0u);
     for (auto i : input)
       result.push_back(TypeConverter<T, E>::Convert(i));
     return result.Pass();

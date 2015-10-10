@@ -24,9 +24,9 @@ using mojo::internal::ArrayValidateParams;
 
 // Creates an array of arrays of handles (2 X 3) for testing.
 Array<Array<ScopedHandle>> CreateTestNestedHandleArray() {
-  Array<Array<ScopedHandle>> array(2);
+  auto array = Array<Array<ScopedHandle>>::New(2);
   for (size_t i = 0; i < array.size(); ++i) {
-    Array<ScopedHandle> nested_array(3);
+    auto nested_array = Array<ScopedHandle>::New(3);
     for (size_t j = 0; j < nested_array.size(); ++j) {
       MessagePipe pipe;
       nested_array[j] = ScopedHandle::From(pipe.handle1.Pass());
@@ -190,7 +190,7 @@ TEST_F(SerializationWarningTest, ArrayOfArraysOfHandles) {
 }
 
 TEST_F(SerializationWarningTest, ArrayOfStrings) {
-  Array<String> test_array(3);
+  auto test_array = Array<String>::New(3);
   for (size_t i = 0; i < test_array.size(); ++i)
     test_array[i] = "hello";
 
@@ -199,14 +199,14 @@ TEST_F(SerializationWarningTest, ArrayOfStrings) {
   TestArrayWarning(test_array.Pass(), mojo::internal::VALIDATION_ERROR_NONE,
                    &validate_params_0);
 
-  test_array = Array<String>(3);
+  test_array = Array<String>::New(3);
   ArrayValidateParams validate_params_1(
       0, false, new ArrayValidateParams(0, false, nullptr));
   TestArrayWarning(test_array.Pass(),
                    mojo::internal::VALIDATION_ERROR_UNEXPECTED_NULL_POINTER,
                    &validate_params_1);
 
-  test_array = Array<String>(2);
+  test_array = Array<String>::New(2);
   ArrayValidateParams validate_params_2(
       3, true, new ArrayValidateParams(0, false, nullptr));
   TestArrayWarning(test_array.Pass(),
