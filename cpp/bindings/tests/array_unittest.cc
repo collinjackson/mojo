@@ -219,6 +219,38 @@ TEST_F(ArrayTest, Serialization_ArrayOfArrayOfPOD) {
   }
 }
 
+TEST_F(ArrayTest, Serialization_ArrayOfScopedEnum) {
+  enum class TestEnum : int32_t {
+    E0,
+    E1,
+    E2,
+    E3,
+  };
+  static const TestEnum TEST_VALS[] = {
+      TestEnum::E0, TestEnum::E2, TestEnum::E1, TestEnum::E3,
+      TestEnum::E2, TestEnum::E2, TestEnum::E2, TestEnum::E0,
+  };
+
+  Array<TestEnum> array(MOJO_ARRAYSIZE(TEST_VALS));
+  for (size_t i = 0; i < array.size(); ++i)
+    array[i] = TEST_VALS[i];
+
+  size_t size = GetSerializedSize_(array);
+  EXPECT_EQ(8U + (MOJO_ARRAYSIZE(TEST_VALS) * sizeof(int32_t)), size);
+
+  FixedBufferForTesting buf(size);
+  Array_Data<int32_t>* data;
+  ArrayValidateParams validate_params(0, false, nullptr);
+  SerializeArray_(&array, &buf, &data, &validate_params);
+
+  Array<TestEnum> array2;
+  Deserialize_(data, &array2);
+
+  EXPECT_EQ(MOJO_ARRAYSIZE(TEST_VALS), array2.size());
+  for (size_t i = 0; i < array2.size(); ++i)
+    EXPECT_EQ(TEST_VALS[i], array2[i]);
+}
+
 TEST_F(ArrayTest, Serialization_ArrayOfBool) {
   auto array = Array<bool>::New(10);
   for (size_t i = 0; i < array.size(); ++i)

@@ -3,6 +3,7 @@
 // found in the LICENSE file.
 
 #include <string.h>
+#include <type_traits>
 
 #include "mojo/public/cpp/bindings/lib/fixed_buffer.h"
 #include "mojo/public/cpp/bindings/lib/validation_errors.h"
@@ -14,6 +15,10 @@
 namespace mojo {
 namespace test {
 namespace {
+
+static_assert(std::is_same<std::underlying_type<ScopedConstants::EType>::type,
+                           int32_t>::value,
+              "The underlying type of mojom generated enums must be int32_t.");
 
 RectPtr MakeRect(int32_t factor = 1) {
   RectPtr rect(Rect::New());

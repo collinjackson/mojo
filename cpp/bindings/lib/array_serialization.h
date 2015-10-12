@@ -6,6 +6,7 @@
 #define MOJO_PUBLIC_CPP_BINDINGS_LIB_ARRAY_SERIALIZATION_H_
 
 #include <string.h>  // For |memcpy()|.
+#include <type_traits>
 #include <vector>
 
 #include "mojo/public/c/system/macros.h"
@@ -30,15 +31,35 @@ namespace internal {
 //   * void DeserializeElements(..)
 //       Takes a pointer to an |Array_Data| and deserializes it into a given
 //       |Array|.
+//
+// Note: The enable template parameter exists only to allow partial
+// specializations to disable instantiation using logic based on E and F.
+// By default, assuming that there are no other substitution failures, the
+// specialization will instantiate and needs to take no action.  A partial
+// specialization of the form
+//
+// template<E, F> struct ArraySerialzer<E, F>
+//
+// may be limited to values of E and F with particular properties by supplying
+// an expression for enable which will cause substitution failure if the
+// properties of E and F do not satisfy the expression.
 template <typename E,
           typename F,
           bool is_union =
-              IsUnionDataType<typename RemovePointer<F>::type>::value>
+              IsUnionDataType<typename RemovePointer<F>::type>::value,
+          typename enable = void>
 struct ArraySerializer;
 
 // Handles serialization and deserialization of arrays of pod types.
 template <typename E, typename F>
-struct ArraySerializer<E, F, false> {
+struct ArraySerializer<
+    E,
+    F,
+    false,
+    typename std::enable_if<std::is_convertible<E, F>::value ||
+                                (std::is_enum<E>::value &&
+                                 std::is_same<F, int32_t>::value),
+                            void>::type> {
   static_assert(sizeof(E) == sizeof(F), "Incorrect array serializer");
   static size_t GetSerializedSize(const Array<E>& input) {
     return sizeof(Array_Data<F>) + Align(input.size() * sizeof(E));
@@ -56,7 +77,7 @@ struct ArraySerializer<E, F, false> {
     MOJO_DCHECK(!validate_params->element_validate_params)
         << "Primitive type should not have array validate params";
     for (size_t i = 0; i < num_elements; ++i, ++it)
-      output->at(i) = *it;
+      output->at(i) = static_cast<F>(*it);
 
     return VALIDATION_ERROR_NONE;
   }

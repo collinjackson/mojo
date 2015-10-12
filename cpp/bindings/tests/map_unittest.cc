@@ -283,6 +283,90 @@ TEST_F(MapTest, ArrayOfMap) {
   }
 }
 
+TEST_F(MapTest, Serialization_MapWithScopedEnumKeys) {
+  enum class TestEnum : int32_t {
+    E0,
+    E1,
+    E2,
+    E3,
+  };
+  static const TestEnum TEST_KEYS[] = {
+      TestEnum::E0, TestEnum::E2, TestEnum::E1, TestEnum::E3,
+  };
+  static const uint32_t TEST_VALS[] = {17, 29, 5, 61};
+
+  ASSERT_EQ(MOJO_ARRAYSIZE(TEST_KEYS), MOJO_ARRAYSIZE(TEST_VALS));
+
+  Map<TestEnum, uint32_t> test_map;
+  for (size_t i = 0; i < MOJO_ARRAYSIZE(TEST_KEYS); ++i) {
+    test_map[TEST_KEYS[i]] = TEST_VALS[i];
+  }
+
+  size_t size = GetSerializedSize_(test_map);
+  FixedBufferForTesting buf(size);
+  Map_Data<int32_t, uint32_t>* data;
+  ArrayValidateParams validate_params(0, false, nullptr);
+
+  SerializeMap_(&test_map, &buf, &data, &validate_params);
+
+  Map<TestEnum, uint32_t> test_map2;
+  Deserialize_(data, &test_map2);
+
+  EXPECT_TRUE(test_map2.Equals(test_map));
+
+  for (auto iter = test_map.cbegin(); iter != test_map.cend(); ++iter) {
+    ASSERT_NE(test_map2.find(iter.GetKey()), test_map2.end());
+    EXPECT_EQ(test_map.at(iter.GetKey()), test_map.at(iter.GetKey()));
+  }
+
+  for (auto iter = test_map2.cbegin(); iter != test_map2.cend(); ++iter) {
+    ASSERT_NE(test_map.find(iter.GetKey()), test_map.end());
+    EXPECT_EQ(test_map2.at(iter.GetKey()), test_map2.at(iter.GetKey()));
+  }
+}
+
+TEST_F(MapTest, Serialization_MapWithScopedEnumVals) {
+  enum class TestEnum : int32_t {
+    E0,
+    E1,
+    E2,
+    E3,
+  };
+  static const uint32_t TEST_KEYS[] = {17, 29, 5, 61};
+  static const TestEnum TEST_VALS[] = {
+      TestEnum::E0, TestEnum::E2, TestEnum::E1, TestEnum::E3,
+  };
+
+  ASSERT_EQ(MOJO_ARRAYSIZE(TEST_KEYS), MOJO_ARRAYSIZE(TEST_VALS));
+
+  Map<uint32_t, TestEnum> test_map;
+  for (size_t i = 0; i < MOJO_ARRAYSIZE(TEST_KEYS); ++i) {
+    test_map[TEST_KEYS[i]] = TEST_VALS[i];
+  }
+
+  size_t size = GetSerializedSize_(test_map);
+  FixedBufferForTesting buf(size);
+  Map_Data<uint32_t, int32_t>* data;
+  ArrayValidateParams validate_params(0, false, nullptr);
+
+  SerializeMap_(&test_map, &buf, &data, &validate_params);
+
+  Map<uint32_t, TestEnum> test_map2;
+  Deserialize_(data, &test_map2);
+
+  EXPECT_TRUE(test_map2.Equals(test_map));
+
+  for (auto iter = test_map.cbegin(); iter != test_map.cend(); ++iter) {
+    ASSERT_NE(test_map2.find(iter.GetKey()), test_map2.end());
+    EXPECT_EQ(test_map.at(iter.GetKey()), test_map.at(iter.GetKey()));
+  }
+
+  for (auto iter = test_map2.cbegin(); iter != test_map2.cend(); ++iter) {
+    ASSERT_NE(test_map.find(iter.GetKey()), test_map.end());
+    EXPECT_EQ(test_map2.at(iter.GetKey()), test_map2.at(iter.GetKey()));
+  }
+}
+
 }  // namespace
 }  // namespace test
 }  // namespace mojo
