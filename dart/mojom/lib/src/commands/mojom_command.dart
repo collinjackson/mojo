@@ -9,6 +9,7 @@ import 'dart:io';
 
 import 'package:args/args.dart';
 import 'package:args/command_runner.dart';
+import 'package:logging/logging.dart' as logging;
 import 'package:mojom/src/utils.dart';
 import 'package:path/path.dart' as path;
 
@@ -27,8 +28,23 @@ abstract class MojomCommand extends Command {
   Directory get mojoSdk => _mojoSdk;
   List<String> get skips => _skips;
 
+  static setupLogging() {
+    if (log == null) {
+      logging.hierarchicalLoggingEnabled = true;
+      log = new logging.Logger('mojom');
+      log.onRecord.listen((logging.LogRecord rec) {
+        print('${rec.level.name}: ${rec.message}');
+      });
+    }
+  }
+
   validateArguments() async {
-    _verbose = globalResults['verbose'];
+    assert(log != null);
+    if (globalResults['verbose']) {
+      log.level = logging.Level.INFO;
+    } else {
+      log.level = logging.Level.WARNING;
+    }
     _dryRun = globalResults['dry-run'];
     _errorOnDuplicate = !globalResults['ignore-duplicates'];
 
@@ -40,7 +56,7 @@ abstract class MojomCommand extends Command {
     }
     _mojomRoot = new Directory(makeAbsolute(globalResults['mojom-root']));
     _mojoSdk = new Directory(makeAbsolute(mojoSdkPath));
-    if (_verbose) print("Mojo SDK = $_mojoSdk");
+    log.info("Mojo SDK = $_mojoSdk");
     if (!(await _mojoSdk.exists())) {
       throw new CommandLineError(
           "The specified Mojo SDK directory $_mojoSdk must exist.");

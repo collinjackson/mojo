@@ -29,20 +29,16 @@ class SinglePackageCommand extends MojomCommand {
   }
 
   run() async {
+    MojomCommand.setupLogging();
     await _validateArguments();
 
-    var dotMojomsGenerator = new DotMojomsGenerator(
-        mojomRoot, _package.parent, skips,
-        verbose: verbose);
-    List<File> dotMojoms = await dotMojomsGenerator.generate();
+    var mojomFinder = new MojomFinder(mojomRoot, _package.parent, skips);
+    List<PackageInfo> packageInfos = await mojomFinder.find();
 
     var generator = new MojomGenerator(mojoSdk,
-        verbose: verbose, dryRun: dryRun, errorOnDuplicate: errorOnDuplicate);
-    await generator.generateForPackage(_package);
-
-    // Delete the generated .mojoms file if one was created.
-    for (var mojoms in dotMojoms) {
-      await mojoms.delete();
+        dryRun: dryRun, errorOnDuplicate: errorOnDuplicate);
+    for (PackageInfo info in packageInfos) {
+      await generator.generate(info);
     }
   }
 
@@ -50,7 +46,7 @@ class SinglePackageCommand extends MojomCommand {
     await validateArguments();
 
     _package = new Directory(makeAbsolute(argResults['package']));
-    if (verbose) print("package = $_package");
+    log.info("package = $_package");
     if (!(await _package.exists())) {
       throw new CommandLineError("The package $_package must exist");
     }

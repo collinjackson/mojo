@@ -9,6 +9,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:crypto/crypto.dart' as crypto;
+import 'package:logging/logging.dart' as logging;
 import 'package:path/path.dart' as path;
 
 bool isMojomDart(String path) => path.endsWith('.mojom.dart');
@@ -21,6 +22,8 @@ String makeAbsolute(String p) =>
 String makeRelative(String p) => path.isAbsolute(p)
     ? path.normalize(path.relative(p, from: Directory.current.path))
     : path.normalize(p);
+
+logging.Logger log;
 
 /// An Error for problems on the command line.
 class CommandLineError {
@@ -89,11 +92,7 @@ markFileReadOnly(String file) async {
   }
 }
 
-Future<DateTime> getModificationTime(Uri uri) async {
-  if (uri.scheme.startsWith('http')) {
-    return new DateTime.now();
-  }
-  File f = new File.fromUri(uri);
+Future<DateTime> getModificationTime(File f) async {
   var stat = await f.stat();
   return stat.modified;
 }

@@ -35,10 +35,10 @@ class CheckCommand extends MojomCommand {
   }
 
   run() async {
+    MojomCommand.setupLogging();
     await _validateArguments();
-    var treeChecker = new TreeChecker(
-        mojoSdk, mojomRoot, _dartRoot, _canon, skips,
-        verbose: verbose);
+    var treeChecker =
+        new TreeChecker(mojoSdk, mojomRoot, _dartRoot, _canon, skips);
     await treeChecker.check();
     return treeChecker.errors;
   }

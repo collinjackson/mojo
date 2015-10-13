@@ -19,7 +19,7 @@ dart_pkg("mojom") {
   sources = [
     "CHANGELOG.md",
     "README.md",
-    "lib/src/generate_dot_mojoms.dart",
+    "lib/src/mojom_finder.dart",
     "pubspec.yaml",
   ]
   deps = [

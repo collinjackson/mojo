@@ -32,10 +32,11 @@ class GenCommand extends MojomCommand {
   }
 
   run() async {
+    MojomCommand.setupLogging();
     await _validateArguments();
-    var treeGenerator = new TreeGenerator(mojoSdk, mojomRoot, _dartRoot, skips,
-        verbose: verbose, dryRun: dryRun);
-    await treeGenerator.findAndGenerate();
+    var treeGenerator =
+        new TreeGenerator(mojoSdk, mojomRoot, _dartRoot, skips, dryRun: dryRun);
+    await treeGenerator.generate();
     return treeGenerator.errors;
   }
 
