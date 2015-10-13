@@ -20,6 +20,17 @@ struct RectPair {
 struct EmptyStruct {
 };
 
+
+struct HandleStruct {
+  handle<message_pipe>? h;
+  array<handle<message_pipe>> array_h;
+};
+
+struct NullableHandleStruct {
+  handle<message_pipe>? h;
+  int32 data = 1234;
+};
+
 // Used to verify that struct fields which don't specify a default are
 // initialized to: false for bool, 0 for numbers, and null for strings,
 // handles, and structs. The "?" nullable suffix shouldn't have any
