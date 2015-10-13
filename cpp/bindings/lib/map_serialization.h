@@ -5,6 +5,8 @@
 #ifndef MOJO_PUBLIC_CPP_BINDINGS_LIB_MAP_SERIALIZATION_H_
 #define MOJO_PUBLIC_CPP_BINDINGS_LIB_MAP_SERIALIZATION_H_
 
+#include <type_traits>
+
 #include "mojo/public/cpp/bindings/lib/array_internal.h"
 #include "mojo/public/cpp/bindings/lib/array_serialization.h"
 #include "mojo/public/cpp/bindings/lib/bindings_internal.h"
@@ -12,6 +14,7 @@
 #include "mojo/public/cpp/bindings/lib/map_data_internal.h"
 #include "mojo/public/cpp/bindings/lib/map_internal.h"
 #include "mojo/public/cpp/bindings/lib/string_serialization.h"
+#include "mojo/public/cpp/bindings/lib/template_util.h"
 #include "mojo/public/cpp/bindings/map.h"
 
 namespace mojo {
@@ -20,8 +23,8 @@ namespace internal {
 template <typename MapType,
           typename DataType,
           bool value_is_move_only_type = IsMoveOnlyType<MapType>::value,
-          bool is_union =
-              IsUnionDataType<typename RemovePointer<DataType>::type>::value>
+          bool is_union = IsUnionDataType<
+              typename std::remove_pointer<DataType>::type>::value>
 struct MapSerializer;
 
 template <typename MapType, typename DataType>
@@ -53,12 +56,14 @@ struct MapSerializer<ScopedHandleBase<H>, H, true, false> {
 template <typename S>
 struct MapSerializer<
     S,
-    typename EnableIf<IsPointer<typename WrapperTraits<S>::DataType>::value,
-                      typename WrapperTraits<S>::DataType>::type,
+    typename std::enable_if<
+        std::is_pointer<typename WrapperTraits<S>::DataType>::value,
+        typename WrapperTraits<S>::DataType>::type,
     true,
     false> {
   typedef
-      typename RemovePointer<typename WrapperTraits<S>::DataType>::type S_Data;
+      typename std::remove_pointer<typename WrapperTraits<S>::DataType>::type
+          S_Data;
   static size_t GetBaseArraySize(size_t count) {
     return count * sizeof(StructPointer<S_Data>);
   }

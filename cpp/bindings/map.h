@@ -6,6 +6,7 @@
 #define MOJO_PUBLIC_CPP_BINDINGS_MAP_H_
 
 #include <map>
+#include <type_traits>
 
 #include "mojo/public/cpp/bindings/lib/map_internal.h"
 #include "mojo/public/cpp/bindings/lib/template_util.h"
@@ -178,16 +179,15 @@ class Map {
   enum class IteratorMutability { kConst, kMutable };
   template <IteratorMutability MutabilityType = IteratorMutability::kMutable>
   class InternalIterator {
-    using InternalIteratorType = typename internal::Conditional<
+    using InternalIteratorType = typename std::conditional<
         MutabilityType == IteratorMutability::kConst,
         typename std::map<KeyStorageType, ValueStorageType>::const_iterator,
         typename std::map<KeyStorageType, ValueStorageType>::iterator>::type;
 
     using ReturnValueType =
-        typename internal::Conditional<MutabilityType ==
-                                           IteratorMutability::kConst,
-                                       ValueConstRefType,
-                                       ValueRefType>::type;
+        typename std::conditional<MutabilityType == IteratorMutability::kConst,
+                                  ValueConstRefType,
+                                  ValueRefType>::type;
 
    public:
     InternalIterator() : it_() {}

@@ -5,6 +5,8 @@
 #ifndef MOJO_PUBLIC_CPP_BINDINGS_LIB_BINDINGS_INTERNAL_H_
 #define MOJO_PUBLIC_CPP_BINDINGS_LIB_BINDINGS_INTERNAL_H_
 
+#include <type_traits>
+
 #include "mojo/public/cpp/bindings/lib/template_util.h"
 #include "mojo/public/cpp/bindings/struct_ptr.h"
 #include "mojo/public/cpp/system/core.h"
@@ -86,7 +88,7 @@ T FetchAndReset(T* ptr) {
 
 template <typename H>
 struct IsHandle {
-  enum { value = IsBaseOf<Handle, H>::value };
+  enum { value = std::is_base_of<Handle, H>::value };
 };
 
 template <typename T>
@@ -149,7 +151,7 @@ struct IsUnionWrapperType {
   static NoType Test(...);
 
   static const bool value =
-      sizeof(Test<T>(0)) == sizeof(YesType) && !IsConst<T>::value;
+      sizeof(Test<T>(0)) == sizeof(YesType) && !std::is_const<T>::value;
 };
 
 template <typename T>
@@ -161,7 +163,7 @@ struct IsUnionDataType {
   static NoType Test(...);
 
   static const bool value =
-      sizeof(Test<T>(0)) == sizeof(YesType) && !IsConst<T>::value;
+      sizeof(Test<T>(0)) == sizeof(YesType) && !std::is_const<T>::value;
 };
 
 template <typename T,
@@ -205,12 +207,12 @@ struct ValueTraits {
 };
 
 template <typename T>
-struct ValueTraits<
-    T,
-    typename EnableIf<IsSpecializationOf<Array, T>::value ||
-                      IsSpecializationOf<Map, T>::value ||
-                      IsSpecializationOf<StructPtr, T>::value ||
-                      IsSpecializationOf<InlinedStructPtr, T>::value>::type> {
+struct ValueTraits<T,
+                   typename std::enable_if<
+                       IsSpecializationOf<Array, T>::value ||
+                       IsSpecializationOf<Map, T>::value ||
+                       IsSpecializationOf<StructPtr, T>::value ||
+                       IsSpecializationOf<InlinedStructPtr, T>::value>::type> {
   static bool Equals(const T& a, const T& b) { return a.Equals(b); }
 };
 

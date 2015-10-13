@@ -6,6 +6,7 @@
 #define MOJO_PUBLIC_CPP_BINDINGS_LIB_ARRAY_INTERNAL_H_
 
 #include <new>
+#include <type_traits>
 #include <vector>
 
 #include "mojo/public/c/system/macros.h"
@@ -14,7 +15,6 @@
 #include "mojo/public/cpp/bindings/lib/bounds_checker.h"
 #include "mojo/public/cpp/bindings/lib/buffer.h"
 #include "mojo/public/cpp/bindings/lib/map_data_internal.h"
-#include "mojo/public/cpp/bindings/lib/template_util.h"
 #include "mojo/public/cpp/bindings/lib/validate_params.h"
 #include "mojo/public/cpp/bindings/lib/validation_errors.h"
 #include "mojo/public/cpp/environment/logging.h"
@@ -389,7 +389,7 @@ class Array_Data {
   typedef ArraySerializationHelper<
       T,
       IsHandle<T>::value,
-      IsUnionDataType<typename RemovePointer<T>::type>::value> Helper;
+      IsUnionDataType<typename std::remove_pointer<T>::type>::value> Helper;
 
   // Returns null if |num_elements| or the corresponding storage size cannot be
   // stored in uint32_t.

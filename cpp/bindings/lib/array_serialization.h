@@ -16,7 +16,6 @@
 #include "mojo/public/cpp/bindings/lib/map_data_internal.h"
 #include "mojo/public/cpp/bindings/lib/map_serialization_forward.h"
 #include "mojo/public/cpp/bindings/lib/string_serialization.h"
-#include "mojo/public/cpp/bindings/lib/template_util.h"
 #include "mojo/public/cpp/bindings/lib/validation_errors.h"
 
 namespace mojo {
@@ -46,7 +45,7 @@ namespace internal {
 template <typename E,
           typename F,
           bool is_union =
-              IsUnionDataType<typename RemovePointer<F>::type>::value,
+              IsUnionDataType<typename std::remove_pointer<F>::type>::value,
           typename enable = void>
 struct ArraySerializer;
 
@@ -192,11 +191,13 @@ struct ArraySerializer<ScopedHandleBase<H>, H, false> {
 template <typename S>
 struct ArraySerializer<
     S,
-    typename EnableIf<IsPointer<typename WrapperTraits<S>::DataType>::value,
-                      typename WrapperTraits<S>::DataType>::type,
+    typename std::enable_if<
+        std::is_pointer<typename WrapperTraits<S>::DataType>::value,
+        typename WrapperTraits<S>::DataType>::type,
     false> {
   typedef
-      typename RemovePointer<typename WrapperTraits<S>::DataType>::type S_Data;
+      typename std::remove_pointer<typename WrapperTraits<S>::DataType>::type
+          S_Data;
   static size_t GetSerializedSize(const Array<S>& input) {
     size_t size = sizeof(Array_Data<S_Data*>) +
                   input.size() * sizeof(StructPointer<S_Data>);
@@ -249,8 +250,10 @@ struct ArraySerializer<
   struct SerializeCaller {
     // This template needs to be suppressed if |T| is |String|, otherwise it
     // takes precedence over the |String|-overloaded Run() below.
-    template <typename T,
-              typename = typename EnableIf<!IsSame<T, String>::value, T>::type>
+    template <
+        typename T,
+        typename =
+            typename std::enable_if<!std::is_same<T, String>::value, T>::type>
     static ValidationError Run(T* input,
                                Buffer* buf,
                                typename WrapperTraits<T>::DataType* output,

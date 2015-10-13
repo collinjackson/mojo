@@ -5,6 +5,8 @@
 #ifndef MOJO_PUBLIC_CPP_BINDINGS_CALLBACK_H_
 #define MOJO_PUBLIC_CPP_BINDINGS_CALLBACK_H_
 
+#include <type_traits>
+
 #include "mojo/public/cpp/bindings/lib/callback_internal.h"
 #include "mojo/public/cpp/bindings/lib/shared_ptr.h"
 #include "mojo/public/cpp/bindings/lib/template_util.h"
@@ -41,7 +43,7 @@ class Callback<void(Args...)> {
   // preferred if the type has both.
   template <typename Sink>
   Callback(const Sink& sink) {
-    using sink_type = typename internal::Conditional<
+    using sink_type = typename std::conditional<
         internal::HasCompatibleCallOperator<Sink, Args...>::value,
         FunctorAdapter<Sink>, RunnableAdapter<Sink>>::type;
     sink_ = internal::SharedPtr<Runnable>(new sink_type(sink));
