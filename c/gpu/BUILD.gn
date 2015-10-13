@@ -65,7 +65,10 @@ mojo_sdk_source_set("GLES2") {
   sources = [
     "GLES2/gl2.h",
     "GLES2/gl2ext.h",
-    "GLES2/gl2mojo.h",
+    "GLES2/gl2extmojo.h",
+    "GLES2/gl2mojo_autogen.h",
+    "GLES2/gl2mojo_internal.h",
+    "GLES2/gl2platform.h",
   ]
 
   public_deps = [
