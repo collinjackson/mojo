@@ -69,8 +69,6 @@ namespace mojo {
 // like the C++11 |unique_ptr|.
 template <class HandleType>
 class ScopedHandleBase {
-  MOJO_MOVE_ONLY_TYPE(ScopedHandleBase)
-
  public:
   ScopedHandleBase() {}
   explicit ScopedHandleBase(HandleType handle) : handle_(handle) {}
@@ -127,6 +125,8 @@ class ScopedHandleBase {
   }
 
   HandleType handle_;
+
+  MOJO_MOVE_ONLY_TYPE(ScopedHandleBase);
 };
 
 template <typename HandleType>

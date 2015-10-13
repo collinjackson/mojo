@@ -92,8 +92,6 @@ TEST(MacrosCppTest, ArraySize) {
 // Note: MSVS is very strict (and arguably buggy) about warnings for classes
 // defined in a local scope, so define these globally.
 class MoveOnlyInt {
-  MOJO_MOVE_ONLY_TYPE(MoveOnlyInt)
-
  public:
   MoveOnlyInt() : is_set_(false), value_() {}
   explicit MoveOnlyInt(int value) : is_set_(true), value_(value) {}
@@ -119,6 +117,8 @@ class MoveOnlyInt {
  private:
   bool is_set_;
   int value_;
+
+  MOJO_MOVE_ONLY_TYPE(MoveOnlyInt);
 };
 
 TEST(MacrosCppTest, MoveOnlyType) {

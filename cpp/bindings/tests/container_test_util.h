@@ -28,7 +28,6 @@ class CopyableType {
 };
 
 class MoveOnlyType {
-  MOJO_MOVE_ONLY_TYPE(MoveOnlyType)
  public:
   typedef MoveOnlyType Data_;
   MoveOnlyType();
@@ -45,6 +44,8 @@ class MoveOnlyType {
   bool moved_;
   static size_t num_instances_;
   MoveOnlyType* ptr_;
+
+  MOJO_MOVE_ONLY_TYPE(MoveOnlyType);
 };
 
 }  // namespace mojo

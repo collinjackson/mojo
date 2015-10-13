@@ -14,8 +14,6 @@ namespace mojo {
 // interface implementation, which could be used to construct an InterfacePtr.
 template <typename Interface>
 class InterfacePtrInfo {
-  MOJO_MOVE_ONLY_TYPE(InterfacePtrInfo);
-
  public:
   InterfacePtrInfo() : version_(0u) {}
 
@@ -51,6 +49,8 @@ class InterfacePtrInfo {
  private:
   ScopedMessagePipeHandle handle_;
   uint32_t version_;
+
+  MOJO_MOVE_ONLY_TYPE(InterfacePtrInfo);
 };
 
 }  // namespace mojo

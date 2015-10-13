@@ -45,8 +45,6 @@ namespace mojo {
 //   };
 template <typename Interface>
 class StrongBinding {
-  MOJO_MOVE_ONLY_TYPE(StrongBinding)
-
  public:
   explicit StrongBinding(Interface* impl) : binding_(impl) {
     binding_.set_connection_error_handler([this]() { OnConnectionError(); });
@@ -120,6 +118,8 @@ class StrongBinding {
  private:
   Closure connection_error_handler_;
   Binding<Interface> binding_;
+
+  MOJO_MOVE_ONLY_TYPE(StrongBinding);
 };
 
 }  // namespace mojo

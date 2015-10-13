@@ -17,7 +17,6 @@ namespace mojo {
 // if the client did not provide a message pipe.
 template <typename Interface>
 class InterfaceRequest {
-  MOJO_MOVE_ONLY_TYPE(InterfaceRequest)
  public:
   // Constructs an empty InterfaceRequest, representing that the client is not
   // requesting an implementation of Interface.
@@ -51,6 +50,8 @@ class InterfaceRequest {
 
  private:
   ScopedMessagePipeHandle handle_;
+
+  MOJO_MOVE_ONLY_TYPE(InterfaceRequest);
 };
 
 // Makes an InterfaceRequest bound to the specified message pipe. If |handle|

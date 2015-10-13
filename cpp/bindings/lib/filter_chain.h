@@ -15,8 +15,6 @@ namespace mojo {
 namespace internal {
 
 class FilterChain {
-  MOJO_MOVE_ONLY_TYPE(FilterChain)
-
  public:
   // Doesn't take ownership of |sink|. Therefore |sink| has to stay alive while
   // this object is alive.
@@ -44,6 +42,8 @@ class FilterChain {
   std::vector<MessageFilter*> filters_;
 
   MessageReceiver* sink_;
+
+  MOJO_MOVE_ONLY_TYPE(FilterChain);
 };
 
 template <typename FilterType>

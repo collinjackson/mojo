@@ -23,8 +23,6 @@ namespace mojo {
 //     using the insert() method.
 template <typename Key, typename Value>
 class Map {
-  MOJO_MOVE_ONLY_TYPE(Map)
-
  public:
   // Map keys cannot be move only classes.
   static_assert(!internal::IsMoveOnlyType<Key>::value,
@@ -264,6 +262,8 @@ class Map {
 
   std::map<KeyStorageType, ValueStorageType> map_;
   bool is_null_;
+
+  MOJO_MOVE_ONLY_TYPE(Map);
 };
 
 // Copies the contents of an std::map to a new Map, optionally changing the

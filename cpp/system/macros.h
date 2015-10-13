@@ -9,9 +9,20 @@
 #ifndef MOJO_PUBLIC_CPP_SYSTEM_MACROS_H_
 #define MOJO_PUBLIC_CPP_SYSTEM_MACROS_H_
 
+#include <utility>
+
 #include "mojo/public/c/system/macros.h"  // Symbols exposed.
 
-// A macro to disallow the copy constructor and operator= functions.
+// A macro to disallow the copy constructor and operator= functions. This is
+// typically used like:
+//
+//   class MyUncopyableClass {
+//    public:
+//     ...
+//    private:
+//     ...
+//     MOJO_DISALLOW_COPY_AND_ASSIGN(MyUncopyableClass);
+//   };
 #define MOJO_DISALLOW_COPY_AND_ASSIGN(TypeName) \
   TypeName(const TypeName&) = delete;           \
   void operator=(const TypeName&) = delete
@@ -30,19 +41,28 @@ char(&ArraySizeHelper(const T(&array)[N]))[N];
 }  // namespace mojo
 #define MOJO_ARRAYSIZE(array) (sizeof(::mojo::internal::ArraySizeHelper(array)))
 
-// Used to make a type move-only. See Chromium's base/move.h for more
-// details. The MoveOnlyTypeForCPP03 typedef is for Chromium's base/callback.h
-// to tell that this type is move-only.
-#define MOJO_MOVE_ONLY_TYPE(type)                                              \
- private:                                                                      \
-  type(const type&);                                                           \
-  void operator=(const type&);                                                 \
-                                                                               \
- public:                                                                       \
-  type&& Pass() MOJO_WARN_UNUSED_RESULT { return static_cast<type&&>(*this); } \
-  typedef void MoveOnlyTypeForCPP03;                                           \
-                                                                               \
- private:
+// Used to make a type move-only. (The MoveOnlyTypeForCPP03 typedef is for
+// Chromium's base/callback.h to tell that this type is move-only.) This is
+// typically used like:
+//
+//   class MyMoveOnlyClass {
+//    public:
+//     ...
+//    private:
+//     ...
+//     MOJO_MOVE_ONLY_TYPE(MyMoveOnlyClass);
+//   };
+//
+// (Note: Class members following the use of this macro will have private access
+// by default.)
+#define MOJO_MOVE_ONLY_TYPE(type)                                    \
+ public:                                                             \
+  type&& Pass() MOJO_WARN_UNUSED_RESULT { return std::move(*this); } \
+  typedef void MoveOnlyTypeForCPP03;                                 \
+                                                                     \
+ private:                                                            \
+  type(const type&) = delete;                                        \
+  void operator=(const type&) = delete
 
 // The C++ standard requires that static const members have an out-of-class
 // definition (in a single compilation unit), but MSVC chokes on this (when

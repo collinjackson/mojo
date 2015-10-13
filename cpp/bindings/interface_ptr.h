@@ -28,7 +28,6 @@ namespace mojo {
 // create and bind a new InterfacePtr from that thread.
 template <typename Interface>
 class InterfacePtr {
-  MOJO_MOVE_ONLY_TYPE(InterfacePtr)
  public:
   // Constructs an unbound InterfacePtr.
   InterfacePtr() {}
@@ -165,6 +164,8 @@ class InterfacePtr {
  private:
   typedef internal::InterfacePtrState<Interface> State;
   mutable State internal_state_;
+
+  MOJO_MOVE_ONLY_TYPE(InterfacePtr);
 };
 
 // If |info| is valid (containing a valid message pipe handle), returns an
