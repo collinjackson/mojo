@@ -185,6 +185,50 @@ struct ArraySerializer<ScopedHandleBase<H>, H, false> {
   }
 };
 
+// Serializes and deserializes arrays of interfaces (interface pointers).
+template <typename Interface>
+struct ArraySerializer<InterfacePtr<Interface>, Interface_Data, false> {
+  static size_t GetSerializedSize(const Array<InterfacePtr<Interface>>& input) {
+    return sizeof(Array_Data<Interface_Data>) +
+           Align(input.size() * sizeof(Interface_Data));
+  }
+
+  template <typename Iterator>
+  static ValidationError SerializeElements(
+      Iterator it,
+      size_t num_elements,
+      Buffer* buf,
+      Array_Data<Interface_Data>* output,
+      const ArrayValidateParams* validate_params) {
+    MOJO_DCHECK(!validate_params->element_validate_params)
+        << "Interface type should not have array validate params";
+
+    for (size_t i = 0; i < num_elements; ++i, ++it) {
+      // Transfer ownership of the handle.
+      internal::InterfacePointerToData(it->Pass(), &output->at(i));
+      if (!validate_params->element_is_nullable &&
+          !output->at(i).handle.is_valid()) {
+        MOJO_INTERNAL_DLOG_SERIALIZATION_WARNING(
+            VALIDATION_ERROR_UNEXPECTED_INVALID_HANDLE,
+            MakeMessageWithArrayIndex(
+                "invalid handle in array expecting valid handles", num_elements,
+                i));
+        return VALIDATION_ERROR_UNEXPECTED_INVALID_HANDLE;
+      }
+    }
+
+    return VALIDATION_ERROR_NONE;
+  }
+
+  static void DeserializeElements(Array_Data<Interface_Data>* input,
+                                  Array<InterfacePtr<Interface>>* output) {
+    Array<InterfacePtr<Interface>> result(input->size());
+    for (size_t i = 0; i < input->size(); ++i)
+      internal::InterfaceDataToPointer(&input->at(i), &result.at(i));
+    output->Swap(&result);
+  }
+};
+
 // This template must only apply to pointer mojo entity (structs, arrays,
 // strings).  This is done by ensuring that WrapperTraits<S>::DataType is a
 // pointer.

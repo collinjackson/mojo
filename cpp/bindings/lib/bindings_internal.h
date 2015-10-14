@@ -17,6 +17,9 @@ class String;
 template <typename T>
 class Array;
 
+template <typename Interface>
+class InterfacePtr;
+
 template <typename K, typename V>
 class Map;
 
@@ -179,6 +182,10 @@ struct WrapperTraits<T, false, false> {
 template <typename H>
 struct WrapperTraits<ScopedHandleBase<H>, true, false> {
   typedef H DataType;
+};
+template <typename Interface>
+struct WrapperTraits<InterfacePtr<Interface>, true, false> {
+  typedef Interface_Data DataType;
 };
 template <typename S>
 struct WrapperTraits<StructPtr<S>, true, false> {

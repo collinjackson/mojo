@@ -9,6 +9,7 @@
 #include "mojo/public/cpp/bindings/tests/container_test_util.h"
 #include "mojo/public/cpp/bindings/tests/iterator_test_util.h"
 #include "mojo/public/cpp/environment/environment.h"
+#include "mojo/public/interfaces/bindings/tests/test_arrays.mojom.h"
 #include "mojo/public/interfaces/bindings/tests/test_structs.mojom.h"
 #include "testing/gtest/include/gtest/gtest.h"
 
@@ -302,6 +303,147 @@ TEST_F(ArrayTest, Serialization_ArrayOfString) {
     char c = 'A' + static_cast<char>(i);
     EXPECT_EQ(String(&c, 1), array2[i]);
   }
+}
+
+// Tests serializing and deserializing an Array<Handle>.
+TEST_F(ArrayTest, Serialization_ArrayOfHandle) {
+  Array<ScopedHandleBase<MessagePipeHandle>> array(4);
+  MessagePipe p0;
+  MessagePipe p1;
+  // array[0] is left invalid.
+  array[1] = p0.handle1.Pass();
+  array[2] = p1.handle0.Pass();
+  array[3] = p1.handle1.Pass();
+
+  size_t size = GetSerializedSize_(array);
+  EXPECT_EQ(8U               // array header
+                + (4U * 4),  // 4 handles
+            size);
+
+  // We're going to reuse this buffer.. twice.
+  FixedBufferForTesting buf(size * 3);
+  Array_Data<MessagePipeHandle>* data;
+
+  // 1.  Serialization should fail on non-nullable invalid Handle.
+  ArrayValidateParams validate_params(4, false, nullptr);
+  EXPECT_EQ(mojo::internal::VALIDATION_ERROR_UNEXPECTED_INVALID_HANDLE,
+            SerializeArray_(&array, &buf, &data, &validate_params));
+
+  // We failed trying to transfer the first handle, so the rest are left valid.
+  EXPECT_FALSE(array[0].is_valid());
+  EXPECT_TRUE(array[1].is_valid());
+  EXPECT_TRUE(array[2].is_valid());
+  EXPECT_TRUE(array[3].is_valid());
+
+  // 2.  Serialization should pass on nullable invalid Handle.
+  ArrayValidateParams validate_params_nullable(4, true, nullptr);
+  EXPECT_EQ(mojo::internal::VALIDATION_ERROR_NONE,
+            SerializeArray_(&array, &buf, &data, &validate_params_nullable));
+
+  EXPECT_FALSE(array[0].is_valid());
+  EXPECT_FALSE(array[1].is_valid());
+  EXPECT_FALSE(array[2].is_valid());
+  EXPECT_FALSE(array[3].is_valid());
+
+  Deserialize_(data, &array);
+  EXPECT_FALSE(array[0].is_valid());
+  EXPECT_TRUE(array[1].is_valid());
+  EXPECT_TRUE(array[2].is_valid());
+  EXPECT_TRUE(array[3].is_valid());
+}
+
+TEST_F(ArrayTest, Serialization_StructWithArraysOfHandles) {
+  StructWithHandles handles_struct;
+  MessagePipe handle_pair_0;
+}
+
+// Test serializing and deserializing an Array<InterfacePtr>.
+TEST_F(ArrayTest, Serialization_ArrayOfInterfacePtr) {
+  Array<TestInterfacePtr> iface_array(1);
+  size_t size = GetSerializedSize_(iface_array);
+  EXPECT_EQ(8U               // array header
+                + (8U * 1),  // Interface_Data * number of elements
+            size);
+
+  FixedBufferForTesting buf(size * 3);
+  Array_Data<mojo::internal::Interface_Data>* output;
+
+  // 1.  Invalid InterfacePtr should fail serialization.
+  ArrayValidateParams validate_non_nullable(1, false, nullptr);
+  EXPECT_EQ(
+      mojo::internal::VALIDATION_ERROR_UNEXPECTED_INVALID_HANDLE,
+      SerializeArray_(&iface_array, &buf, &output, &validate_non_nullable));
+  EXPECT_FALSE(iface_array[0].is_bound());
+
+  // 2.  Invalid InterfacePtr should pass if array elements are nullable.
+  ArrayValidateParams validate_nullable(1, true, nullptr);
+  EXPECT_EQ(mojo::internal::VALIDATION_ERROR_NONE,
+            SerializeArray_(&iface_array, &buf, &output, &validate_nullable));
+  EXPECT_FALSE(iface_array[0].is_bound());
+
+  // 3.  Should serialize successfully if InterfacePtr is valid.
+  TestInterfacePtr iface_ptr;
+  auto iface_req = GetProxy(&iface_ptr);
+
+  iface_array[0] = iface_ptr.Pass();
+  EXPECT_TRUE(iface_array[0].is_bound());
+
+  EXPECT_EQ(
+      mojo::internal::VALIDATION_ERROR_NONE,
+      SerializeArray_(&iface_array, &buf, &output, &validate_non_nullable));
+  EXPECT_FALSE(iface_array[0].is_bound());
+
+  Deserialize_(output, &iface_array);
+  EXPECT_TRUE(iface_array[0].is_bound());
+}
+
+// Test serializing and deserializing a struct with an Array<> of another struct
+// which has an InterfacePtr.
+TEST_F(ArrayTest, Serialization_StructWithArrayOfIntefacePtr) {
+  StructWithInterfaceArray struct_arr_iface;
+  struct_arr_iface.structs_array = Array<StructWithInterfacePtr>::New(1);
+  struct_arr_iface.nullable_structs_array =
+      Array<StructWithInterfacePtr>::New(1);
+
+  size_t size = GetSerializedSize_(struct_arr_iface);
+  EXPECT_EQ(8U                // struct header
+                + 8U          // offset to |structs_array|
+                + (8U         // array header
+                   + 8U       // offset to StructWithInterface
+                   + (8U      // StructWithInterface header
+                      + 8U))  // Interface_Data
+                + 8U          // offset to |structs_nullable_array|
+                + 8U          // offset to |nullable_structs_array|
+                + (8U         // array header
+                   + 8U       // offset to StructWithinInterface
+                   + (8U      // StructWithInterface header
+                      + 8U))  // Interface_Data
+                + 8U,         // offset to |nullable_structs_nullable_array|
+            size);
+
+  FixedBufferForTesting buf(size * 2);
+  StructWithInterfaceArray::Data_* struct_arr_iface_data;
+  //  1. This should fail because |structs_array| has an invalid InterfacePtr<>
+  //     and it is not nullable.
+  EXPECT_EQ(mojo::internal::VALIDATION_ERROR_UNEXPECTED_NULL_POINTER,
+            Serialize_(&struct_arr_iface, &buf, &struct_arr_iface_data));
+
+  //  2. Adding in a struct with a valid InterfacePtr<> will let it serialize.
+  TestInterfacePtr iface_ptr;
+  auto iface_req = GetProxy(&iface_ptr);
+
+  StructWithInterfacePtr iface_struct(StructWithInterface::New());
+  iface_struct->iptr = iface_ptr.Pass();
+
+  struct_arr_iface.structs_array[0] = iface_struct.Pass();
+  ASSERT_TRUE(struct_arr_iface.structs_array[0]->iptr.is_bound());
+  EXPECT_EQ(mojo::internal::VALIDATION_ERROR_NONE,
+            Serialize_(&struct_arr_iface, &buf, &struct_arr_iface_data));
+
+  EXPECT_FALSE(struct_arr_iface.structs_array[0]->iptr.is_bound());
+
+  Deserialize_(struct_arr_iface_data, &struct_arr_iface);
+  EXPECT_TRUE(struct_arr_iface.structs_array[0]->iptr.is_bound());
 }
 
 TEST_F(ArrayTest, Resize_Copyable) {
