@@ -62,37 +62,6 @@ void FunctionMoveOnlyType(ExampleMoveOnlyType m) {
   (*g_calls)++;
 }
 
-static_assert(!internal::HasCompatibleCallOperator<RunnableNoArgs>::value,
-              "HasCompatibleCallOperator<Runnable>");
-static_assert(!internal::HasCompatibleCallOperator<RunnableOneArg, int>::value,
-              "HasCompatibleCallOperator<RunnableOneArg, int>");
-static_assert(!internal::HasCompatibleCallOperator<RunnableStringArgByConstRef,
-                                                   String>::value,
-              "HasCompatibleCallOperator<RunnableStringArgByConstRef, String>");
-static_assert(!internal::HasCompatibleCallOperator<RunnableMoveOnlyParam,
-                                                   ExampleMoveOnlyType>::value,
-              "HasCompatibleCallOperator<RunnableMoveOnlyParam, String>");
-
-auto lambda_one = []() {};
-static_assert(internal::HasCompatibleCallOperator<decltype(lambda_one)>::value,
-              "HasCompatibleCallOperator<lambda []() {}>");
-
-auto lambda_two = [](int x) {};
-static_assert(
-    internal::HasCompatibleCallOperator<decltype(lambda_two), int>::value,
-    "HasCompatibleCallOperator<lambda [](int x) {}, int>");
-
-auto lambda_three = [](const String& s) {};
-static_assert(
-    internal::HasCompatibleCallOperator<decltype(lambda_three), String>::value,
-    "HasCompatibleCallOperator<lambda [](const String& s) {}, String>");
-
-auto lambda_four = [](ExampleMoveOnlyType m) {};
-static_assert(internal::HasCompatibleCallOperator<decltype(lambda_four),
-                                                  ExampleMoveOnlyType>::value,
-              "HasCompatibleCallOperator<lambda [](ExampleMoveOnlyType) {}, "
-              "ExampleMoveOnlyType>");
-
 // Tests constructing and invoking a mojo::Callback from objects with a
 // compatible Run() method (called 'runnables'), from lambdas, and from function
 // pointers.

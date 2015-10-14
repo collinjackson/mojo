@@ -5,6 +5,7 @@
 #ifndef MOJO_PUBLIC_CPP_BINDINGS_CALLBACK_H_
 #define MOJO_PUBLIC_CPP_BINDINGS_CALLBACK_H_
 
+#include <functional>
 #include <type_traits>
 
 #include "mojo/public/cpp/bindings/lib/callback_internal.h"
@@ -38,13 +39,13 @@ class Callback<void(Args...)> {
   // ownership of |runnable|.
   explicit Callback(Runnable* runnable) : sink_(runnable) {}
 
-  // As above, but can take an object that isn't derived from Runnable, so long
-  // as it has a compatible operator() or Run() method. operator() will be
-  // preferred if the type has both.
+  // Adapts any type that is copy-constructable and has a compatible Run method
+  // or is convertible to std::function<void(Args...)> (such as a lambda of the
+  // correct type).
   template <typename Sink>
   Callback(const Sink& sink) {
     using sink_type = typename std::conditional<
-        internal::HasCompatibleCallOperator<Sink, Args...>::value,
+        std::is_convertible<Sink, std::function<void(Args...)>>::value,
         FunctorAdapter<Sink>, RunnableAdapter<Sink>>::type;
     sink_ = internal::SharedPtr<Runnable>(new sink_type(sink));
   }
