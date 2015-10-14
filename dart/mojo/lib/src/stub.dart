@@ -16,7 +16,7 @@ abstract class Stub extends core.MojoEventStreamListener {
 
   Stub.unbound() : super.unbound();
 
-  Future<Message> handleMessage(ServiceMessage message);
+  dynamic handleMessage(ServiceMessage message);
 
   void handleRead() {
     // Query how many bytes are available.
@@ -34,40 +34,26 @@ abstract class Stub extends core.MojoEventStreamListener {
 
     // Prepare the response.
     var message;
-    var responseFuture;
+    var response;
     try {
       message = new ServiceMessage.fromMessage(new Message(bytes, handles));
-      responseFuture = _isClosing ? null : handleMessage(message);
+      response = _isClosing ? null : handleMessage(message);
     } catch (e) {
       handles.forEach((h) => h.close());
       rethrow;
     }
 
     // If there's a response, send it.
-    if (responseFuture != null) {
-      _outstandingResponseFutures++;
-      responseFuture.then((response) {
-        _outstandingResponseFutures--;
-        if (isOpen) {
-          endpoint.write(
-              response.buffer, response.buffer.lengthInBytes, response.handles);
-          // FailedPrecondition is only used to indicate that the other end of
-          // the pipe has been closed. We can ignore the close here and wait for
-          // the PeerClosed signal on the event stream.
-          assert(endpoint.status.isOk || endpoint.status.isFailedPrecondition);
-          if (_isClosing && (_outstandingResponseFutures == 0)) {
-            // This was the final response future for which we needed to send
-            // a response. It is safe to close.
-            super.close().then((_) {
-              if (_isClosing) {
-                _isClosing = false;
-                _closeCompleter.complete(null);
-                _closeCompleter = null;
-              }
-            });
-          }
-        }
-      });
+    if (response != null) {
+      if (response is Future) {
+        _outstandingResponseFutures++;
+        response.then((response) {
+          _outstandingResponseFutures--;
+          return response;
+        }).then(_sendResponse);
+      } else {
+        _sendResponse(response);
+      }
     } else if (_isClosing && (_outstandingResponseFutures == 0)) {
       // We are closing, there is no response to send for this message, and
       // there are no outstanding response futures. Do the close now.
@@ -78,6 +64,28 @@ abstract class Stub extends core.MojoEventStreamListener {
           _closeCompleter = null;
         }
       });
+    }
+  }
+
+  void _sendResponse(Message response) {
+    if (isOpen) {
+      endpoint.write(
+          response.buffer, response.buffer.lengthInBytes, response.handles);
+      // FailedPrecondition is only used to indicate that the other end of
+      // the pipe has been closed. We can ignore the close here and wait for
+      // the PeerClosed signal on the event stream.
+      assert(endpoint.status.isOk || endpoint.status.isFailedPrecondition);
+      if (_isClosing && (_outstandingResponseFutures == 0)) {
+        // This was the final response future for which we needed to send
+        // a response. It is safe to close.
+        super.close().then((_) {
+          if (_isClosing) {
+            _isClosing = false;
+            _closeCompleter.complete(null);
+            _closeCompleter = null;
+          }
+        });
+      }
     }
   }
 
