@@ -254,6 +254,34 @@ TEST_F(StructTest, Serialization_NullArrayPointers) {
   EXPECT_TRUE(region2->rects.is_null());
 }
 
+TEST_F(StructTest, Serialization_InterfaceRequest) {
+  ContainsInterfaceRequest iface_req_struct;
+
+  auto size = GetSerializedSize_(iface_req_struct);
+  EXPECT_EQ(8U         // struct header
+                + 4U   // interface request handle
+                + 4U,  // interface request nullable handle
+            size);
+
+  mojo::internal::FixedBufferForTesting buf(size * 2);
+  ContainsInterfaceRequest::Data_* data;
+
+  // Test failure when non-nullable interface request is null.
+  EXPECT_EQ(mojo::internal::VALIDATION_ERROR_UNEXPECTED_INVALID_HANDLE,
+            Serialize_(&iface_req_struct, &buf, &data));
+
+  SomeInterfacePtr i_ptr;
+  iface_req_struct.req = GetProxy(&i_ptr);
+  EXPECT_TRUE(iface_req_struct.req.is_pending());
+
+  EXPECT_EQ(mojo::internal::VALIDATION_ERROR_NONE,
+            Serialize_(&iface_req_struct, &buf, &data));
+  EXPECT_FALSE(iface_req_struct.req.is_pending());
+
+  Deserialize_(data, &iface_req_struct);
+  EXPECT_TRUE(iface_req_struct.req.is_pending());
+}
+
 // Tests deserializing structs as a newer version.
 TEST_F(StructTest, Versioning_OldToNew) {
   {
@@ -430,5 +458,6 @@ TEST_F(StructTest, Versioning_NewToOld) {
     EXPECT_TRUE(output->Equals(*expected_output));
   }
 }
+
 }  // namespace test
 }  // namespace mojo

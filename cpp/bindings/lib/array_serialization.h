@@ -2,6 +2,13 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+// TODO(vardhan):  Currently, the logic for serializing a mojom type exists in
+// two places: the C++ code generator template, and here.  However, most types
+// are serialized the same way within Arrays or outside, with the exception of
+// |bool|.  Consider defining serialization/deserialization traits for each
+// serializable type and call those traits from here.  This should help us
+// remove most of the ArraySerializer<> specializations here.
+
 #ifndef MOJO_PUBLIC_CPP_BINDINGS_LIB_ARRAY_SERIALIZATION_H_
 #define MOJO_PUBLIC_CPP_BINDINGS_LIB_ARRAY_SERIALIZATION_H_
 
@@ -10,6 +17,7 @@
 #include <vector>
 
 #include "mojo/public/c/system/macros.h"
+#include "mojo/public/cpp/bindings/interface_request.h"
 #include "mojo/public/cpp/bindings/lib/array_internal.h"
 #include "mojo/public/cpp/bindings/lib/bindings_internal.h"
 #include "mojo/public/cpp/bindings/lib/iterator_util.h"
@@ -181,6 +189,50 @@ struct ArraySerializer<ScopedHandleBase<H>, H, false> {
     auto result = Array<ScopedHandleBase<H>>::New(input->size());
     for (size_t i = 0; i < input->size(); ++i)
       result.at(i) = MakeScopedHandle(FetchAndReset(&input->at(i)));
+    output->Swap(&result);
+  }
+};
+
+// Serializes and deserializes arrays of interface requests.
+template <typename I>
+struct ArraySerializer<InterfaceRequest<I>, MessagePipeHandle, false> {
+  static size_t GetSerializedSize(const Array<InterfaceRequest<I>>& input) {
+    return sizeof(Array_Data<MessagePipeHandle>) +
+           Align(input.size() * sizeof(MessagePipeHandle));
+  }
+
+  template <typename Iterator>
+  static ValidationError SerializeElements(
+      Iterator it,
+      size_t num_elements,
+      Buffer* buf,
+      Array_Data<MessagePipeHandle>* output,
+      const ArrayValidateParams* validate_params) {
+    MOJO_DCHECK(!validate_params->element_validate_params)
+        << "Handle type should not have array validate params";
+
+    for (size_t i = 0; i < num_elements; ++i, ++it) {
+      // Transfer ownership of the MessagePipeHandle.
+      output->at(i) = it->PassMessagePipe().release();
+      if (!validate_params->element_is_nullable && !output->at(i).is_valid()) {
+        MOJO_INTERNAL_DLOG_SERIALIZATION_WARNING(
+            VALIDATION_ERROR_UNEXPECTED_INVALID_HANDLE,
+            MakeMessageWithArrayIndex(
+                "invalid message pipe handle in array expecting valid handles",
+                num_elements, i));
+        return VALIDATION_ERROR_UNEXPECTED_INVALID_HANDLE;
+      }
+    }
+
+    return VALIDATION_ERROR_NONE;
+  }
+
+  static void DeserializeElements(Array_Data<MessagePipeHandle>* input,
+                                  Array<InterfaceRequest<I>>* output) {
+    auto result = Array<InterfaceRequest<I>>::New(input->size());
+    for (size_t i = 0; i < input->size(); ++i)
+      result.at(i) =
+          MakeRequest<I>(MakeScopedHandle(FetchAndReset(&input->at(i)))).Pass();
     output->Swap(&result);
   }
 };

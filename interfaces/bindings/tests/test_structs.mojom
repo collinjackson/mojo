@@ -379,3 +379,8 @@ struct ContainsInterface {
 struct ContainsOther {
   int32 other;
 };
+
+struct ContainsInterfaceRequest {
+  SomeInterface& req;
+  SomeInterface&? nullable_req;
+};

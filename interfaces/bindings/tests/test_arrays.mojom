@@ -53,3 +53,10 @@ struct StructWithHandles {
   array<handle?> nullable_handles_array;
   array<handle?>? nullable_handles_nullable_array;
 };
+
+struct StructWithInterfaceRequests {
+  array<TestInterface&> req_array;
+  array<TestInterface&>? req_nullable_array;
+  array<TestInterface&?> nullable_req_array;
+  array<TestInterface&?>? nullable_req_nullable_array;
+};

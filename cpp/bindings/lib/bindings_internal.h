@@ -20,6 +20,9 @@ class Array;
 template <typename Interface>
 class InterfacePtr;
 
+template <typename Interface>
+class InterfaceRequest;
+
 template <typename K, typename V>
 class Map;
 
@@ -183,6 +186,10 @@ template <typename H>
 struct WrapperTraits<ScopedHandleBase<H>, true, false> {
   typedef H DataType;
 };
+template <typename I>
+struct WrapperTraits<InterfaceRequest<I>, true, false> {
+  typedef MessagePipeHandle DataType;
+};
 template <typename Interface>
 struct WrapperTraits<InterfacePtr<Interface>, true, false> {
   typedef Interface_Data DataType;
@@ -227,7 +234,15 @@ template <typename T>
 struct ValueTraits<ScopedHandleBase<T>> {
   static bool Equals(const ScopedHandleBase<T>& a,
                      const ScopedHandleBase<T>& b) {
-    return a.get().value() == b.get().value();
+    return (&a == &b) || (!a.is_valid() && !b.is_valid());
+  }
+};
+
+template <typename I>
+struct ValueTraits<InterfaceRequest<I>> {
+  static bool Equals(const InterfaceRequest<I>& a,
+                     const InterfaceRequest<I>& b) {
+    return (&a == &b) || (!a.is_pending() && !b.is_pending());
   }
 };
 

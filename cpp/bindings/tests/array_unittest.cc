@@ -446,6 +446,52 @@ TEST_F(ArrayTest, Serialization_StructWithArrayOfIntefacePtr) {
   EXPECT_TRUE(struct_arr_iface.structs_array[0]->iptr.is_bound());
 }
 
+// Test serializing and deserializing a struct with an Array<> of interface
+// requests.
+TEST_F(ArrayTest, Serialization_StructWithArrayOfIntefaceRequest) {
+  StructWithInterfaceRequests struct_arr_iface_req;
+  struct_arr_iface_req.req_array =
+      Array<InterfaceRequest<TestInterface>>::New(1);
+  struct_arr_iface_req.nullable_req_array =
+      Array<InterfaceRequest<TestInterface>>::New(1);
+
+  size_t size = GetSerializedSize_(struct_arr_iface_req);
+  EXPECT_EQ(8U            // struct header
+                + 8U      // offset to |req_array|
+                + (8U     // array header for |req_array|
+                   + 4U   // InterfaceRequest
+                   + 4U)  // alignment padding
+                + 8U      // offset to |req_nullable_array|
+                + 8U      // offset to |nullable_req_array|
+                + (8U     // array header for |nullable_req_array|
+                   + 4U   // InterfaceRequest
+                   + 4U)  // alignment padding
+                + 8U,     // offset to |nullable_req_nullable_array|
+            size);
+
+  FixedBufferForTesting buf(size * 2);
+  StructWithInterfaceRequests::Data_* struct_arr_iface_req_data;
+  //  1. This should fail because |req_array| has an invalid InterfaceRequest<>
+  //     and it is not nullable.
+  EXPECT_EQ(
+      mojo::internal::VALIDATION_ERROR_UNEXPECTED_INVALID_HANDLE,
+      Serialize_(&struct_arr_iface_req, &buf, &struct_arr_iface_req_data));
+
+  //  2. Adding in a valid InterfacePtr<> will let it serialize.
+  TestInterfacePtr iface_ptr;
+  struct_arr_iface_req.req_array[0] = GetProxy(&iface_ptr);
+  EXPECT_TRUE(struct_arr_iface_req.req_array[0].is_pending());
+
+  EXPECT_EQ(
+      mojo::internal::VALIDATION_ERROR_NONE,
+      Serialize_(&struct_arr_iface_req, &buf, &struct_arr_iface_req_data));
+
+  EXPECT_FALSE(struct_arr_iface_req.req_array[0].is_pending());
+
+  Deserialize_(struct_arr_iface_req_data, &struct_arr_iface_req);
+  EXPECT_TRUE(struct_arr_iface_req.req_array[0].is_pending());
+}
+
 TEST_F(ArrayTest, Resize_Copyable) {
   ASSERT_EQ(0u, CopyableType::num_instances());
   auto array = mojo::Array<CopyableType>::New(3);
