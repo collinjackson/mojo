@@ -23,9 +23,6 @@ mojo_sdk_source_set("tests") {
 
   # crbug.com/342893
   if (!is_win) {
-    sources += [
-      "mutex_unittest.cc",
-      "thread_unittest.cc",
-    ]
+    sources += [ "thread_unittest.cc" ]
   }
 }
