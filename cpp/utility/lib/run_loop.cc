@@ -9,13 +9,12 @@
 #include <algorithm>
 #include <vector>
 
-#include "mojo/public/cpp/utility/lib/thread_local.h"
 #include "mojo/public/cpp/utility/run_loop_handler.h"
 
 namespace mojo {
 namespace {
 
-internal::ThreadLocalPointer<RunLoop> current_run_loop;
+thread_local RunLoop* current_run_loop = nullptr;
 
 const MojoTimeTicks kInvalidTimeTicks = static_cast<MojoTimeTicks>(0);
 
@@ -39,29 +38,26 @@ struct RunLoop::RunState {
 RunLoop::RunLoop()
     : run_state_(nullptr), next_handler_id_(0), next_sequence_number_(0) {
   assert(!current());
-  current_run_loop.Set(this);
+  current_run_loop = this;
 }
 
 RunLoop::~RunLoop() {
   assert(current() == this);
   NotifyHandlers(MOJO_RESULT_ABORTED, IGNORE_DEADLINE);
-  current_run_loop.Set(nullptr);
+  current_run_loop = nullptr;
 }
 
 // static
-void RunLoop::SetUp() {
-  current_run_loop.Allocate();
-}
+void RunLoop::SetUp() {}
 
 // static
 void RunLoop::TearDown() {
   assert(!current());
-  current_run_loop.Free();
 }
 
 // static
 RunLoop* RunLoop::current() {
-  return current_run_loop.Get();
+  return current_run_loop;
 }
 
 void RunLoop::AddHandler(RunLoopHandler* handler,
