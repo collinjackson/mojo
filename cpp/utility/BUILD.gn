@@ -7,25 +7,15 @@ import("../../mojo_sdk.gni")
 mojo_sdk_source_set("utility") {
   sources = [
     "lib/run_loop.cc",
-    "lib/thread.cc",
     "lib/thread_local.h",
     "lib/thread_local_posix.cc",
     "lib/thread_local_win.cc",
     "run_loop.h",
     "run_loop_handler.h",
-    "thread.h",
   ]
 
   mojo_sdk_deps = [
     "mojo/public/cpp/bindings:callback",
     "mojo/public/cpp/system",
   ]
-
-  if (is_win) {
-    # See crbug.com/342893:
-    sources -= [
-      "lib/thread.cc",
-      "thread.h",
-    ]
-  }
 }

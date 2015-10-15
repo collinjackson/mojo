@@ -20,9 +20,4 @@ mojo_sdk_source_set("tests") {
     "mojo/public/cpp/test_support:test_utils",
     "mojo/public/cpp/utility",
   ]
-
-  # crbug.com/342893
-  if (!is_win) {
-    sources += [ "thread_unittest.cc" ]
-  }
 }
