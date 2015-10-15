@@ -41,6 +41,5 @@ mojo_sdk_source_set("perftests") {
     "mojo/public/c/environment",
     "mojo/public/cpp/system",
     "mojo/public/cpp/test_support:test_utils",
-    "mojo/public/cpp/utility",
   ]
 }
