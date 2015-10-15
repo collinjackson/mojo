@@ -171,3 +171,7 @@ abstract class ProxyBase {
   final Proxy impl = null;
   final String name = null;
 }
+
+abstract class ServiceConnector {
+  void connectToService(String url, ProxyBase proxy);
+}

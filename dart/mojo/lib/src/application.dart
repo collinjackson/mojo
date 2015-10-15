@@ -55,7 +55,7 @@ class _ApplicationImpl implements application_mojom.Application {
 // - Optionally override initialize() to process command-line args.
 // - Optionally override acceptConnection() if services are to be provided.
 // - Optionally override close() to clean up application resources.
-abstract class Application {
+abstract class Application implements bindings.ServiceConnector {
   _ApplicationImpl _applicationImpl;
   List<ApplicationConnection> _applicationConnections;
   Function onError;
