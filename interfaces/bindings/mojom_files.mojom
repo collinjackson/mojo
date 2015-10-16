@@ -22,7 +22,8 @@ import "mojom_types.mojom";
 
 * The Mojom structures represented here have been fully resolved, meaning that
 * the type references have been associated with their corresponding type
-* definitions. This resolved type data is contained in a MojomDescriptor.
+* definitions. This resolved type data is contained in the resolved_types data
+* in MojomFileGraph.
 */
 
 // A MojomFile represents the data defined by a single .mojom file, when
@@ -46,11 +47,11 @@ struct MojomFile {
   // be retrieved from the  MojomFileGraph.
   array<string>? imports;
 
-  // The MojomDescriptor in the MojomFileGraph contains the types and
-  // constants declared in the union of all modules in the graph. This
-  // KeysByType selects the keys of the types and constants defined in
-  // this module
-  KeysByType declaredMojomObjects;
+  // resolved_types and resolved_constants in MojomFileGraph contain
+  // respectively the types and constants declared in the union of all modules
+  // in the graph. This KeysByType selects the keys of the types and constants
+  // defined in this module
+  KeysByType declared_mojom_objects;
 };
 
 // Represents a directed acyclic graph of MojomFiles.
@@ -68,9 +69,9 @@ struct MojomFileGraph {
 };
 
 // A KeysByType struct organizes by type all of the type and constant keys known
-// to an associated MojomDescriptor.
+// to an associated MojomFileGraph.
 struct KeysByType {
-  // All the type_keys known to the owning MojomDescriptor, organized by
+  // All the type_keys known to the owning MojomFileGraph, organized by
   // type;
   array<string>? interfaces;
   array<string>? structs;
@@ -78,7 +79,7 @@ struct KeysByType {
   array<string>? top_level_enums;
   array<string>? embedded_enums;
 
-  // All the constant_keys known to the owning MojomDescriptor.
+  // All the constant_keys known to the owning MojomFileGraph.
   array<string>? top_level_constants;
   array<string>? embedded_constants;
 };
