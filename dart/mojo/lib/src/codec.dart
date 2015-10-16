@@ -105,7 +105,8 @@ class Encoder {
     return result;
   }
 
-  Message get message => new Message(_buffer.trimmed, _buffer.handles);
+  Message get message => new Message(
+      _buffer.trimmed, _buffer.handles, _buffer.extent, _buffer.handles.length);
 
   void encodeStructDataHeader(StructDataHeader dataHeader) {
     _buffer.claimMemory(align(dataHeader.size));
@@ -572,8 +573,7 @@ class Decoder {
 
   Decoder(this._message, [this._base = 0, this._validator = null]) {
     if (_validator == null) {
-      _validator =
-          new _Validator(_message.buffer.lengthInBytes, _message.numHandles);
+      _validator = new _Validator(_message.dataLength, _message.handlesLength);
     }
   }
 
@@ -585,11 +585,13 @@ class Decoder {
 
   ByteData get _buffer => _message.buffer;
   List<core.MojoHandle> get _handles => _message.handles;
-  List<core.MojoHandle> get excessHandles => (_message.handles == null)
-      ? null
-      : (new List.from(_message.handles
-          .getRange(_validator._minNextClaimedHandle, _message.handles.length))
-        ..addAll(_validator._skippedIndices.map((i) => _message.handles[i])));
+  List<core.MojoHandle> get excessHandles {
+    if (_message.handlesLength == 0) return null;
+    var leftAtEnd = _message.handles
+        .getRange(_validator._minNextClaimedHandle, _message.handlesLength);
+    var skipped = _validator._skippedIndices.map((i) => _message.handles[i]);
+    return new List.from(leftAtEnd)..addAll(skipped);
+  }
 
   int decodeInt8(int offset) => _buffer.getInt8(_base + offset);
   int decodeUint8(int offset) => _buffer.getUint8(_base + offset);

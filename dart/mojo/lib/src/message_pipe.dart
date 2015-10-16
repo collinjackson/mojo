@@ -19,25 +19,49 @@ class MojoMessagePipeReadResult {
   }
 }
 
-class MojoMessagePipeQueryAndReadResult {
-  MojoResult status;
-  ByteData bytesRead;
-  List<MojoHandle> handlesRead;
+class MojoMessagePipeQueryAndReadState {
+  static ByteData _data;
+  static Uint32List _rawHandles;
+  static final List _result = new List(5);
 
-  MojoMessagePipeQueryAndReadResult.fromList(List result) {
-    status = new MojoResult(result[0]);
-    bytesRead = result[1];
-    if (result[2] != null) {
-      handlesRead = new List<MojoHandle>(result[2].length);
-      for (int i = 0; i < handlesRead.length; i++) {
-        handlesRead[i] = new MojoHandle(result[2][i]);
+  MojoResult _status;
+  List<MojoHandle> _handles;
+  int _dataLength;
+  int _handlesLength;
+
+  MojoResult get status => _status;
+  List<MojoHandle> get handles => _handles;
+  int get dataLength => _dataLength;
+  int get handlesLength => _handlesLength;
+  ByteData get data => _data;
+
+  MojoMessagePipeQueryAndReadState()
+      : _dataLength = 0,
+        _handlesLength = 0;
+
+  void queryAndRead(int handle, int flags) {
+    MojoMessagePipeNatives.MojoQueryAndReadMessage(
+        handle, flags, _data, _rawHandles, _result);
+    _status = new MojoResult(_result[0]);
+    _data = _result[1];
+    _rawHandles = _result[2];
+    _dataLength = _result[3];
+    _handlesLength = _result[4];
+
+    if (_handlesLength == 0) {
+      _handles = null;
+    } else {
+      _handles = new List(_handlesLength);
+      for (int i = 0; i < _handlesLength; i++) {
+        _handles[i] = new MojoHandle(_rawHandles[i]);
       }
     }
   }
 
   String toString() {
-    return "MojoMessagePipeQueryAndReadResult("
-        "status: $status, bytesRead: $bytesRead, handlesRead: $handlesRead)";
+    return "MojoMessagePipeQueryAndReadState("
+        "status: $_status, dataLength: $dataLength, "
+        "handlesLength: $handlesLength)";
   }
 }
 
@@ -49,7 +73,10 @@ class MojoMessagePipeEndpoint {
   MojoHandle handle;
   MojoResult status;
 
-  MojoMessagePipeEndpoint(this.handle);
+  MojoMessagePipeQueryAndReadState _queryAndReadState;
+
+  MojoMessagePipeEndpoint(this.handle)
+      : _queryAndReadState = new MojoMessagePipeQueryAndReadState();
 
   MojoResult write(ByteData data,
       [int numBytes = -1, List<MojoHandle> handles = null, int flags = 0]) {
@@ -131,24 +158,17 @@ class MojoMessagePipeEndpoint {
 
   MojoMessagePipeReadResult query() => read(null);
 
-  MojoMessagePipeQueryAndReadResult queryAndRead([int flags = 0]) {
+  // Warning: The object returned by this function, and the buffers inside of it
+  // are only valid until the next call to this function by the same isolate.
+  MojoMessagePipeQueryAndReadState queryAndRead([int flags = 0]) {
     if (handle == null) {
       status = MojoResult.INVALID_ARGUMENT;
       return null;
     }
 
-    List result =
-        MojoMessagePipeNatives.MojoQueryAndReadMessage(handle.h, flags);
-    if (result == null) {
-      status = MojoResult.INVALID_ARGUMENT;
-      return null;
-    }
-    assert((result is List) && (result.length == 3));
-
-    var readResult = new MojoMessagePipeQueryAndReadResult.fromList(result);
-
-    status = readResult.status;
-    return readResult;
+    _queryAndReadState.queryAndRead(handle.h, flags);
+    status = _queryAndReadState.status;
+    return _queryAndReadState;
   }
 
   bool setDescription(String description) {

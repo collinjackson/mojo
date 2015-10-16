@@ -20,7 +20,7 @@ abstract class Stub extends core.MojoEventStreamListener {
 
   void handleRead() {
     var result = endpoint.queryAndRead();
-    if ((result.bytesRead == null) || (result.bytesRead.length == 0)) {
+    if ((result.data == null) || (result.dataLength == 0)) {
       throw new MojoCodecError('Unexpected empty message or error: $result');
     }
 
@@ -28,12 +28,12 @@ abstract class Stub extends core.MojoEventStreamListener {
     var message;
     var response;
     try {
-      message = new ServiceMessage.fromMessage(
-          new Message(result.bytesRead, result.handlesRead));
+      message = new ServiceMessage.fromMessage(new Message(result.data,
+          result.handles, result.dataLength, result.handlesLength));
       response = _isClosing ? null : handleMessage(message);
     } catch (e) {
-      if (result.handlesRead != null) {
-        result.handlesRead.forEach((h) => h.close());
+      if (result.handles != null) {
+        result.handles.forEach((h) => h.close());
       }
       rethrow;
     }
