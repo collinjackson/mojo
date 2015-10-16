@@ -19,6 +19,28 @@ class MojoMessagePipeReadResult {
   }
 }
 
+class MojoMessagePipeQueryAndReadResult {
+  MojoResult status;
+  ByteData bytesRead;
+  List<MojoHandle> handlesRead;
+
+  MojoMessagePipeQueryAndReadResult.fromList(List result) {
+    status = new MojoResult(result[0]);
+    bytesRead = result[1];
+    if (result[2] != null) {
+      handlesRead = new List<MojoHandle>(result[2].length);
+      for (int i = 0; i < handlesRead.length; i++) {
+        handlesRead[i] = new MojoHandle(result[2][i]);
+      }
+    }
+  }
+
+  String toString() {
+    return "MojoMessagePipeQueryAndReadResult("
+        "status: $status, bytesRead: $bytesRead, handlesRead: $handlesRead)";
+  }
+}
+
 class MojoMessagePipeEndpoint {
   static const int WRITE_FLAG_NONE = 0;
   static const int READ_FLAG_NONE = 0;
@@ -108,6 +130,26 @@ class MojoMessagePipeEndpoint {
   }
 
   MojoMessagePipeReadResult query() => read(null);
+
+  MojoMessagePipeQueryAndReadResult queryAndRead([int flags = 0]) {
+    if (handle == null) {
+      status = MojoResult.INVALID_ARGUMENT;
+      return null;
+    }
+
+    List result =
+        MojoMessagePipeNatives.MojoQueryAndReadMessage(handle.h, flags);
+    if (result == null) {
+      status = MojoResult.INVALID_ARGUMENT;
+      return null;
+    }
+    assert((result is List) && (result.length == 3));
+
+    var readResult = new MojoMessagePipeQueryAndReadResult.fromList(result);
+
+    status = readResult.status;
+    return readResult;
+  }
 
   bool setDescription(String description) {
     assert(MojoHandle._setHandleLeakDescription(handle, description));

@@ -24,14 +24,14 @@ class MessageHeader {
       (flags & (kMessageExpectsResponse | kMessageIsResponse)) != 0;
 
   MessageHeader(this.type)
-      : _header = new StructDataHeader(
-          kSimpleMessageSize, kSimpleMessageVersion),
+      : _header =
+            new StructDataHeader(kSimpleMessageSize, kSimpleMessageVersion),
         flags = 0,
         requestId = 0;
 
   MessageHeader.withRequestId(this.type, this.flags, this.requestId)
       : _header = new StructDataHeader(
-          kMessageWithRequestIdSize, kMessageWithRequestIdVersion);
+            kMessageWithRequestIdSize, kMessageWithRequestIdVersion);
 
   MessageHeader.fromMessage(Message message) {
     var decoder = new Decoder(message);
@@ -77,9 +77,10 @@ class MessageHeader {
 class Message {
   final ByteData buffer;
   final List<core.MojoHandle> handles;
+  int get numHandles => (handles == null) ? 0 : handles.length;
   Message(this.buffer, this.handles);
   String toString() =>
-      "Message(numBytes=${buffer.lengthInBytes}, numHandles=${handles.length})";
+      "Message(numBytes=${buffer.lengthInBytes}, numHandles=${numHandles})";
 }
 
 class ServiceMessage extends Message {

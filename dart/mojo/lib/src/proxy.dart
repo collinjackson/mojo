@@ -34,16 +34,12 @@ abstract class Proxy extends core.MojoEventStreamListener {
   void handleResponse(ServiceMessage reader);
 
   void handleRead() {
-    // Query how many bytes are available.
-    var result = endpoint.query();
-    assert(result.status.isOk || result.status.isResourceExhausted);
-
-    // Read the data.
-    var bytes = new ByteData(result.bytesRead);
-    var handles = new List<core.MojoHandle>(result.handlesRead);
-    result = endpoint.read(bytes, result.bytesRead, handles);
-    assert(result.status.isOk || result.status.isResourceExhausted);
-    var message = new ServiceMessage.fromMessage(new Message(bytes, handles));
+    var result = endpoint.queryAndRead();
+    if ((result.bytesRead == null) || (result.bytesRead.length == 0)) {
+      throw new MojoCodecError('Unexpected empty message or error: $result');
+    }
+    var message = new ServiceMessage.fromMessage(
+        new Message(result.bytesRead, result.handlesRead));
     if (ControlMessageHandler.isControlMessage(message)) {
       _handleControlMessageResponse(message);
       return;
