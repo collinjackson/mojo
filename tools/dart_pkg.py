@@ -301,9 +301,11 @@ def main():
       relative_source = os.path.relpath(source, common_prefix)
       target = os.path.join(sdk_ext_dir, relative_source)
       copy_or_link(source, target)
+
+  common_source_prefix = os.path.dirname(os.path.commonprefix(
+      args.sdk_ext_files))
   for source in args.sdk_ext_files:
-    common_prefix = os.path.commonprefix(args.sdk_ext_files)
-    relative_source = os.path.relpath(source, common_prefix)
+    relative_source = os.path.relpath(source, common_source_prefix)
     target = os.path.join(sdk_ext_dir, relative_source)
     copy_or_link(source, target)
 
