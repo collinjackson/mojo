@@ -40,6 +40,23 @@ TEST_F(ArrayTest, Basic) {
   }
 }
 
+TEST_F(ArrayTest, DefaultConstructor) {
+  Array<int32_t> array;
+  EXPECT_TRUE(array.is_null());
+  EXPECT_EQ(0u, array.size());
+
+  array.push_back(123);
+  EXPECT_FALSE(array.is_null());
+  EXPECT_EQ(1u, array.size());
+  EXPECT_EQ(123, array[0]);
+
+  array.push_back(456);
+  EXPECT_FALSE(array.is_null());
+  EXPECT_EQ(2u, array.size());
+  EXPECT_EQ(123, array[0]);
+  EXPECT_EQ(456, array[1]);
+}
+
 // Tests that basic Array<bool> operations work.
 TEST_F(ArrayTest, Bool) {
   auto array = Array<bool>::New(64);
