@@ -8,8 +8,7 @@ module mojo.bindings.types;
 
 /*
 * This file contains definitions of data structures used to represent
-* Mojom types and partially resolved Mojom type schema. The distinction between
-* these is explained below.
+* Mojom types and values.
 *
 * As described in the Mojom Language Specification, Mojom types are defined
 * recursively and consequently a |Type| object may recursively contain
@@ -21,66 +20,32 @@ module mojo.bindings.types;
 * to represent an occurrence of such an identifier. A |TypeReference| may be
 * resolved or not. Resolved means that the user-defined type to which the
 * identifier refers has been found and associated with the |TypeReference|.
-* (We say more below about how this association works.)  A |Type| object is
-* fully-resolved if it, and recursively all of its sub-components, do not
-* contain any unresolved TypeReferences. A |Type| object that is fully
-* resolved represents a Mojom type. Otherwise we say that the |Type| object
-* represents only a type schema, because until all of the identifiers have been
-* resolved we don't know exactly which type it represents.
-*
-* The data structures defined in this file are useful in different contexts
-* depending on whether the structures are fully-resolved or not. For example
-* as a representation of partially resolved Mojom type declarations the
-* structures may be useful as the intermediate representation output by the
-* front end of a Mojom compiler. As a representation of fully-resolved Mojom
-* types the structures may be useful at runtime for a service that deserializes
-* arbitrary Mojo messages given only the name of the interface with which the
-* message is associated.
+* A |Type| object is fully-resolved if it, and recursively all of its
+* sub-components, do not contain any unresolved TypeReferences.
 *
 * A resolved |TypeReference| does not literally contain a structure representing
-* the type that it represents but rather refers to its target type indirectly
-* via a string called a |type_key|. This key may be exchanged (via a mechanism
-* described below) for an instance of a data structure that describes
-* the resolved type.
+* the user-defined type that it represents but rather refers to its target type
+* indirectly via a string called a |type_key|. The type_key may be used to
+* lookup the user-defined type to which it refers.
 *
-* The reason for this extra level of indirection is that Mojom types, being
-* recursive, are allowed to reference themselves. But Mojo messages are not
-* allowed to point to themselves. We give an example to clarify this. Consider
-* the following perfectly valid user-defined Mojom struct:
+* The mapping from |type_keys| to user-defined types is not
+* represented by any structures in this file and instead must be maintained
+* by a higher layer context in which this file is used. For example the
+* |ServiceDescription| interface defined in service_describer.mojom includes
+* the method:
+*     GetTypeDefinition(string type_key) => UserDefinedType? type);
+* for this purpose.
+* We refer to this higher-layer context as the *owning context.*
 *
-* struct TreeNode {
-*   TreeNode left_child;
-*   TreeNode right_child;
-* };
-*
-* Consider how this type should be represented as an object from this file.
-* The |MojomStruct| structure defined below is used to represent structures.
-* So let us attempt to define an instance of |MojomStruct| called |tree_node|
-* that represents the type |TreeNode|. A |MojomStruct| contains an array of
-* |StructField|s each of which contains a |Type|. So |tree_node| would have
-* two |StructField|s. But what should be the |Type| of these |StructField|s?
-* It needs to be some instance of |Type|. At first we might suppose that the
-* |Type| should be |tree_node| itself. But this is impossible because it
-* would require that the definition of |tree_node| recursively pointed to
-* itself, and this is forbidden in the definition of a Mojo message. We might
-* think that we could get out of this dilemma by defining two copies of
-* |tree_node| called |tree_node_2| and |tree_node_3| and setting the |Type|s of
-* the |StructField|s of |tree_node| to be |tree_node_2| and |tree_node_3|.
-* But we soon realize that this solution also does not work because we are
-* then left with the problem of defining the |Type|s of the two |StructFields|
-* of |tree_node_2| and |tree_node_3|.
-*
-* Our solution to this problem is to assign a |type_key| to the
-* user-defined type TreeNode. Let's call this key |x|. Then we set the |Type|
-* of the two |StructFields| of |tree_node| to be a resolved |TypeReference| with
-* a |type_key| of x.
-*
-* The mapping from |type_keys| to user-defined type definitions is contained
-* in a structure called a |MojomDescriptor| which is not defined in this file
-* but rather in "mojom_descriptors.mojom" which imports this file. A |Type|
-* object is associated with some instance of MojomDescriptor we call the owning
-* MojomDescriptor. In order to recover the user-defined type associated with the
-* |type_key| in a resolved |TypeReference| one uses the owning MojomDescriptor.
+* In addition to types, Mojom values are also representd by structures in this
+* file. A |Value| may be a LiteralValue, a UserValueReference or a
+* BuiltinConstantValue. Similarly to the situation with TypeReferences,
+* UserValueReferences contain a |value_key| which may be used to lookup
+* a UserDefinedValue (an EnumValue or a UserDefinedConstant) in
+* the owning context. For example the |MojomFileGraph| struct in
+* mojom_files.mojom contains the map:
+*     map<string, UserDefinedValue> resolved_values;
+* for this purpose.
 */
 
 // The different kinds of types. We divide the types into five categories:
@@ -179,8 +144,8 @@ struct TypeReference {
 ////////////////////////////////////////////////////////////////////////////
 // The data structures below represent user-defined types or type
 // declarations. Instances of these are not literally contained in a
-// |Type| object. In a fully-resolved context these represent types and are
-// obtained from the  owning |MojomDescriptor|.
+// |Type| object. Instead the owning context is used to lookup a UserDefinedType
+// given a type_key.
 ////////////////////////////////////////////////////////////////////////////
 
 // Represents a user-defined type referenced
@@ -199,8 +164,7 @@ struct StructField {
 
   Type type;
 
-  // The value must eventually resolve to a ConstantValue of type |field_type|.
-  ConstantOccurrence? default_value;
+  DefaultFieldValue? default_value;
 
   // The offset in bytes from the start of the serialized struct, not including
   // the eight-byte header, of the first byte of this field. In the case of
@@ -209,6 +173,15 @@ struct StructField {
   // A negative value means unset.
   int32 offset;
 };
+
+union DefaultFieldValue {
+  Value value;
+  DefaultKeyword default_keyword;
+};
+
+// A built-in pseudo-value, indicated by the keyword "default", that
+// specifies that the default value of a user-defined type should be used.
+struct DefaultKeyword{};
 
 struct StructVersion {
   uint32 version_number;
@@ -249,17 +222,18 @@ struct MojomUnion {
 };
 
 struct EnumValue {
-  DeclarationData? decl_data; // Some implementations may not provide this.
+  DeclarationData? decl_data;
 
-  // The value must eventually resolve to a ConstantValue of type integer or
-  // EnumConstantValue.
-  ConstantOccurrence value;
+  // The type key of the enum that this value belongs to.
+  string enum_type_key;
+
+  // The integer value corresponding to this enum value.
+  int32 int_value;
 };
 
 struct MojomEnum {
   DeclarationData? decl_data; // Some implementations may not provide this.
 
-  // The MojomEnum is fully resolved just in case all of the EnumValues are.
   array<EnumValue> values;
 };
 
@@ -290,25 +264,24 @@ struct MojomInterface {
 };
 
 ////////////////////////////////////////////////////////////////////////////
-// Representations of Mojom Constants
+// Mojom values
 ////////////////////////////////////////////////////////////////////////////
 
-// Represents an occurrence of a constant. This is either a literal or as an
-// identifier that refers to a declared constant.
-struct ConstantOccurrence {
-  // This constant occurrence is fully resolved just in case |value| is not
-  // null. If the constant occurrence was a literal then it is necessarily
-  // resolved to the value of the literal. If the constant occurrence was an
-  // identifier then it may or may not be resolved.
-  ConstantValue? value;
+// A value may occur as the default value of a struct field, as the
+// right-hand-side of a constant declaration, or as the right-hand-side
+// of an enum value specifier.
+union Value {
+  // A literal number, boolean or string
+  LiteralValue literal_value;
 
-  // Either |value| or |identifier| must be non-null. Some implementations
-  // will maintain |identifier| even after the constant occurrence has been
-  // resolved.
-  ConstantReference? identifier;
+  // A reference to a user-defined value (a declared constant or enum value.)
+  UserValueReference user_value_reference;
+
+  // A built-in numeric constant.
+  BuiltinConstantValue builtin_value;
 };
 
-union ConstantValue {
+union LiteralValue {
   bool bool_value;
   double double_value;
   float float_value;
@@ -321,11 +294,9 @@ union ConstantValue {
   uint16 uint16_value;
   uint32 uint32_value;
   uint64 uint64_value;
-  EnumConstantValue enum_value;
-  BuiltinConstantValue builtin_value;
 };
 
-// Represents the built-in constants.
+// Represents the built-in floating-point constants.
 enum BuiltinConstantValue {
   DOUBLE_INFINITY,
   DOUBLE_NEGATIVE_INFINITY,
@@ -335,43 +306,43 @@ enum BuiltinConstantValue {
   FLOAT_NAN,
 };
 
-// Represents an occurrence of a user-defined identifier that should resolve to
-// a constant. The constant reference may or may not be resolved. If it is
-// resolved then |constant_key| is not null.
-struct ConstantReference {
-  // The identifier, as it appears in the occurrence. Note that this may be
-  // a short name, a fully-qualified identifier, or a partially qualified
-  // identifier.
+// A reference to a user-defined value (a declared constant or enum value.)
+struct UserValueReference {
+  // The identifier, as it appears at the reference site.
   string identifier;
 
-  // This field is non-null if this reference has been resolved. Note that
-  // because a constant may be defined in terms of another constant, it is
-  // possible that this is non-null but yet the |ConstantOccurrence| containing
-  // this reference is not fully resolved and so its |value| is null. Also
-  // note that some implementations will not provide this field for a
-  // fully-resolved |ConstantOccurrence|.
-  string? constant_key;
+  // The key to the resolved value of this identifier. It refers to
+  // an instance of |UserDefinedValue| and so an EnumValue or
+  // DeclaredConstant.
+  string? value_key;
+
+  // The resolved concrete value. This must be a LiteralValue or a
+  // BuiltinConstantValue, not a UserValueReference. The resolved
+  // concrete value is defined as follows: If |value_key| refers to an
+  // EnumValue then |resolved_concrete_value| is the |int_value| of that
+  // EnumValue. If |value_key| referes to a DeclaredConstant then
+  // |resolved_concrete_value| is defined recursively to be the resolved
+  // concrete value of the DeclaredConstant's |value|.
+  Value? resolved_concrete_value;
 };
 
-struct EnumConstantValue {
-  // The reference must be resolved to an MojomEnum.
-  TypeReference enum_type;
-
-  string? enum_value_name;  // Some implementations may not provide this name.
-
-  // The integer value that the enum value name resolves to.
-  int32 int_value;
+union UserDefinedValue {
+  EnumValue enum_value;
+  DeclaredConstant declared_constant;
 };
 
 // This represents a Mojom constant declaration.
 struct DeclaredConstant {
   DeclarationData decl_data;
 
-  // The type must be a string, bool, float, double, or integer type.
+  // The type must be a string, bool, or numeric type.
   Type type;
 
-  // The value must eventually resolve to the same type as |type|.
-  ConstantOccurrence value;
+  // This is the value specified in the right-hand-side of the constant
+  // declaration. The value must be a literal value or a built-in constant of
+  // the same type as |type| or a UserValueReference whose
+  // |resolved_concrete_value| is one of those.
+  Value value;
 };
 
 ////////////////////////////////////////////////////////////////////////////
@@ -379,7 +350,7 @@ struct DeclaredConstant {
 ////////////////////////////////////////////////////////////////////////////
 
 // This structure contains additional data that may be present in
-// a Mojom declaration. Some implementations of |MojomDescriptor| may
+// a Mojom declaration. Some owning contexts may
 // provide some of this data.
 struct DeclarationData {
   array<Attribute>? attributes;
