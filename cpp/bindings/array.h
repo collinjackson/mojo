@@ -37,12 +37,6 @@ class Array {
   // Constructs a new array that is null.
   Array() : is_null_(true) {}
 
-  // Constructs a new non-null array of the specified size. The elements will
-  // be value-initialized (meaning that they will be initialized by their
-  // default constructor, if any, or else zero-initialized).
-  explicit Array(size_t size) : vec_(size), is_null_(false) {
-    Traits::Initialize(&vec_);
-  }
   ~Array() { Traits::Finalize(&vec_); }
 
   // Moves the contents of |other| into this array.

@@ -274,7 +274,7 @@ struct ArraySerializer<InterfacePtr<Interface>, Interface_Data, false> {
 
   static void DeserializeElements(Array_Data<Interface_Data>* input,
                                   Array<InterfacePtr<Interface>>* output) {
-    Array<InterfacePtr<Interface>> result(input->size());
+    auto result = Array<InterfacePtr<Interface>>::New(input->size());
     for (size_t i = 0; i < input->size(); ++i)
       internal::InterfaceDataToPointer(&input->at(i), &result.at(i));
     output->Swap(&result);

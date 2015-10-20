@@ -497,7 +497,6 @@ struct ArrayTraits<T, false> {
   typedef typename std::vector<T>::reference RefType;
   typedef typename std::vector<T>::const_reference ConstRefType;
   typedef ConstRefType ForwardType;
-  static inline void Initialize(std::vector<T>* vec) {}
   static inline void Finalize(std::vector<T>* vec) {}
   static inline ConstRefType at(const std::vector<T>* vec, size_t offset) {
     return vec->at(offset);
@@ -525,10 +524,6 @@ struct ArrayTraits<T, true> {
   typedef T& RefType;
   typedef const T& ConstRefType;
   typedef T ForwardType;
-  static inline void Initialize(std::vector<StorageType>* vec) {
-    for (size_t i = 0; i < vec->size(); ++i)
-      new (vec->at(i).buf) T();
-  }
   static inline void Finalize(std::vector<StorageType>* vec) {
     for (size_t i = 0; i < vec->size(); ++i)
       reinterpret_cast<T*>(vec->at(i).buf)->~T();

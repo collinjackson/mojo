@@ -249,7 +249,7 @@ TEST_F(ArrayTest, Serialization_ArrayOfScopedEnum) {
       TestEnum::E2, TestEnum::E2, TestEnum::E2, TestEnum::E0,
   };
 
-  Array<TestEnum> array(MOJO_ARRAYSIZE(TEST_VALS));
+  auto array = Array<TestEnum>::New(MOJO_ARRAYSIZE(TEST_VALS));
   for (size_t i = 0; i < array.size(); ++i)
     array[i] = TEST_VALS[i];
 
@@ -324,7 +324,7 @@ TEST_F(ArrayTest, Serialization_ArrayOfString) {
 
 // Tests serializing and deserializing an Array<Handle>.
 TEST_F(ArrayTest, Serialization_ArrayOfHandle) {
-  Array<ScopedHandleBase<MessagePipeHandle>> array(4);
+  auto array = Array<ScopedHandleBase<MessagePipeHandle>>::New(4);
   MessagePipe p0;
   MessagePipe p1;
   // array[0] is left invalid.
@@ -376,7 +376,7 @@ TEST_F(ArrayTest, Serialization_StructWithArraysOfHandles) {
 
 // Test serializing and deserializing an Array<InterfacePtr>.
 TEST_F(ArrayTest, Serialization_ArrayOfInterfacePtr) {
-  Array<TestInterfacePtr> iface_array(1);
+  auto iface_array = Array<TestInterfacePtr>::New(1);
   size_t size = GetSerializedSize_(iface_array);
   EXPECT_EQ(8U               // array header
                 + (8U * 1),  // Interface_Data * number of elements
