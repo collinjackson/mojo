@@ -21,17 +21,17 @@ bool IsValidMessageHeader(const MessageHeader* header) {
   // Extra validation of the struct header:
   if (header->version == 0) {
     if (header->num_bytes != sizeof(MessageHeader)) {
-      ReportValidationError(VALIDATION_ERROR_UNEXPECTED_STRUCT_HEADER);
+      ReportValidationError(ValidationError::UNEXPECTED_STRUCT_HEADER);
       return false;
     }
   } else if (header->version == 1) {
     if (header->num_bytes != sizeof(MessageHeaderWithRequestID)) {
-      ReportValidationError(VALIDATION_ERROR_UNEXPECTED_STRUCT_HEADER);
+      ReportValidationError(ValidationError::UNEXPECTED_STRUCT_HEADER);
       return false;
     }
   } else if (header->version > 1) {
     if (header->num_bytes < sizeof(MessageHeaderWithRequestID)) {
-      ReportValidationError(VALIDATION_ERROR_UNEXPECTED_STRUCT_HEADER);
+      ReportValidationError(ValidationError::UNEXPECTED_STRUCT_HEADER);
       return false;
     }
   }
@@ -41,14 +41,14 @@ bool IsValidMessageHeader(const MessageHeader* header) {
   // These flags require a RequestID.
   if (header->version < 1 && ((header->flags & kMessageExpectsResponse) ||
                               (header->flags & kMessageIsResponse))) {
-    ReportValidationError(VALIDATION_ERROR_MESSAGE_HEADER_MISSING_REQUEST_ID);
+    ReportValidationError(ValidationError::MESSAGE_HEADER_MISSING_REQUEST_ID);
     return false;
   }
 
   // These flags are mutually exclusive.
   if ((header->flags & kMessageExpectsResponse) &&
       (header->flags & kMessageIsResponse)) {
-    ReportValidationError(VALIDATION_ERROR_MESSAGE_HEADER_INVALID_FLAGS);
+    ReportValidationError(ValidationError::MESSAGE_HEADER_INVALID_FLAGS);
     return false;
   }
 

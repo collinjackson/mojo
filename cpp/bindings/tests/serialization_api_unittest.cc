@@ -33,16 +33,16 @@ class StructSerializationAPITest : public testing::Test {
     EXPECT_EQ(170u, bytes[num_bytes]);
 
     validation_error_observer_.set_last_error(
-        mojo::internal::VALIDATION_ERROR_NONE);
+        mojo::internal::ValidationError::NONE);
     mojo::internal::BoundsChecker bounds_checker(bytes.data(), num_bytes, 0);
     EXPECT_EQ(
-        expected_validation_error == mojo::internal::VALIDATION_ERROR_NONE,
+        expected_validation_error == mojo::internal::ValidationError::NONE,
         Type::Data_::Validate(bytes.data(), &bounds_checker));
     EXPECT_EQ(expected_validation_error,
               validation_error_observer_.last_error());
 
     if (validation_error_observer_.last_error() ==
-        mojo::internal::VALIDATION_ERROR_NONE) {
+        mojo::internal::ValidationError::NONE) {
       Type out_val;
       out_val.Deserialize(bytes.data());
       EXPECT_TRUE(val->Equals(out_val));
@@ -87,14 +87,14 @@ TEST_F(StructSerializationAPITest, BasicStructSerialization) {
     rect.y = 456;
     rect.width = 789;
     rect.height = 999;
-    SerializeAndDeserialize(&rect, mojo::internal::VALIDATION_ERROR_NONE);
+    SerializeAndDeserialize(&rect, mojo::internal::ValidationError::NONE);
   }
 
   {
     SCOPED_TRACE("DefaultFieldValues");
     DefaultFieldValues default_values;
     SerializeAndDeserialize(&default_values,
-                            mojo::internal::VALIDATION_ERROR_NONE);
+                            mojo::internal::ValidationError::NONE);
   }
 }
 
@@ -105,11 +105,11 @@ TEST_F(StructSerializationAPITest, HandlesSerialization) {
     HandleStruct handle_struct;
     // TODO(vardhan):  Once handles and pointers are encoded inline with
     // serialization, validation should fail at
-    // VALIDATION_ERROR_UNEXPECTED_NULL_POINTER (which happens after the
-    // VALIDATION_ERROR_ILLEGAL_HANDLE error, which shouldn't happen since
+    // ValidationError::UNEXPECTED_NULL_POINTER (which happens after the
+    // ValidationError::ILLEGAL_HANDLE error, which shouldn't happen since
     // handles will be encoded even on failures).
     SerializeAndDeserialize(&handle_struct,
-                            mojo::internal::VALIDATION_ERROR_ILLEGAL_HANDLE);
+                            mojo::internal::ValidationError::ILLEGAL_HANDLE);
   }
 
   {
@@ -120,10 +120,10 @@ TEST_F(StructSerializationAPITest, HandlesSerialization) {
     // is invalid, so should be serializable.  Instead, we live with a
     // serialization error for an invalid handle.
     // TODO(vardhan): This should be
-    // mojo::internal::VALIDATION_ERROR_UNEXPECTED_INVALID_HANDLE after handles
+    // mojo::internal::ValidationError::UNEXPECTED_INVALID_HANDLE after handles
     // are encoded inline with serialization.
     SerializeAndDeserialize(&handle_struct,
-                            mojo::internal::VALIDATION_ERROR_ILLEGAL_HANDLE);
+                            mojo::internal::ValidationError::ILLEGAL_HANDLE);
   }
 
   // We shouldn't be able to serialize a valid handle.
@@ -134,7 +134,7 @@ TEST_F(StructSerializationAPITest, HandlesSerialization) {
     handle_struct.array_h = Array<mojo::ScopedMessagePipeHandle>::New(0);
     EXPECT_DEATH_IF_SUPPORTED({
       SerializeAndDeserialize(&handle_struct,
-                              mojo::internal::VALIDATION_ERROR_NONE);
+                              mojo::internal::ValidationError::NONE);
     }, "does not support handles");
   }
 }
@@ -145,7 +145,7 @@ TEST_F(StructSerializationAPITest, NullableHandleSerialization) {
   NullableHandleStruct handle_struct;
   handle_struct.data = 16;
   SerializeAndDeserialize(&handle_struct,
-                          mojo::internal::VALIDATION_ERROR_NONE);
+                          mojo::internal::ValidationError::NONE);
 }
 
 }  // namespace

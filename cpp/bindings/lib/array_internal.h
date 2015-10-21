@@ -214,15 +214,15 @@ struct ArraySerializationHelper<Handle, true, false> {
       if (!validate_params->element_is_nullable &&
           elements[i].value() == kEncodedInvalidHandleValue) {
         ReportValidationError(
-            VALIDATION_ERROR_UNEXPECTED_INVALID_HANDLE,
+            ValidationError::UNEXPECTED_INVALID_HANDLE,
             MakeMessageWithArrayIndex(
                 "invalid handle in array expecting valid handles",
-                header->num_elements,
-                i).c_str());
+                header->num_elements, i)
+                .c_str());
         return false;
       }
       if (!bounds_checker->ClaimHandle(elements[i])) {
-        ReportValidationError(VALIDATION_ERROR_ILLEGAL_HANDLE);
+        ReportValidationError(ValidationError::ILLEGAL_HANDLE);
         return false;
       }
     }
@@ -282,14 +282,14 @@ struct ArraySerializationHelper<P*, false, false> {
     for (uint32_t i = 0; i < header->num_elements; ++i) {
       if (!validate_params->element_is_nullable && !elements[i].offset) {
         ReportValidationError(
-            VALIDATION_ERROR_UNEXPECTED_NULL_POINTER,
+            ValidationError::UNEXPECTED_NULL_POINTER,
             MakeMessageWithArrayIndex("null in array expecting valid pointers",
-                                      header->num_elements,
-                                      i).c_str());
+                                      header->num_elements, i)
+                .c_str());
         return false;
       }
       if (!ValidateEncodedPointer(&elements[i].offset)) {
-        ReportValidationError(VALIDATION_ERROR_ILLEGAL_POINTER);
+        ReportValidationError(ValidationError::ILLEGAL_POINTER);
         return false;
       }
       if (!ValidateCaller<P>::Run(DecodePointerRaw(&elements[i].offset),
@@ -362,7 +362,7 @@ struct ArraySerializationHelper<P, false, true> {
     for (uint32_t i = 0; i < header->num_elements; ++i) {
       if (!validate_params->element_is_nullable && elements[i].is_null()) {
         ReportValidationError(
-            VALIDATION_ERROR_UNEXPECTED_NULL_UNION,
+            ValidationError::UNEXPECTED_NULL_UNION,
             MakeMessageWithArrayIndex(
                 "null union in array expecting non-null unions",
                 header->num_elements, i)
@@ -409,31 +409,31 @@ class Array_Data {
     if (!data)
       return true;
     if (!IsAligned(data)) {
-      ReportValidationError(VALIDATION_ERROR_MISALIGNED_OBJECT);
+      ReportValidationError(ValidationError::MISALIGNED_OBJECT);
       return false;
     }
     if (!bounds_checker->IsValidRange(data, sizeof(ArrayHeader))) {
-      ReportValidationError(VALIDATION_ERROR_ILLEGAL_MEMORY_RANGE);
+      ReportValidationError(ValidationError::ILLEGAL_MEMORY_RANGE);
       return false;
     }
     const ArrayHeader* header = static_cast<const ArrayHeader*>(data);
     if (header->num_elements > Traits::kMaxNumElements ||
         header->num_bytes < Traits::GetStorageSize(header->num_elements)) {
-      ReportValidationError(VALIDATION_ERROR_UNEXPECTED_ARRAY_HEADER);
+      ReportValidationError(ValidationError::UNEXPECTED_ARRAY_HEADER);
       return false;
     }
     if (validate_params->expected_num_elements != 0 &&
         header->num_elements != validate_params->expected_num_elements) {
       ReportValidationError(
-          VALIDATION_ERROR_UNEXPECTED_ARRAY_HEADER,
+          ValidationError::UNEXPECTED_ARRAY_HEADER,
           MakeMessageWithExpectedArraySize(
               "fixed-size array has wrong number of elements",
-              header->num_elements,
-              validate_params->expected_num_elements).c_str());
+              header->num_elements, validate_params->expected_num_elements)
+              .c_str());
       return false;
     }
     if (!bounds_checker->ClaimMemory(data, header->num_bytes)) {
-      ReportValidationError(VALIDATION_ERROR_ILLEGAL_MEMORY_RANGE);
+      ReportValidationError(ValidationError::ILLEGAL_MEMORY_RANGE);
       return false;
     }
 

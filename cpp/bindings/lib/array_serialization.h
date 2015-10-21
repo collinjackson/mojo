@@ -89,7 +89,7 @@ struct ArraySerializer<
     for (size_t i = 0; i < num_elements; ++i, ++it)
       output->at(i) = static_cast<F>(*it);
 
-    return VALIDATION_ERROR_NONE;
+    return ValidationError::NONE;
   }
 
   // We can optimize serializing PODs by |memcpy|ing directly.
@@ -107,7 +107,7 @@ struct ArraySerializer<
     if (num_elements)
       memcpy(output->storage(), &(*it), num_elements * sizeof(E));
 
-    return VALIDATION_ERROR_NONE;
+    return ValidationError::NONE;
   }
 
   static void DeserializeElements(Array_Data<F>* input, Array<E>* output) {
@@ -141,7 +141,7 @@ struct ArraySerializer<bool, bool, false> {
     for (size_t i = 0; i < num_elements; ++i, ++it)
       output->at(i) = *it;
 
-    return VALIDATION_ERROR_NONE;
+    return ValidationError::NONE;
   }
 
   static void DeserializeElements(Array_Data<bool>* input,
@@ -176,15 +176,15 @@ struct ArraySerializer<ScopedHandleBase<H>, H, false> {
       output->at(i) = it->release();
       if (!validate_params->element_is_nullable && !output->at(i).is_valid()) {
         MOJO_INTERNAL_DLOG_SERIALIZATION_WARNING(
-            VALIDATION_ERROR_UNEXPECTED_INVALID_HANDLE,
+            ValidationError::UNEXPECTED_INVALID_HANDLE,
             MakeMessageWithArrayIndex(
                 "invalid handle in array expecting valid handles", num_elements,
                 i));
-        return VALIDATION_ERROR_UNEXPECTED_INVALID_HANDLE;
+        return ValidationError::UNEXPECTED_INVALID_HANDLE;
       }
     }
 
-    return VALIDATION_ERROR_NONE;
+    return ValidationError::NONE;
   }
 
   static void DeserializeElements(Array_Data<H>* input,
@@ -219,15 +219,15 @@ struct ArraySerializer<InterfaceRequest<I>, MessagePipeHandle, false> {
       output->at(i) = it->PassMessagePipe().release();
       if (!validate_params->element_is_nullable && !output->at(i).is_valid()) {
         MOJO_INTERNAL_DLOG_SERIALIZATION_WARNING(
-            VALIDATION_ERROR_UNEXPECTED_INVALID_HANDLE,
+            ValidationError::UNEXPECTED_INVALID_HANDLE,
             MakeMessageWithArrayIndex(
                 "invalid message pipe handle in array expecting valid handles",
                 num_elements, i));
-        return VALIDATION_ERROR_UNEXPECTED_INVALID_HANDLE;
+        return ValidationError::UNEXPECTED_INVALID_HANDLE;
       }
     }
 
-    return VALIDATION_ERROR_NONE;
+    return ValidationError::NONE;
   }
 
   static void DeserializeElements(Array_Data<MessagePipeHandle>* input,
@@ -264,15 +264,15 @@ struct ArraySerializer<InterfacePtr<Interface>, Interface_Data, false> {
       if (!validate_params->element_is_nullable &&
           !output->at(i).handle.is_valid()) {
         MOJO_INTERNAL_DLOG_SERIALIZATION_WARNING(
-            VALIDATION_ERROR_UNEXPECTED_INVALID_HANDLE,
+            ValidationError::UNEXPECTED_INVALID_HANDLE,
             MakeMessageWithArrayIndex(
                 "invalid handle in array expecting valid handles", num_elements,
                 i));
-        return VALIDATION_ERROR_UNEXPECTED_INVALID_HANDLE;
+        return ValidationError::UNEXPECTED_INVALID_HANDLE;
       }
     }
 
-    return VALIDATION_ERROR_NONE;
+    return ValidationError::NONE;
   }
 
   static void DeserializeElements(Array_Data<Interface_Data>* input,
@@ -316,20 +316,20 @@ struct ArraySerializer<
       S_Data* element;
       auto retval = SerializeCaller::Run(
           &(*it), buf, &element, validate_params->element_validate_params);
-      if (retval != VALIDATION_ERROR_NONE)
+      if (retval != ValidationError::NONE)
         return retval;
 
       output->at(i) = element;
       if (!validate_params->element_is_nullable && !element) {
         MOJO_INTERNAL_DLOG_SERIALIZATION_WARNING(
-            VALIDATION_ERROR_UNEXPECTED_NULL_POINTER,
+            ValidationError::UNEXPECTED_NULL_POINTER,
             MakeMessageWithArrayIndex("null in array expecting valid pointers",
                                       num_elements, i));
-        return VALIDATION_ERROR_UNEXPECTED_NULL_POINTER;
+        return ValidationError::UNEXPECTED_NULL_POINTER;
       }
     }
 
-    return VALIDATION_ERROR_NONE;
+    return ValidationError::NONE;
   }
 
   static void DeserializeElements(Array_Data<S_Data*>* input,
@@ -372,7 +372,7 @@ struct ArraySerializer<
                   validate_params->expected_num_elements == 0)
           << "String type has unexpected array validate params";
       SerializeString_(*input, buf, output);
-      return VALIDATION_ERROR_NONE;
+      return ValidationError::NONE;
     }
 
     template <typename T>
@@ -442,19 +442,19 @@ struct ArraySerializer<U, U_Data, true> {
     for (size_t i = 0; i < num_elements; ++i, ++it) {
       U_Data* result = output->storage() + i;
       auto retval = SerializeUnion_(it->get(), buf, &result, true);
-      if (retval != VALIDATION_ERROR_NONE)
+      if (retval != ValidationError::NONE)
         return retval;
       if (!validate_params->element_is_nullable && output->at(i).is_null()) {
         MOJO_INTERNAL_DLOG_SERIALIZATION_WARNING(
 
-            VALIDATION_ERROR_UNEXPECTED_NULL_POINTER,
+            ValidationError::UNEXPECTED_NULL_POINTER,
             MakeMessageWithArrayIndex("null in array expecting valid unions",
                                       num_elements, i));
-        return VALIDATION_ERROR_UNEXPECTED_NULL_POINTER;
+        return ValidationError::UNEXPECTED_NULL_POINTER;
       }
     }
 
-    return VALIDATION_ERROR_NONE;
+    return ValidationError::NONE;
   }
 
   static void DeserializeElements(Array_Data<U_Data>* input, Array<U>* output) {
@@ -481,7 +481,7 @@ inline size_t GetSerializedSize_(const Array<E>& input) {
   return internal::ArraySerializer<E, F>::GetSerializedSize(input);
 }
 
-// SerializeArray_ will return VALIDATION_ERROR_NONE on success and set
+// SerializeArray_ will return ValidationError::NONE on success and set
 // |output| accordingly.  On failure, |input| will be partially serialized into
 // |output| up until an error occurs (which is propagated up and returned by
 // SerializeArray_), in which case |buf| is also partially consumed.
@@ -496,28 +496,28 @@ inline internal::ValidationError SerializeArray_(
     // It is up to the caller to make sure the given |Array| is not null if it
     // is not nullable.
     *output = nullptr;
-    return internal::VALIDATION_ERROR_NONE;
+    return internal::ValidationError::NONE;
   }
 
   if (validate_params->expected_num_elements != 0 &&
       input->size() != validate_params->expected_num_elements) {
     MOJO_INTERNAL_DLOG_SERIALIZATION_WARNING(
-        internal::VALIDATION_ERROR_UNEXPECTED_ARRAY_HEADER,
+        internal::ValidationError::UNEXPECTED_ARRAY_HEADER,
         internal::MakeMessageWithExpectedArraySize(
             "fixed-size array has wrong number of elements", input->size(),
             validate_params->expected_num_elements));
-    return internal::ValidationError::VALIDATION_ERROR_UNEXPECTED_ARRAY_HEADER;
+    return internal::ValidationError::UNEXPECTED_ARRAY_HEADER;
   }
 
   internal::Array_Data<F>* result =
       internal::Array_Data<F>::New(input->size(), buf);
   auto retval = internal::ArraySerializer<E, F>::SerializeElements(
       input->begin(), input->size(), buf, result, validate_params);
-  if (retval != internal::VALIDATION_ERROR_NONE)
+  if (retval != internal::ValidationError::NONE)
     return retval;
 
   *output = result;
-  return internal::VALIDATION_ERROR_NONE;
+  return internal::ValidationError::NONE;
 }
 
 template <typename E, typename F>

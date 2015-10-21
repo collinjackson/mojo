@@ -179,7 +179,7 @@ TEST_F(ArrayTest, Serialization_ArrayOfPOD) {
   FixedBufferForTesting buf(size);
   Array_Data<int32_t>* data;
   ArrayValidateParams validate_params(0, false, nullptr);
-  EXPECT_EQ(mojo::internal::VALIDATION_ERROR_NONE,
+  EXPECT_EQ(mojo::internal::ValidationError::NONE,
             SerializeArray_(&array, &buf, &data, &validate_params));
 
   Array<int32_t> array2;
@@ -198,7 +198,7 @@ TEST_F(ArrayTest, Serialization_EmptyArrayOfPOD) {
   FixedBufferForTesting buf(size);
   Array_Data<int32_t>* data;
   ArrayValidateParams validate_params(0, false, nullptr);
-  EXPECT_EQ(mojo::internal::VALIDATION_ERROR_NONE,
+  EXPECT_EQ(mojo::internal::ValidationError::NONE,
             SerializeArray_(&array, &buf, &data, &validate_params));
 
   Array<int32_t> array2;
@@ -222,7 +222,7 @@ TEST_F(ArrayTest, Serialization_ArrayOfArrayOfPOD) {
   Array_Data<Array_Data<int32_t>*>* data;
   ArrayValidateParams validate_params(
       0, false, new ArrayValidateParams(0, false, nullptr));
-  EXPECT_EQ(mojo::internal::VALIDATION_ERROR_NONE,
+  EXPECT_EQ(mojo::internal::ValidationError::NONE,
             SerializeArray_(&array, &buf, &data, &validate_params));
 
   Array<Array<int32_t>> array2;
@@ -280,7 +280,7 @@ TEST_F(ArrayTest, Serialization_ArrayOfBool) {
   FixedBufferForTesting buf(size);
   Array_Data<bool>* data;
   ArrayValidateParams validate_params(0, false, nullptr);
-  EXPECT_EQ(mojo::internal::VALIDATION_ERROR_NONE,
+  EXPECT_EQ(mojo::internal::ValidationError::NONE,
             SerializeArray_(&array, &buf, &data, &validate_params));
 
   Array<bool> array2;
@@ -309,7 +309,7 @@ TEST_F(ArrayTest, Serialization_ArrayOfString) {
   Array_Data<String_Data*>* data;
   ArrayValidateParams validate_params(
       0, false, new ArrayValidateParams(0, false, nullptr));
-  EXPECT_EQ(mojo::internal::VALIDATION_ERROR_NONE,
+  EXPECT_EQ(mojo::internal::ValidationError::NONE,
             SerializeArray_(&array, &buf, &data, &validate_params));
 
   Array<String> array2;
@@ -343,7 +343,7 @@ TEST_F(ArrayTest, Serialization_ArrayOfHandle) {
 
   // 1.  Serialization should fail on non-nullable invalid Handle.
   ArrayValidateParams validate_params(4, false, nullptr);
-  EXPECT_EQ(mojo::internal::VALIDATION_ERROR_UNEXPECTED_INVALID_HANDLE,
+  EXPECT_EQ(mojo::internal::ValidationError::UNEXPECTED_INVALID_HANDLE,
             SerializeArray_(&array, &buf, &data, &validate_params));
 
   // We failed trying to transfer the first handle, so the rest are left valid.
@@ -354,7 +354,7 @@ TEST_F(ArrayTest, Serialization_ArrayOfHandle) {
 
   // 2.  Serialization should pass on nullable invalid Handle.
   ArrayValidateParams validate_params_nullable(4, true, nullptr);
-  EXPECT_EQ(mojo::internal::VALIDATION_ERROR_NONE,
+  EXPECT_EQ(mojo::internal::ValidationError::NONE,
             SerializeArray_(&array, &buf, &data, &validate_params_nullable));
 
   EXPECT_FALSE(array[0].is_valid());
@@ -388,13 +388,13 @@ TEST_F(ArrayTest, Serialization_ArrayOfInterfacePtr) {
   // 1.  Invalid InterfacePtr should fail serialization.
   ArrayValidateParams validate_non_nullable(1, false, nullptr);
   EXPECT_EQ(
-      mojo::internal::VALIDATION_ERROR_UNEXPECTED_INVALID_HANDLE,
+      mojo::internal::ValidationError::UNEXPECTED_INVALID_HANDLE,
       SerializeArray_(&iface_array, &buf, &output, &validate_non_nullable));
   EXPECT_FALSE(iface_array[0].is_bound());
 
   // 2.  Invalid InterfacePtr should pass if array elements are nullable.
   ArrayValidateParams validate_nullable(1, true, nullptr);
-  EXPECT_EQ(mojo::internal::VALIDATION_ERROR_NONE,
+  EXPECT_EQ(mojo::internal::ValidationError::NONE,
             SerializeArray_(&iface_array, &buf, &output, &validate_nullable));
   EXPECT_FALSE(iface_array[0].is_bound());
 
@@ -406,7 +406,7 @@ TEST_F(ArrayTest, Serialization_ArrayOfInterfacePtr) {
   EXPECT_TRUE(iface_array[0].is_bound());
 
   EXPECT_EQ(
-      mojo::internal::VALIDATION_ERROR_NONE,
+      mojo::internal::ValidationError::NONE,
       SerializeArray_(&iface_array, &buf, &output, &validate_non_nullable));
   EXPECT_FALSE(iface_array[0].is_bound());
 
@@ -442,7 +442,7 @@ TEST_F(ArrayTest, Serialization_StructWithArrayOfIntefacePtr) {
   StructWithInterfaceArray::Data_* struct_arr_iface_data;
   //  1. This should fail because |structs_array| has an invalid InterfacePtr<>
   //     and it is not nullable.
-  EXPECT_EQ(mojo::internal::VALIDATION_ERROR_UNEXPECTED_NULL_POINTER,
+  EXPECT_EQ(mojo::internal::ValidationError::UNEXPECTED_NULL_POINTER,
             Serialize_(&struct_arr_iface, &buf, &struct_arr_iface_data));
 
   //  2. Adding in a struct with a valid InterfacePtr<> will let it serialize.
@@ -454,7 +454,7 @@ TEST_F(ArrayTest, Serialization_StructWithArrayOfIntefacePtr) {
 
   struct_arr_iface.structs_array[0] = iface_struct.Pass();
   ASSERT_TRUE(struct_arr_iface.structs_array[0]->iptr.is_bound());
-  EXPECT_EQ(mojo::internal::VALIDATION_ERROR_NONE,
+  EXPECT_EQ(mojo::internal::ValidationError::NONE,
             Serialize_(&struct_arr_iface, &buf, &struct_arr_iface_data));
 
   EXPECT_FALSE(struct_arr_iface.structs_array[0]->iptr.is_bound());
@@ -491,7 +491,7 @@ TEST_F(ArrayTest, Serialization_StructWithArrayOfIntefaceRequest) {
   //  1. This should fail because |req_array| has an invalid InterfaceRequest<>
   //     and it is not nullable.
   EXPECT_EQ(
-      mojo::internal::VALIDATION_ERROR_UNEXPECTED_INVALID_HANDLE,
+      mojo::internal::ValidationError::UNEXPECTED_INVALID_HANDLE,
       Serialize_(&struct_arr_iface_req, &buf, &struct_arr_iface_req_data));
 
   //  2. Adding in a valid InterfacePtr<> will let it serialize.
@@ -500,7 +500,7 @@ TEST_F(ArrayTest, Serialization_StructWithArrayOfIntefaceRequest) {
   EXPECT_TRUE(struct_arr_iface_req.req_array[0].is_pending());
 
   EXPECT_EQ(
-      mojo::internal::VALIDATION_ERROR_NONE,
+      mojo::internal::ValidationError::NONE,
       Serialize_(&struct_arr_iface_req, &buf, &struct_arr_iface_req_data));
 
   EXPECT_FALSE(struct_arr_iface_req.req_array[0].is_pending());

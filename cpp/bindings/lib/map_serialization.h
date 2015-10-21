@@ -126,7 +126,7 @@ inline size_t GetSerializedSize_(const Map<MapKey, MapValue>& input) {
          value_data_size;
 }
 
-// SerializeMap_ will return VALIDATION_ERROR_NONE on success and set
+// SerializeMap_ will return ValidationError::NONE on success and set
 // |output| accordingly.  On failure, |input| will be partially serialized into
 // |output| up until an error occurs (which is propagated up and returned by
 // SerializeMap_), in which case |buf| is also partially consumed.
@@ -147,7 +147,7 @@ inline internal::ValidationError SerializeMap_(
     // |input| could be a nullable map, in which case |output| is serialized as
     // null, which is valid.
     *output = nullptr;
-    return internal::VALIDATION_ERROR_NONE;
+    return internal::ValidationError::NONE;
   }
 
   internal::Map_Data<DataKey, DataValue>* result =
@@ -167,7 +167,7 @@ inline internal::ValidationError SerializeMap_(
       internal::ArraySerializer<MapKey, DataKey>::SerializeElements(
           key_iter.begin(), input->size(), buf, result->keys.ptr,
           key_validate_params);
-  if (keys_retval != internal::VALIDATION_ERROR_NONE)
+  if (keys_retval != internal::ValidationError::NONE)
     return keys_retval;
 
   // Now we try allocate an Array_Data for the values
@@ -181,11 +181,11 @@ inline internal::ValidationError SerializeMap_(
       internal::ArraySerializer<MapValue, DataValue>::SerializeElements(
           value_iter.begin(), input->size(), buf, result->values.ptr,
           value_validate_params);
-  if (values_retval != internal::VALIDATION_ERROR_NONE)
+  if (values_retval != internal::ValidationError::NONE)
     return values_retval;
 
   *output = result;
-  return internal::VALIDATION_ERROR_NONE;
+  return internal::ValidationError::NONE;
 }
 
 template <typename MapKey,

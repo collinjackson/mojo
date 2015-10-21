@@ -60,7 +60,7 @@ U SerializeAndDeserialize(T input) {
   size_t size = GetSerializedSize_(*input);
   mojo::internal::FixedBufferForTesting buf(size + 32);
   InputDataType data;
-  EXPECT_EQ(mojo::internal::VALIDATION_ERROR_NONE,
+  EXPECT_EQ(mojo::internal::ValidationError::NONE,
             Serialize_(input.get(), &buf, &data));
 
   std::vector<Handle> handles;
@@ -151,7 +151,7 @@ TEST_F(StructTest, Serialization_Basic) {
 
   mojo::internal::FixedBufferForTesting buf(size);
   internal::Rect_Data* data;
-  EXPECT_EQ(mojo::internal::VALIDATION_ERROR_NONE,
+  EXPECT_EQ(mojo::internal::ValidationError::NONE,
             Serialize_(rect.get(), &buf, &data));
 
   RectPtr rect2(Rect::New());
@@ -185,7 +185,7 @@ TEST_F(StructTest, Serialization_StructPointers) {
 
   mojo::internal::FixedBufferForTesting buf(size);
   internal::RectPair_Data* data;
-  EXPECT_EQ(mojo::internal::VALIDATION_ERROR_NONE,
+  EXPECT_EQ(mojo::internal::ValidationError::NONE,
             Serialize_(pair.get(), &buf, &data));
 
   RectPairPtr pair2(RectPair::New());
@@ -217,7 +217,7 @@ TEST_F(StructTest, Serialization_ArrayPointers) {
 
   mojo::internal::FixedBufferForTesting buf(size);
   internal::NamedRegion_Data* data;
-  EXPECT_EQ(mojo::internal::VALIDATION_ERROR_NONE,
+  EXPECT_EQ(mojo::internal::ValidationError::NONE,
             Serialize_(region.get(), &buf, &data));
 
   NamedRegionPtr region2(NamedRegion::New());
@@ -244,7 +244,7 @@ TEST_F(StructTest, Serialization_NullArrayPointers) {
 
   mojo::internal::FixedBufferForTesting buf(size);
   internal::NamedRegion_Data* data;
-  EXPECT_EQ(mojo::internal::VALIDATION_ERROR_NONE,
+  EXPECT_EQ(mojo::internal::ValidationError::NONE,
             Serialize_(region.get(), &buf, &data));
 
   NamedRegionPtr region2(NamedRegion::New());
@@ -267,14 +267,14 @@ TEST_F(StructTest, Serialization_InterfaceRequest) {
   ContainsInterfaceRequest::Data_* data;
 
   // Test failure when non-nullable interface request is null.
-  EXPECT_EQ(mojo::internal::VALIDATION_ERROR_UNEXPECTED_INVALID_HANDLE,
+  EXPECT_EQ(mojo::internal::ValidationError::UNEXPECTED_INVALID_HANDLE,
             Serialize_(&iface_req_struct, &buf, &data));
 
   SomeInterfacePtr i_ptr;
   iface_req_struct.req = GetProxy(&i_ptr);
   EXPECT_TRUE(iface_req_struct.req.is_pending());
 
-  EXPECT_EQ(mojo::internal::VALIDATION_ERROR_NONE,
+  EXPECT_EQ(mojo::internal::ValidationError::NONE,
             Serialize_(&iface_req_struct, &buf, &data));
   EXPECT_FALSE(iface_req_struct.req.is_pending());
 

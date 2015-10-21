@@ -58,7 +58,7 @@ bool ControlMessageHandler::Run(Message* message,
   RunResponseMessageParams_Data* response_params = nullptr;
   auto result =
       Serialize_(response_params_ptr.get(), builder.buffer(), &response_params);
-  MOJO_DCHECK(result == VALIDATION_ERROR_NONE);
+  MOJO_DCHECK(result == ValidationError::NONE);
 
   response_params->EncodePointersAndHandles(
       builder.message()->mutable_handles());

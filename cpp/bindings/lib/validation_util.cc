@@ -25,23 +25,23 @@ bool ValidateEncodedPointer(const uint64_t* offset) {
 bool ValidateStructHeaderAndClaimMemory(const void* data,
                                         BoundsChecker* bounds_checker) {
   if (!IsAligned(data)) {
-    ReportValidationError(VALIDATION_ERROR_MISALIGNED_OBJECT);
+    ReportValidationError(ValidationError::MISALIGNED_OBJECT);
     return false;
   }
   if (!bounds_checker->IsValidRange(data, sizeof(StructHeader))) {
-    ReportValidationError(VALIDATION_ERROR_ILLEGAL_MEMORY_RANGE);
+    ReportValidationError(ValidationError::ILLEGAL_MEMORY_RANGE);
     return false;
   }
 
   const StructHeader* header = static_cast<const StructHeader*>(data);
 
   if (header->num_bytes < sizeof(StructHeader)) {
-    ReportValidationError(VALIDATION_ERROR_UNEXPECTED_STRUCT_HEADER);
+    ReportValidationError(ValidationError::UNEXPECTED_STRUCT_HEADER);
     return false;
   }
 
   if (!bounds_checker->ClaimMemory(data, header->num_bytes)) {
-    ReportValidationError(VALIDATION_ERROR_ILLEGAL_MEMORY_RANGE);
+    ReportValidationError(ValidationError::ILLEGAL_MEMORY_RANGE);
     return false;
   }
 

@@ -80,13 +80,13 @@ TEST_F(SerializationWarningTest, HandleInStruct) {
   EXPECT_FALSE(test_struct->hdl.is_valid());
 
   TestWarning(test_struct.Pass(),
-              mojo::internal::VALIDATION_ERROR_UNEXPECTED_INVALID_HANDLE);
+              mojo::internal::ValidationError::UNEXPECTED_INVALID_HANDLE);
 
   test_struct = Struct2::New();
   MessagePipe pipe;
   test_struct->hdl = ScopedHandle::From(pipe.handle1.Pass());
 
-  TestWarning(test_struct.Pass(), mojo::internal::VALIDATION_ERROR_NONE);
+  TestWarning(test_struct.Pass(), mojo::internal::ValidationError::NONE);
 }
 
 TEST_F(SerializationWarningTest, StructInStruct) {
@@ -94,12 +94,12 @@ TEST_F(SerializationWarningTest, StructInStruct) {
   EXPECT_TRUE(!test_struct->struct_1);
 
   TestWarning(test_struct.Pass(),
-              mojo::internal::VALIDATION_ERROR_UNEXPECTED_NULL_POINTER);
+              mojo::internal::ValidationError::UNEXPECTED_NULL_POINTER);
 
   test_struct = Struct3::New();
   test_struct->struct_1 = Struct1::New();
 
-  TestWarning(test_struct.Pass(), mojo::internal::VALIDATION_ERROR_NONE);
+  TestWarning(test_struct.Pass(), mojo::internal::ValidationError::NONE);
 }
 
 TEST_F(SerializationWarningTest, ArrayOfStructsInStruct) {
@@ -107,24 +107,24 @@ TEST_F(SerializationWarningTest, ArrayOfStructsInStruct) {
   EXPECT_TRUE(!test_struct->data);
 
   TestWarning(test_struct.Pass(),
-              mojo::internal::VALIDATION_ERROR_UNEXPECTED_NULL_POINTER);
+              mojo::internal::ValidationError::UNEXPECTED_NULL_POINTER);
 
   test_struct = Struct4::New();
   test_struct->data.resize(1);
 
   TestWarning(test_struct.Pass(),
-              mojo::internal::VALIDATION_ERROR_UNEXPECTED_NULL_POINTER);
+              mojo::internal::ValidationError::UNEXPECTED_NULL_POINTER);
 
   test_struct = Struct4::New();
   test_struct->data.resize(0);
 
-  TestWarning(test_struct.Pass(), mojo::internal::VALIDATION_ERROR_NONE);
+  TestWarning(test_struct.Pass(), mojo::internal::ValidationError::NONE);
 
   test_struct = Struct4::New();
   test_struct->data.resize(1);
   test_struct->data[0] = Struct1::New();
 
-  TestWarning(test_struct.Pass(), mojo::internal::VALIDATION_ERROR_NONE);
+  TestWarning(test_struct.Pass(), mojo::internal::ValidationError::NONE);
 }
 
 TEST_F(SerializationWarningTest, FixedArrayOfStructsInStruct) {
@@ -132,21 +132,21 @@ TEST_F(SerializationWarningTest, FixedArrayOfStructsInStruct) {
   EXPECT_TRUE(!test_struct->pair);
 
   TestWarning(test_struct.Pass(),
-              mojo::internal::VALIDATION_ERROR_UNEXPECTED_NULL_POINTER);
+              mojo::internal::ValidationError::UNEXPECTED_NULL_POINTER);
 
   test_struct = Struct5::New();
   test_struct->pair.resize(1);
   test_struct->pair[0] = Struct1::New();
 
   TestWarning(test_struct.Pass(),
-              mojo::internal::VALIDATION_ERROR_UNEXPECTED_ARRAY_HEADER);
+              mojo::internal::ValidationError::UNEXPECTED_ARRAY_HEADER);
 
   test_struct = Struct5::New();
   test_struct->pair.resize(2);
   test_struct->pair[0] = Struct1::New();
   test_struct->pair[1] = Struct1::New();
 
-  TestWarning(test_struct.Pass(), mojo::internal::VALIDATION_ERROR_NONE);
+  TestWarning(test_struct.Pass(), mojo::internal::ValidationError::NONE);
 }
 
 TEST_F(SerializationWarningTest, StringInStruct) {
@@ -154,12 +154,12 @@ TEST_F(SerializationWarningTest, StringInStruct) {
   EXPECT_TRUE(!test_struct->str);
 
   TestWarning(test_struct.Pass(),
-              mojo::internal::VALIDATION_ERROR_UNEXPECTED_NULL_POINTER);
+              mojo::internal::ValidationError::UNEXPECTED_NULL_POINTER);
 
   test_struct = Struct6::New();
   test_struct->str = "hello world";
 
-  TestWarning(test_struct.Pass(), mojo::internal::VALIDATION_ERROR_NONE);
+  TestWarning(test_struct.Pass(), mojo::internal::ValidationError::NONE);
 }
 
 TEST_F(SerializationWarningTest, ArrayOfArraysOfHandles) {
@@ -169,7 +169,7 @@ TEST_F(SerializationWarningTest, ArrayOfArraysOfHandles) {
 
   ArrayValidateParams validate_params_0(
       0, true, new ArrayValidateParams(0, true, nullptr));
-  TestArrayWarning(test_array.Pass(), mojo::internal::VALIDATION_ERROR_NONE,
+  TestArrayWarning(test_array.Pass(), mojo::internal::ValidationError::NONE,
                    &validate_params_0);
 
   test_array = CreateTestNestedHandleArray();
@@ -177,7 +177,7 @@ TEST_F(SerializationWarningTest, ArrayOfArraysOfHandles) {
   ArrayValidateParams validate_params_1(
       0, false, new ArrayValidateParams(0, true, nullptr));
   TestArrayWarning(test_array.Pass(),
-                   mojo::internal::VALIDATION_ERROR_UNEXPECTED_NULL_POINTER,
+                   mojo::internal::ValidationError::UNEXPECTED_NULL_POINTER,
                    &validate_params_1);
 
   test_array = CreateTestNestedHandleArray();
@@ -185,7 +185,7 @@ TEST_F(SerializationWarningTest, ArrayOfArraysOfHandles) {
   ArrayValidateParams validate_params_2(
       0, true, new ArrayValidateParams(0, false, nullptr));
   TestArrayWarning(test_array.Pass(),
-                   mojo::internal::VALIDATION_ERROR_UNEXPECTED_INVALID_HANDLE,
+                   mojo::internal::ValidationError::UNEXPECTED_INVALID_HANDLE,
                    &validate_params_2);
 }
 
@@ -196,21 +196,21 @@ TEST_F(SerializationWarningTest, ArrayOfStrings) {
 
   ArrayValidateParams validate_params_0(
       0, true, new ArrayValidateParams(0, false, nullptr));
-  TestArrayWarning(test_array.Pass(), mojo::internal::VALIDATION_ERROR_NONE,
+  TestArrayWarning(test_array.Pass(), mojo::internal::ValidationError::NONE,
                    &validate_params_0);
 
   test_array = Array<String>::New(3);
   ArrayValidateParams validate_params_1(
       0, false, new ArrayValidateParams(0, false, nullptr));
   TestArrayWarning(test_array.Pass(),
-                   mojo::internal::VALIDATION_ERROR_UNEXPECTED_NULL_POINTER,
+                   mojo::internal::ValidationError::UNEXPECTED_NULL_POINTER,
                    &validate_params_1);
 
   test_array = Array<String>::New(2);
   ArrayValidateParams validate_params_2(
       3, true, new ArrayValidateParams(0, false, nullptr));
   TestArrayWarning(test_array.Pass(),
-                   mojo::internal::VALIDATION_ERROR_UNEXPECTED_ARRAY_HEADER,
+                   mojo::internal::ValidationError::UNEXPECTED_ARRAY_HEADER,
                    &validate_params_2);
 }
 

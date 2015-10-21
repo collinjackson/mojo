@@ -501,7 +501,7 @@ TEST(UnionTest, Serialization_UnionOfPods) {
 
   mojo::internal::FixedBufferForTesting buf(size);
   internal::SmallStruct_Data* data = nullptr;
-  EXPECT_EQ(mojo::internal::VALIDATION_ERROR_NONE,
+  EXPECT_EQ(mojo::internal::ValidationError::NONE,
             Serialize_(small_struct.get(), &buf, &data));
 
   SmallStructPtr deserialized(SmallStruct::New());
@@ -522,7 +522,7 @@ TEST(UnionTest, Serialization_UnionOfObjects) {
 
   mojo::internal::FixedBufferForTesting buf(size);
   internal::SmallObjStruct_Data* data = nullptr;
-  EXPECT_EQ(mojo::internal::VALIDATION_ERROR_NONE,
+  EXPECT_EQ(mojo::internal::ValidationError::NONE,
             Serialize_(obj_struct.get(), &buf, &data));
 
   std::vector<Handle> handles;
@@ -546,7 +546,7 @@ TEST(UnionTest, Validation_UnionsInStruct) {
 
   mojo::internal::FixedBufferForTesting buf(size);
   internal::SmallStruct_Data* data = nullptr;
-  EXPECT_EQ(mojo::internal::VALIDATION_ERROR_NONE,
+  EXPECT_EQ(mojo::internal::ValidationError::NONE,
             Serialize_(small_struct.get(), &buf, &data));
 
   std::vector<Handle> handles;
@@ -571,7 +571,7 @@ TEST(UnionTest, Validation_PodUnionInStruct_Failure) {
 
   mojo::internal::FixedBufferForTesting buf(size);
   internal::SmallStruct_Data* data = nullptr;
-  EXPECT_EQ(mojo::internal::VALIDATION_ERROR_NONE,
+  EXPECT_EQ(mojo::internal::ValidationError::NONE,
             Serialize_(small_struct.get(), &buf, &data));
   data->pod_union.tag = static_cast<internal::PodUnion_Data::PodUnion_Tag>(100);
 
@@ -615,7 +615,7 @@ TEST(UnionTest, Validation_NullableUnion) {
 
   mojo::internal::FixedBufferForTesting buf(size);
   internal::SmallStruct_Data* data = nullptr;
-  EXPECT_EQ(mojo::internal::VALIDATION_ERROR_NONE,
+  EXPECT_EQ(mojo::internal::ValidationError::NONE,
             Serialize_(small_struct.get(), &buf, &data));
 
   std::vector<Handle> handles;
@@ -660,7 +660,7 @@ TEST(UnionTest, PodUnionInMapSerialization) {
   mojo::internal::Map_Data<mojo::internal::String_Data*,
                            internal::PodUnion_Data>* data;
   mojo::internal::ArrayValidateParams validate_params(0, false, nullptr);
-  EXPECT_EQ(mojo::internal::VALIDATION_ERROR_NONE,
+  EXPECT_EQ(mojo::internal::ValidationError::NONE,
             SerializeMap_(&map, &buf, &data, &validate_params));
 
   Map<String, PodUnionPtr> map2;
@@ -685,7 +685,7 @@ TEST(UnionTest, PodUnionInMapSerializationWithNull) {
   mojo::internal::Map_Data<mojo::internal::String_Data*,
                            internal::PodUnion_Data>* data;
   mojo::internal::ArrayValidateParams validate_params(0, true, nullptr);
-  EXPECT_EQ(mojo::internal::VALIDATION_ERROR_NONE,
+  EXPECT_EQ(mojo::internal::ValidationError::NONE,
             SerializeMap_(&map, &buf, &data, &validate_params));
 
   Map<String, PodUnionPtr> map2;

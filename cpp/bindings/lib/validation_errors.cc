@@ -14,35 +14,39 @@ ValidationErrorObserverForTesting* g_validation_error_observer = nullptr;
 
 }  // namespace
 
+// TODO(vardhan):  There are golden files
+// (mojo/public/interfaces/bindings/tests/data/validation/*expected) with these
+// strings shared between languages, so changing them here requires changing
+// them in all languages, along with the golden files.
 const char* ValidationErrorToString(ValidationError error) {
   switch (error) {
-    case VALIDATION_ERROR_NONE:
+    case ValidationError::NONE:
       return "VALIDATION_ERROR_NONE";
-    case VALIDATION_ERROR_MISALIGNED_OBJECT:
+    case ValidationError::MISALIGNED_OBJECT:
       return "VALIDATION_ERROR_MISALIGNED_OBJECT";
-    case VALIDATION_ERROR_ILLEGAL_MEMORY_RANGE:
+    case ValidationError::ILLEGAL_MEMORY_RANGE:
       return "VALIDATION_ERROR_ILLEGAL_MEMORY_RANGE";
-    case VALIDATION_ERROR_UNEXPECTED_STRUCT_HEADER:
+    case ValidationError::UNEXPECTED_STRUCT_HEADER:
       return "VALIDATION_ERROR_UNEXPECTED_STRUCT_HEADER";
-    case VALIDATION_ERROR_UNEXPECTED_ARRAY_HEADER:
+    case ValidationError::UNEXPECTED_ARRAY_HEADER:
       return "VALIDATION_ERROR_UNEXPECTED_ARRAY_HEADER";
-    case VALIDATION_ERROR_ILLEGAL_HANDLE:
+    case ValidationError::ILLEGAL_HANDLE:
       return "VALIDATION_ERROR_ILLEGAL_HANDLE";
-    case VALIDATION_ERROR_UNEXPECTED_INVALID_HANDLE:
+    case ValidationError::UNEXPECTED_INVALID_HANDLE:
       return "VALIDATION_ERROR_UNEXPECTED_INVALID_HANDLE";
-    case VALIDATION_ERROR_ILLEGAL_POINTER:
+    case ValidationError::ILLEGAL_POINTER:
       return "VALIDATION_ERROR_ILLEGAL_POINTER";
-    case VALIDATION_ERROR_UNEXPECTED_NULL_POINTER:
+    case ValidationError::UNEXPECTED_NULL_POINTER:
       return "VALIDATION_ERROR_UNEXPECTED_NULL_POINTER";
-    case VALIDATION_ERROR_MESSAGE_HEADER_INVALID_FLAGS:
+    case ValidationError::MESSAGE_HEADER_INVALID_FLAGS:
       return "VALIDATION_ERROR_MESSAGE_HEADER_INVALID_FLAGS";
-    case VALIDATION_ERROR_MESSAGE_HEADER_MISSING_REQUEST_ID:
+    case ValidationError::MESSAGE_HEADER_MISSING_REQUEST_ID:
       return "VALIDATION_ERROR_MESSAGE_HEADER_MISSING_REQUEST_ID";
-    case VALIDATION_ERROR_MESSAGE_HEADER_UNKNOWN_METHOD:
+    case ValidationError::MESSAGE_HEADER_UNKNOWN_METHOD:
       return "VALIDATION_ERROR_MESSAGE_HEADER_UNKNOWN_METHOD";
-    case VALIDATION_ERROR_DIFFERENT_SIZED_ARRAYS_IN_MAP:
+    case ValidationError::DIFFERENT_SIZED_ARRAYS_IN_MAP:
       return "VALIDATION_ERROR_DIFFERENT_SIZED_ARRAYS_IN_MAP";
-    case VALIDATION_ERROR_UNEXPECTED_NULL_UNION:
+    case ValidationError::UNEXPECTED_NULL_UNION:
       return "VALIDATION_ERROR_UNEXPECTED_NULL_UNION";
   }
 
@@ -61,7 +65,7 @@ void ReportValidationError(ValidationError error, const char* description) {
 }
 
 ValidationErrorObserverForTesting::ValidationErrorObserverForTesting()
-    : last_error_(VALIDATION_ERROR_NONE) {
+    : last_error_(ValidationError::NONE) {
   MOJO_DCHECK(!g_validation_error_observer);
   g_validation_error_observer = this;
 }

@@ -246,7 +246,7 @@ TEST_F(MapTest, ArrayOfMap) {
     Array_Data<Map_Data<int32_t, int8_t>*>* data;
     ArrayValidateParams validate_params(
         0, false, new ArrayValidateParams(0, false, nullptr));
-    EXPECT_EQ(internal::VALIDATION_ERROR_NONE,
+    EXPECT_EQ(internal::ValidationError::NONE,
               SerializeArray_(&array, &buf, &data, &validate_params));
 
     Array<Map<int32_t, int8_t>> deserialized_array;
@@ -270,7 +270,7 @@ TEST_F(MapTest, ArrayOfMap) {
     ArrayValidateParams validate_params(
         0, false, new ArrayValidateParams(
                       0, false, new ArrayValidateParams(0, false, nullptr)));
-    EXPECT_EQ(internal::VALIDATION_ERROR_NONE,
+    EXPECT_EQ(internal::ValidationError::NONE,
               SerializeArray_(&array, &buf, &data, &validate_params));
 
     Array<Map<String, Array<bool>>> deserialized_array;

@@ -53,7 +53,7 @@ void SendRunMessage(MessageReceiverWithResponder* receiver,
 
   RunMessageParams_Data* params = nullptr;
   auto result = Serialize_(params_ptr.get(), builder.buffer(), &params);
-  MOJO_DCHECK(result == VALIDATION_ERROR_NONE);
+  MOJO_DCHECK(result == ValidationError::NONE);
 
   params->EncodePointersAndHandles(builder.message()->mutable_handles());
   MessageReceiver* responder = new RunResponseForwardToCallback(callback);
@@ -73,7 +73,7 @@ void SendRunOrClosePipeMessage(MessageReceiverWithResponder* receiver,
 
   RunOrClosePipeMessageParams_Data* params = nullptr;
   auto result = Serialize_(params_ptr.get(), builder.buffer(), &params);
-  MOJO_DCHECK(result == VALIDATION_ERROR_NONE);
+  MOJO_DCHECK(result == ValidationError::NONE);
 
   params->EncodePointersAndHandles(builder.message()->mutable_handles());
   bool ok = receiver->Accept(builder.message());

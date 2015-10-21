@@ -65,16 +65,16 @@ class Map_Data {
     const Map_Data* object = static_cast<const Map_Data*>(data);
     if (object->header_.num_bytes != sizeof(Map_Data) ||
         object->header_.version != 0) {
-      ReportValidationError(VALIDATION_ERROR_UNEXPECTED_STRUCT_HEADER);
+      ReportValidationError(ValidationError::UNEXPECTED_STRUCT_HEADER);
       return false;
     }
 
     if (!ValidateEncodedPointer(&object->keys.offset)) {
-      ReportValidationError(VALIDATION_ERROR_ILLEGAL_POINTER);
+      ReportValidationError(ValidationError::ILLEGAL_POINTER);
       return false;
     }
     if (!object->keys.offset) {
-      ReportValidationError(VALIDATION_ERROR_UNEXPECTED_NULL_POINTER,
+      ReportValidationError(ValidationError::UNEXPECTED_NULL_POINTER,
                             "null key array in map struct");
       return false;
     }
@@ -86,11 +86,11 @@ class Map_Data {
     }
 
     if (!ValidateEncodedPointer(&object->values.offset)) {
-      ReportValidationError(VALIDATION_ERROR_ILLEGAL_POINTER);
+      ReportValidationError(ValidationError::ILLEGAL_POINTER);
       return false;
     }
     if (!object->values.offset) {
-      ReportValidationError(VALIDATION_ERROR_UNEXPECTED_NULL_POINTER,
+      ReportValidationError(ValidationError::UNEXPECTED_NULL_POINTER,
                             "null value array in map struct");
       return false;
     }
@@ -104,7 +104,7 @@ class Map_Data {
     const ArrayHeader* value_header = static_cast<const ArrayHeader*>(
         DecodePointerRaw(&object->values.offset));
     if (key_header->num_elements != value_header->num_elements) {
-      ReportValidationError(VALIDATION_ERROR_DIFFERENT_SIZED_ARRAYS_IN_MAP);
+      ReportValidationError(ValidationError::DIFFERENT_SIZED_ARRAYS_IN_MAP);
       return false;
     }
 
