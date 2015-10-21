@@ -6,10 +6,16 @@ import("../../mojo_sdk.gni")
 
 mojo_sdk_source_set("mojo_irt_header") {
   sources = [
+    "mgl_irt.h",
     "mojo_initial_handle.h",
     "mojo_irt.h",
   ]
-  mojo_sdk_deps = [ "mojo/public/c/system" ]
+  mojo_sdk_deps = [
+    "mojo/public/c/gpu:MGL",
+    "mojo/public/c/gpu:MGL_onscreen",
+    "mojo/public/c/gpu:MGL_signal_sync_point",
+    "mojo/public/c/system",
+  ]
 }
 
 # Untrusted code
@@ -18,6 +24,7 @@ if (is_nacl) {
   mojo_sdk_source_set("mojo") {
     sources = [
       "libmojo.cc",
+      "mgl_irt.cc",
     ]
     mojo_sdk_deps = [ "mojo/public/c/system" ]
     deps = [

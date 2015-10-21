@@ -16,9 +16,11 @@ group("gpu") {
     ":MGL",
     ":MGL_signal_sync_point",
     ":GLES2",
-    "../../platform/native:mgl_thunks",
     "../../platform/native:gles2",
   ]
+  if (!is_nacl) {
+    deps += [ "../../platform/native:mgl_thunks" ]
+  }
 }
 
 group("gpu_onscreen") {
@@ -28,8 +30,10 @@ group("gpu_onscreen") {
 
   deps = [
     ":gpu",
-    "../../platform/native:mgl_onscreen_thunks",
   ]
+  if (!is_nacl) {
+    deps += [ "../../platform/native:mgl_onscreen_thunks" ]
+  }
 }
 
 mojo_sdk_source_set("MGL") {
