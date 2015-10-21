@@ -8,7 +8,6 @@
 #include <stdint.h>
 
 #include "mojo/public/cpp/bindings/lib/bounds_checker.h"
-#include "mojo/public/cpp/bindings/message.h"
 
 namespace mojo {
 namespace internal {
@@ -26,21 +25,6 @@ bool ValidateEncodedPointer(const uint64_t* offset);
 // claimed version.
 bool ValidateStructHeaderAndClaimMemory(const void* data,
                                         BoundsChecker* bounds_checker);
-
-// Validates that the message is a request which doesn't expect a response.
-bool ValidateMessageIsRequestWithoutResponse(const Message* message);
-// Validates that the message is a request expecting a response.
-bool ValidateMessageIsRequestExpectingResponse(const Message* message);
-// Validates that the message is a response.
-bool ValidateMessageIsResponse(const Message* message);
-
-// Validates that the message payload is a valid struct of type ParamsType.
-template <typename ParamsType>
-bool ValidateMessagePayload(const Message* message) {
-  BoundsChecker bounds_checker(message->payload(), message->payload_num_bytes(),
-                               message->handles()->size());
-  return ParamsType::Validate(message->payload(), &bounds_checker);
-}
 
 }  // namespace internal
 }  // namespace mojo

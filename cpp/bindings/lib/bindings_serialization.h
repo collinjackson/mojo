@@ -7,11 +7,17 @@
 
 #include <vector>
 
-#include "mojo/public/cpp/bindings/interface_ptr.h"
 #include "mojo/public/cpp/bindings/lib/bindings_internal.h"
 #include "mojo/public/cpp/system/core.h"
 
 namespace mojo {
+
+template <typename I>
+class InterfacePtr;
+
+template <typename I>
+class InterfacePtrInfo;
+
 namespace internal {
 
 // Please note that this is a different value than |mojo::kInvalidHandleValue|,

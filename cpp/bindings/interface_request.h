@@ -5,9 +5,15 @@
 #ifndef MOJO_PUBLIC_CPP_BINDINGS_INTERFACE_REQUEST_H_
 #define MOJO_PUBLIC_CPP_BINDINGS_INTERFACE_REQUEST_H_
 
-#include "mojo/public/cpp/bindings/interface_ptr.h"
+#include "mojo/public/cpp/system/message_pipe.h"
 
 namespace mojo {
+
+template <typename I>
+class InterfacePtr;
+
+template <typename I>
+class InterfacePtrInfo;
 
 // Represents a request from a remote client for an implementation of Interface
 // over a specified message pipe. The implementor of the interface should

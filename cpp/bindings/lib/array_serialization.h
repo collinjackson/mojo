@@ -17,7 +17,6 @@
 #include <vector>
 
 #include "mojo/public/c/system/macros.h"
-#include "mojo/public/cpp/bindings/interface_request.h"
 #include "mojo/public/cpp/bindings/lib/array_internal.h"
 #include "mojo/public/cpp/bindings/lib/bindings_internal.h"
 #include "mojo/public/cpp/bindings/lib/iterator_util.h"
@@ -27,6 +26,10 @@
 #include "mojo/public/cpp/bindings/lib/validation_errors.h"
 
 namespace mojo {
+
+template <typename Interface>
+InterfaceRequest<Interface> MakeRequest(ScopedMessagePipeHandle handle);
+
 namespace internal {
 
 // The ArraySerializer template contains static methods for serializing |Array|s
