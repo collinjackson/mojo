@@ -83,7 +83,7 @@ template("dartx") {
   }
 
   group(target_name) {
-    deps = [
+    public_deps = [
       ":gen_${bundle_prefix}_bundle",
     ]
   }
