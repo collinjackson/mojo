@@ -25,11 +25,11 @@ namespace mojo {
 template <typename T>
 class Array {
  public:
-  typedef internal::ArrayTraits<T, internal::IsMoveOnlyType<T>::value> Traits;
-  typedef typename Traits::ConstRefType ConstRefType;
-  typedef typename Traits::RefType RefType;
-  typedef typename Traits::StorageType StorageType;
-  typedef typename Traits::ForwardType ForwardType;
+  using ConstRefType = typename std::vector<T>::const_reference;
+  using RefType = typename std::vector<T>::reference;
+
+  using Traits = internal::ArrayTraits<T, internal::IsMoveOnlyType<T>::value>;
+  using ForwardType = typename Traits::ForwardType;
 
   typedef internal::Array_Data<typename internal::WrapperTraits<T>::DataType>
       Data_;
@@ -37,7 +37,7 @@ class Array {
   // Constructs a new array that is null.
   Array() : is_null_(true) {}
 
-  ~Array() { Traits::Finalize(&vec_); }
+  ~Array() {}
 
   // Moves the contents of |other| into this array.
   Array(Array&& other) : is_null_(true) { Take(&other); }
@@ -69,10 +69,8 @@ class Array {
 
   // Resets the contents of this array back to null.
   void reset() {
-    if (!vec_.empty()) {
-      Traits::Finalize(&vec_);
+    if (!vec_.empty())
       vec_.clear();
-    }
     is_null_ = true;
   }
 
@@ -89,9 +87,9 @@ class Array {
 
   // Returns a reference to the element at zero-based |offset|. Calling this on
   // an array with size less than |offset|+1 causes undefined behavior.
-  ConstRefType at(size_t offset) const { return Traits::at(&vec_, offset); }
+  ConstRefType at(size_t offset) const { return vec_.at(offset); }
   ConstRefType operator[](size_t offset) const { return at(offset); }
-  RefType at(size_t offset) { return Traits::at(&vec_, offset); }
+  RefType at(size_t offset) { return vec_.at(offset); }
   RefType operator[](size_t offset) { return at(offset); }
 
   // Pushes |value| onto the back of the array. If this array was null, it will
@@ -105,13 +103,13 @@ class Array {
   // like the resize method of |std::vector|.
   void resize(size_t size) {
     is_null_ = false;
-    Traits::Resize(&vec_, size);
+    vec_.resize(size);
   }
 
   // Returns a const reference to the |std::vector| managed by this class. If
   // the array is null, this will be an empty vector.
-  const std::vector<StorageType>& storage() const { return vec_; }
-  operator const std::vector<StorageType>&() const { return vec_; }
+  const std::vector<T>& storage() const { return vec_; }
+  operator const std::vector<T>&() const { return vec_; }
 
   // Swaps the contents of this array with the |other| array, including
   // nullness.
@@ -123,7 +121,7 @@ class Array {
   // Swaps the contents of this array with the specified vector, making this
   // array non-null. Since the vector cannot represent null, it will just be
   // made empty if this array is null.
-  void Swap(std::vector<StorageType>* other) {
+  void Swap(std::vector<T>* other) {
     is_null_ = false;
     vec_.swap(*other);
   }
@@ -232,7 +230,7 @@ class Array {
   Iterator end() { return Iterator(this, size()); }
 
  private:
-  typedef std::vector<StorageType> Array::*Testable;
+  typedef std::vector<T> Array::*Testable;
 
  public:
   operator Testable() const { return is_null_ ? 0 : &Array::vec_; }
@@ -243,7 +241,7 @@ class Array {
     Swap(other);
   }
 
-  std::vector<StorageType> vec_;
+  std::vector<T> vec_;
   bool is_null_;
 
   MOJO_MOVE_ONLY_TYPE(Array);
