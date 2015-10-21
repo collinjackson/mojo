@@ -19,52 +19,6 @@ class MojoMessagePipeReadResult {
   }
 }
 
-class MojoMessagePipeQueryAndReadState {
-  static ByteData _data;
-  static Uint32List _rawHandles;
-  static final List _result = new List(5);
-
-  MojoResult _status;
-  List<MojoHandle> _handles;
-  int _dataLength;
-  int _handlesLength;
-
-  MojoResult get status => _status;
-  List<MojoHandle> get handles => _handles;
-  int get dataLength => _dataLength;
-  int get handlesLength => _handlesLength;
-  ByteData get data => _data;
-
-  MojoMessagePipeQueryAndReadState()
-      : _dataLength = 0,
-        _handlesLength = 0;
-
-  void queryAndRead(int handle, int flags) {
-    MojoMessagePipeNatives.MojoQueryAndReadMessage(
-        handle, flags, _data, _rawHandles, _result);
-    _status = new MojoResult(_result[0]);
-    _data = _result[1];
-    _rawHandles = _result[2];
-    _dataLength = _result[3];
-    _handlesLength = _result[4];
-
-    if (_handlesLength == 0) {
-      _handles = null;
-    } else {
-      _handles = new List(_handlesLength);
-      for (int i = 0; i < _handlesLength; i++) {
-        _handles[i] = new MojoHandle(_rawHandles[i]);
-      }
-    }
-  }
-
-  String toString() {
-    return "MojoMessagePipeQueryAndReadState("
-        "status: $_status, dataLength: $dataLength, "
-        "handlesLength: $handlesLength)";
-  }
-}
-
 class MojoMessagePipeEndpoint {
   static const int WRITE_FLAG_NONE = 0;
   static const int READ_FLAG_NONE = 0;
@@ -73,10 +27,7 @@ class MojoMessagePipeEndpoint {
   MojoHandle handle;
   MojoResult status;
 
-  MojoMessagePipeQueryAndReadState _queryAndReadState;
-
-  MojoMessagePipeEndpoint(this.handle)
-      : _queryAndReadState = new MojoMessagePipeQueryAndReadState();
+  MojoMessagePipeEndpoint(this.handle);
 
   MojoResult write(ByteData data,
       [int numBytes = -1, List<MojoHandle> handles = null, int flags = 0]) {
@@ -157,19 +108,6 @@ class MojoMessagePipeEndpoint {
   }
 
   MojoMessagePipeReadResult query() => read(null);
-
-  // Warning: The object returned by this function, and the buffers inside of it
-  // are only valid until the next call to this function by the same isolate.
-  MojoMessagePipeQueryAndReadState queryAndRead([int flags = 0]) {
-    if (handle == null) {
-      status = MojoResult.INVALID_ARGUMENT;
-      return null;
-    }
-
-    _queryAndReadState.queryAndRead(handle.h, flags);
-    status = _queryAndReadState.status;
-    return _queryAndReadState;
-  }
 
   bool setDescription(String description) {
     assert(MojoHandle._setHandleLeakDescription(handle, description));

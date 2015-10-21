@@ -105,8 +105,7 @@ class Encoder {
     return result;
   }
 
-  Message get message => new Message(
-      _buffer.trimmed, _buffer.handles, _buffer.extent, _buffer.handles.length);
+  Message get message => new Message(_buffer.trimmed, _buffer.handles);
 
   void encodeStructDataHeader(StructDataHeader dataHeader) {
     _buffer.claimMemory(align(dataHeader.size));
@@ -171,11 +170,11 @@ class Encoder {
     _buffer.buffer.setUint64(_base + offset, value, Endianness.LITTLE_ENDIAN);
   }
 
-  void encodeFloat(double value, int offset) => _buffer.buffer
-      .setFloat32(_base + offset, value, Endianness.LITTLE_ENDIAN);
+  void encodeFloat(double value, int offset) => _buffer.buffer.setFloat32(
+      _base + offset, value, Endianness.LITTLE_ENDIAN);
 
-  void encodeDouble(double value, int offset) => _buffer.buffer
-      .setFloat64(_base + offset, value, Endianness.LITTLE_ENDIAN);
+  void encodeDouble(double value, int offset) => _buffer.buffer.setFloat64(
+      _base + offset, value, Endianness.LITTLE_ENDIAN);
 
   void encodeHandle(core.MojoHandle value, int offset, bool nullable) {
     if ((value == null) || !value.isValid) {
@@ -276,7 +275,8 @@ class Encoder {
   void encodeUnion(Union value, int offset, bool nullable) {
     if (value == null) {
       if (!nullable) {
-        throw new MojoCodecError('Trying to encode a non-nullable null union.');
+        throw new MojoCodecError(
+            'Trying to encode a non-nullable null union.');
       }
       encodeUint64(0, offset);
       encodeUint64(0, offset + 8);
@@ -422,19 +422,15 @@ class Encoder {
   }
 
   void encodeHandleArray(List<core.MojoHandle> value, int offset,
-          int nullability, int expectedLength) =>
-      _handleArrayEncodeHelper((e, v, o, n) => e.encodeHandle(v, o, n), value,
-          offset, kSerializedHandleSize, nullability, expectedLength);
+      int nullability, int expectedLength) => _handleArrayEncodeHelper(
+          (e, v, o, n) => e.encodeHandle(v, o, n), value, offset,
+          kSerializedHandleSize, nullability, expectedLength);
 
   void encodeMessagePipeHandleArray(List<core.MojoMessagePipeEndpoint> value,
           int offset, int nullability, int expectedLength) =>
       _handleArrayEncodeHelper(
-          (e, v, o, n) => e.encodeMessagePipeHandle(v, o, n),
-          value,
-          offset,
-          kSerializedHandleSize,
-          nullability,
-          expectedLength);
+          (e, v, o, n) => e.encodeMessagePipeHandle(v, o, n), value, offset,
+          kSerializedHandleSize, nullability, expectedLength);
 
   void encodeConsumerHandleArray(List<core.MojoDataPipeConsumer> value,
           int offset, int nullability, int expectedLength) =>
@@ -449,22 +445,14 @@ class Encoder {
   void encodeSharedBufferHandleArray(List<core.MojoSharedBuffer> value,
           int offset, int nullability, int expectedLength) =>
       _handleArrayEncodeHelper(
-          (e, v, o, n) => e.encodeSharedBufferHandle(v, o, n),
-          value,
-          offset,
-          kSerializedHandleSize,
-          nullability,
-          expectedLength);
+          (e, v, o, n) => e.encodeSharedBufferHandle(v, o, n), value, offset,
+          kSerializedHandleSize, nullability, expectedLength);
 
   void encodeInterfaceRequestArray(
           List<Proxy> value, int offset, int nullability, int expectedLength) =>
       _handleArrayEncodeHelper(
-          (e, v, o, n) => e.encodeInterfaceRequest(v, o, n),
-          value,
-          offset,
-          kSerializedHandleSize,
-          nullability,
-          expectedLength);
+          (e, v, o, n) => e.encodeInterfaceRequest(v, o, n), value, offset,
+          kSerializedHandleSize, nullability, expectedLength);
 
   void encodeInterfaceArray(
           List<Stub> value, int offset, int nullability, int expectedLength) =>
@@ -485,10 +473,10 @@ class Encoder {
   }
 
   void appendBytes(Uint8List value) {
-    _buffer.buffer.buffer.asUint8List().setRange(
-        _base + ArrayDataHeader.kHeaderSize,
-        _base + ArrayDataHeader.kHeaderSize + value.lengthInBytes,
-        value);
+    _buffer.buffer.buffer
+        .asUint8List()
+        .setRange(_base + ArrayDataHeader.kHeaderSize,
+            _base + ArrayDataHeader.kHeaderSize + value.lengthInBytes, value);
   }
 
   void appendInt8Array(List<int> value) =>
@@ -573,7 +561,8 @@ class Decoder {
 
   Decoder(this._message, [this._base = 0, this._validator = null]) {
     if (_validator == null) {
-      _validator = new _Validator(_message.dataLength, _message.handlesLength);
+      _validator = new _Validator(
+          _message.buffer.lengthInBytes, _message.handles.length);
     }
   }
 
@@ -585,13 +574,9 @@ class Decoder {
 
   ByteData get _buffer => _message.buffer;
   List<core.MojoHandle> get _handles => _message.handles;
-  List<core.MojoHandle> get excessHandles {
-    if (_message.handlesLength == 0) return null;
-    var leftAtEnd = _message.handles
-        .getRange(_validator._minNextClaimedHandle, _message.handlesLength);
-    var skipped = _validator._skippedIndices.map((i) => _message.handles[i]);
-    return new List.from(leftAtEnd)..addAll(skipped);
-  }
+  List<core.MojoHandle> get excessHandles => new List.from(_message.handles
+      .getRange(_validator._minNextClaimedHandle, _message.handles.length))
+    ..addAll(_validator._skippedIndices.map((i) => _message.handles[i]));
 
   int decodeInt8(int offset) => _buffer.getInt8(_base + offset);
   int decodeUint8(int offset) => _buffer.getUint8(_base + offset);
@@ -724,8 +709,7 @@ class Decoder {
       return null;
     }
     var header = d.decodeDataHeaderForBoolArray(expectedLength);
-    var bytes = new Uint8List.view(
-        d._buffer.buffer,
+    var bytes = new Uint8List.view(d._buffer.buffer,
         d._buffer.offsetInBytes + d._base + ArrayDataHeader.kHeaderSize,
         (header.numElements + 7) ~/ kAlignment);
     var result = new List<bool>(header.numElements);
@@ -774,8 +758,7 @@ class Decoder {
       return null;
     }
     var header = d.decodeDataHeaderForArray(elementSize, expectedLength);
-    return arrayViewer(
-        d._buffer.buffer,
+    return arrayViewer(d._buffer.buffer,
         d._buffer.offsetInBytes + d._base + ArrayDataHeader.kHeaderSize,
         header.numElements);
   }
@@ -793,37 +776,37 @@ class Decoder {
           nullability, expectedLength);
 
   List<int> decodeUint16Array(
-          int offset, int nullability, int expectedLength) =>
-      decodeArray((b, s, l) => new Uint16List.view(b, s, l), 2, offset,
-          nullability, expectedLength);
+      int offset, int nullability, int expectedLength) => decodeArray(
+          (b, s, l) => new Uint16List.view(b, s, l), 2, offset, nullability,
+          expectedLength);
 
   List<int> decodeInt32Array(int offset, int nullability, int expectedLength) =>
       decodeArray((b, s, l) => new Int32List.view(b, s, l), 4, offset,
           nullability, expectedLength);
 
   List<int> decodeUint32Array(
-          int offset, int nullability, int expectedLength) =>
-      decodeArray((b, s, l) => new Uint32List.view(b, s, l), 4, offset,
-          nullability, expectedLength);
+      int offset, int nullability, int expectedLength) => decodeArray(
+          (b, s, l) => new Uint32List.view(b, s, l), 4, offset, nullability,
+          expectedLength);
 
   List<int> decodeInt64Array(int offset, int nullability, int expectedLength) =>
       decodeArray((b, s, l) => new Int64List.view(b, s, l), 8, offset,
           nullability, expectedLength);
 
   List<int> decodeUint64Array(
-          int offset, int nullability, int expectedLength) =>
-      decodeArray((b, s, l) => new Uint64List.view(b, s, l), 8, offset,
-          nullability, expectedLength);
+      int offset, int nullability, int expectedLength) => decodeArray(
+          (b, s, l) => new Uint64List.view(b, s, l), 8, offset, nullability,
+          expectedLength);
 
   List<double> decodeFloatArray(
-          int offset, int nullability, int expectedLength) =>
-      decodeArray((b, s, l) => new Float32List.view(b, s, l), 4, offset,
-          nullability, expectedLength);
+      int offset, int nullability, int expectedLength) => decodeArray(
+          (b, s, l) => new Float32List.view(b, s, l), 4, offset, nullability,
+          expectedLength);
 
   List<double> decodeDoubleArray(
-          int offset, int nullability, int expectedLength) =>
-      decodeArray((b, s, l) => new Float64List.view(b, s, l), 8, offset,
-          nullability, expectedLength);
+      int offset, int nullability, int expectedLength) => decodeArray(
+          (b, s, l) => new Float64List.view(b, s, l), 8, offset, nullability,
+          expectedLength);
 
   List _handleArrayDecodeHelper(Function elementDecoder, int offset,
       int elementSize, int nullability, int expectedLength) {
@@ -834,8 +817,7 @@ class Decoder {
     var header = d.decodeDataHeaderForArray(elementSize, expectedLength);
     var result = new List(header.numElements);
     for (int i = 0; i < result.length; ++i) {
-      result[i] = elementDecoder(
-          d,
+      result[i] = elementDecoder(d,
           ArrayDataHeader.kHeaderSize + elementSize * i,
           isElementNullable(nullability));
     }
@@ -870,20 +852,13 @@ class Decoder {
   List<Stub> decodeInterfaceRequestArray(int offset, int nullability,
           int expectedLength, Function interfaceFactory) =>
       _handleArrayDecodeHelper(
-          (d, o, n) => d.decodeInterfaceRequest(o, n, interfaceFactory),
-          offset,
-          kSerializedHandleSize,
-          nullability,
-          expectedLength);
+          (d, o, n) => d.decodeInterfaceRequest(o, n, interfaceFactory), offset,
+          kSerializedHandleSize, nullability, expectedLength);
 
   List<Proxy> decodeServiceInterfaceArray(int offset, int nullability,
-          int expectedLength, Function clientFactory) =>
-      _handleArrayDecodeHelper(
-          (d, o, n) => d.decodeServiceInterface(o, n, clientFactory),
-          offset,
-          kSerializedInterfaceSize,
-          nullability,
-          expectedLength);
+      int expectedLength, Function clientFactory) => _handleArrayDecodeHelper(
+          (d, o, n) => d.decodeServiceInterface(o, n, clientFactory), offset,
+          kSerializedInterfaceSize, nullability, expectedLength);
 
   static String _stringOfUtf8(Uint8List bytes) =>
       (const Utf8Decoder()).convert(bytes.toList());
