@@ -47,7 +47,7 @@ struct MojomFile {
   // be retrieved from the  MojomFileGraph.
   array<string>? imports;
 
-  // resolved_types and resolved_constants in MojomFileGraph contain
+  // resolved_types and resolved_values in MojomFileGraph contain
   // respectively the types and constants declared in the union of all modules
   // in the graph. This KeysByType selects the keys of the types and constants
   // defined in this module
