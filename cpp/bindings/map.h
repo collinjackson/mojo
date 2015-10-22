@@ -29,33 +29,31 @@ class Map {
   static_assert(!internal::IsMoveOnlyType<Key>::value,
                 "Map keys cannot be move only types.");
 
-  typedef internal::MapTraits<Key,
-                              Value,
-                              internal::IsMoveOnlyType<Value>::value> Traits;
-  typedef typename Traits::KeyStorageType KeyStorageType;
-  typedef typename Traits::KeyRefType KeyRefType;
-  typedef typename Traits::KeyConstRefType KeyConstRefType;
-  typedef typename Traits::KeyForwardType KeyForwardType;
+  using KeyType = Key;
+  using ValueType = Value;
 
-  typedef typename Traits::ValueStorageType ValueStorageType;
-  typedef typename Traits::ValueRefType ValueRefType;
-  typedef typename Traits::ValueConstRefType ValueConstRefType;
-  typedef typename Traits::ValueForwardType ValueForwardType;
+  using Traits =
+      internal::MapTraits<KeyType,
+                          ValueType,
+                          internal::IsMoveOnlyType<ValueType>::value>;
+  using ValueForwardType = typename Traits::ValueForwardType;
 
-  typedef internal::Map_Data<typename internal::WrapperTraits<Key>::DataType,
-                             typename internal::WrapperTraits<Value>::DataType>
-      Data_;
+  using Data_ =
+      internal::Map_Data<typename internal::WrapperTraits<KeyType>::DataType,
+                         typename internal::WrapperTraits<ValueType>::DataType>;
 
   Map() : is_null_(true) {}
 
   // Constructs a non-null Map containing the specified |keys| mapped to the
   // corresponding |values|.
-  Map(mojo::Array<Key> keys, mojo::Array<Value> values) : is_null_(false) {
+  Map(mojo::Array<KeyType> keys, mojo::Array<ValueType> values)
+      : is_null_(false) {
     MOJO_DCHECK(keys.size() == values.size());
-    Traits::InitializeFrom(&map_, keys.Pass(), values.Pass());
+    for (size_t i = 0; i < keys.size(); ++i)
+      Traits::Insert(&map_, keys[i], values[i]);
   }
 
-  ~Map() { Traits::Finalize(&map_); }
+  ~Map() {}
 
   Map(Map&& other) : is_null_(true) { Take(&other); }
   Map& operator=(Map&& other) {
@@ -79,10 +77,7 @@ class Map {
 
   // Destroys the contents of the Map and leaves it in the null state.
   void reset() {
-    if (!map_.empty()) {
-      Traits::Finalize(&map_);
-      map_.clear();
-    }
+    map_.clear();
     is_null_ = true;
   }
 
@@ -96,31 +91,29 @@ class Map {
   // Inserts a key-value pair into the map, moving the value by calling its
   // Pass() method if it is a move-only type. Like std::map, this does not
   // insert |value| if |key| is already a member of the map.
-  void insert(KeyForwardType key, ValueForwardType value) {
+  void insert(const KeyType& key, ValueForwardType value) {
     is_null_ = false;
     Traits::Insert(&map_, key, value);
   }
 
   // Returns a reference to the value associated with the specified key,
   // crashing the process if the key is not present in the map.
-  ValueRefType at(KeyForwardType key) { return Traits::at(&map_, key); }
-  ValueConstRefType at(KeyForwardType key) const {
-    return Traits::at(&map_, key);
-  }
+  ValueType& at(const KeyType& key) { return map_.at(key); }
+  const ValueType& at(const KeyType& key) const { return map_.at(key); }
 
   // Returns a reference to the value associated with the specified key,
   // creating a new entry if the key is not already present in the map. A
   // newly-created value will be value-initialized (meaning that it will be
   // initialized by the default constructor of the value type, if any, or else
   // will be zero-initialized).
-  ValueRefType operator[](KeyForwardType key) {
+  ValueType& operator[](const KeyType& key) {
     is_null_ = false;
-    return Traits::GetOrInsert(&map_, key);
+    return map_[key];
   }
 
   // Swaps the contents of this Map with another Map of the same type (including
   // nullness).
-  void Swap(Map<Key, Value>* other) {
+  void Swap(Map<KeyType, ValueType>* other) {
     std::swap(is_null_, other->is_null_);
     map_.swap(other->map_);
   }
@@ -129,7 +122,7 @@ class Map {
   // of the same type. Since std::map cannot represent the null state, the
   // std::map will be empty if Map is null. The Map will always be left in a
   // non-null state.
-  void Swap(std::map<Key, Value>* other) {
+  void Swap(std::map<KeyType, ValueType>* other) {
     is_null_ = false;
     map_.swap(*other);
   }
@@ -163,7 +156,7 @@ class Map {
     while (i != cend()) {
       if (i.GetKey() != j.GetKey())
         return false;
-      if (!internal::ValueTraits<Value>::Equals(i.GetValue(), j.GetValue()))
+      if (!internal::ValueTraits<ValueType>::Equals(i.GetValue(), j.GetValue()))
         return false;
       ++i;
       ++j;
@@ -181,13 +174,13 @@ class Map {
   class InternalIterator {
     using InternalIteratorType = typename std::conditional<
         MutabilityType == IteratorMutability::kConst,
-        typename std::map<KeyStorageType, ValueStorageType>::const_iterator,
-        typename std::map<KeyStorageType, ValueStorageType>::iterator>::type;
+        typename std::map<KeyType, ValueType>::const_iterator,
+        typename std::map<KeyType, ValueType>::iterator>::type;
 
     using ReturnValueType =
         typename std::conditional<MutabilityType == IteratorMutability::kConst,
-                                  ValueConstRefType,
-                                  ValueRefType>::type;
+                                  const ValueType&,
+                                  ValueType&>::type;
 
    public:
     InternalIterator() : it_() {}
@@ -195,8 +188,8 @@ class Map {
 
     // The key is always a const reference, but the value is conditional on
     // whether this is a const iterator or not.
-    KeyConstRefType GetKey() { return Traits::GetKey(it_); }
-    ReturnValueType GetValue() { return Traits::GetValue(it_); }
+    const KeyType& GetKey() { return it_->first; }
+    ReturnValueType GetValue() { return it_->second; }
 
     InternalIterator& operator++() {
       ++it_;
@@ -240,13 +233,13 @@ class Map {
 
   // Returns the iterator pointing to the entry for |key|, if present, or else
   // returns |cend()| or |end()|, respectively.
-  ConstMapIterator find(KeyForwardType key) const {
+  ConstMapIterator find(const KeyType& key) const {
     return ConstMapIterator(map_.find(key));
   }
-  MapIterator find(KeyForwardType key) { return MapIterator(map_.find(key)); }
+  MapIterator find(const KeyType& key) { return MapIterator(map_.find(key)); }
 
  private:
-  typedef std::map<KeyStorageType, ValueStorageType> Map::*Testable;
+  typedef std::map<KeyType, ValueType> Map::*Testable;
 
  public:
   // The Map may be used in boolean expressions to determine if it is non-null,
@@ -260,7 +253,7 @@ class Map {
     Swap(other);
   }
 
-  std::map<KeyStorageType, ValueStorageType> map_;
+  std::map<KeyType, ValueType> map_;
   bool is_null_;
 
   MOJO_MOVE_ONLY_TYPE(Map);

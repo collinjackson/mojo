@@ -69,8 +69,7 @@ class Array {
 
   // Resets the contents of this array back to null.
   void reset() {
-    if (!vec_.empty())
-      vec_.clear();
+    vec_.clear();
     is_null_ = true;
   }
 
