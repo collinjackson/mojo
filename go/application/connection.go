@@ -11,6 +11,7 @@ import (
 	"mojo/public/go/system"
 
 	sp "mojo/public/interfaces/application/service_provider"
+	"mojo/public/interfaces/bindings/service_describer"
 )
 
 type connectionInfo struct {
@@ -34,6 +35,13 @@ type ServiceRequest interface {
 	// Name returns the name of requested mojo service.
 	Name() string
 
+	// ServiceDescription returns a service description, which can be queried to
+	// examine the type information of the service associated with this
+	// ServiceRequest.
+	// Note: In some implementations, the ServiceDescription returned will not
+	// provide type information. Methods called may return nil or an error.
+	ServiceDescription() service_describer.ServiceDescription
+
 	// PassMessagePipe passes ownership of the underlying message pipe
 	// handle to the newly created handle object, invalidating the
 	// underlying handle object in the process.
@@ -44,6 +52,13 @@ type ServiceRequest interface {
 type ServiceFactory interface {
 	// Name returns the name of provided mojo service.
 	Name() string
+
+	// ServiceDescription returns a service description, which can be queried to
+	// examine the type information of the mojo service associated with this
+	// ServiceFactory.
+	// Note: In some implementations, the ServiceDescription returned will not
+	// provide type information. Methods called may return nil or an error.
+	ServiceDescription() service_describer.ServiceDescription
 
 	// Create binds an implementation of mojo service to the provided
 	// message pipe and runs it.
@@ -62,6 +77,11 @@ type Connection struct {
 	localServices      *bindings.Stub
 	outgoingConnection *OutgoingConnection
 	isClosed           bool
+	// Is set if ProvideServicesWithDescriber was called.
+	// Note: When DescribeServices is invoked, some implementations may return
+	// incomplete ServiceDescriptions. For example, if type information was not
+	// generated, then the methods called may return nil or an error.
+	describer *ServiceDescriberFactory
 }
 
 func newConnection(requestorURL string, services *sp.ServiceProvider_Request, exposedServices *sp.ServiceProvider_Pointer, resolvedURL string) *Connection {
@@ -90,7 +110,7 @@ func newConnection(requestorURL string, services *sp.ServiceProvider_Request, ex
 // Panics if called more than once.
 func (c *Connection) ProvideServices(services ...ServiceFactory) *OutgoingConnection {
 	if c.servicesProvided {
-		panic("ProvideServices can be called only once")
+		panic("ProvideServices or ProvideServicesWithDescriber can be called only once")
 	}
 	c.servicesProvided = true
 	if c.servicesRequest == nil {
@@ -122,6 +142,31 @@ func (c *Connection) ProvideServices(services ...ServiceFactory) *OutgoingConnec
 	return c.outgoingConnection
 }
 
+// ProvideServicesWithDescriber is an alternative to ProvideServices that, in
+// addition to providing the given services, also provides type descriptions of
+// the given services. See ProvideServices for a description of what it does.
+// This method will invoke ProvideServices after appending the ServiceDescriber
+// service to |services|. See service_describer.mojom for a description of the
+// ServiceDescriber interface. Client Mojo applications can choose to connect
+// to this ServiceDescriber interface, which describes the other services listed
+// in |services|.
+// Note that the implementation of ServiceDescriber will make the optional
+// DeclarationData available on all types, and in particular, the names used in
+// .mojom files will be exposed to client applications.
+func (c *Connection) ProvideServicesWithDescriber(services ...ServiceFactory) *OutgoingConnection {
+	if c.servicesProvided {
+		panic("ProvideServices or ProvideServicesWithDescriber can be called only once")
+	}
+	mapping := make(map[string]service_describer.ServiceDescription)
+	for _, service := range services {
+		mapping[service.Name()] = service.ServiceDescription()
+	}
+	c.describer = newServiceDescriberFactory(mapping)
+	servicesWithDescriber := append(services, &service_describer.ServiceDescriber_ServiceFactory{c.describer})
+
+	return c.ProvideServices(servicesWithDescriber...)
+}
+
 // Close closes both incoming and outgoing parts of the connection.
 func (c *Connection) Close() {
 	if c.servicesRequest != nil {
@@ -129,6 +174,9 @@ func (c *Connection) Close() {
 	}
 	if c.localServices != nil {
 		c.localServices.Close()
+	}
+	if c.describer != nil {
+		c.describer.Close()
 	}
 	if c.outgoingConnection.remoteServices != nil {
 		c.outgoingConnection.remoteServices.Close_Proxy()
