@@ -32,6 +32,7 @@ def analyze_entrypoints(dart_sdk, package_root, entrypoints):
   cmd.append("--package-root")
   cmd.append(package_root)
   cmd.append("--no-hints")
+  cmd.append("--show-sdk-warnings")
   try:
     subprocess.check_output(cmd, stderr=subprocess.STDOUT)
   except subprocess.CalledProcessError as e:

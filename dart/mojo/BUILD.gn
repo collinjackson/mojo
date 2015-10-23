@@ -4,6 +4,7 @@
 
 import("../../mojo_sdk.gni")
 import("../rules.gni")
+import("../sdk_ext_sources.gni")
 
 dart_mojo_sdk_entrypoints = [
   "lib/application.dart",
@@ -41,7 +42,7 @@ dart_pkg("mojo") {
               "README.md",
             ]
 
-  sdk_ext_directory = "sdk_ext"
+  sdk_ext_files = dart_mojo_internal_sdk_sources
 
   deps = [
     "../third_party",
