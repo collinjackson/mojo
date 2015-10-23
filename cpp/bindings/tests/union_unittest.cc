@@ -338,6 +338,7 @@ TEST(UnionTest, NullStringValidation) {
   size_t size = sizeof(internal::ObjectUnion_Data);
   mojo::internal::FixedBufferForTesting buf(size);
   internal::ObjectUnion_Data* data = internal::ObjectUnion_Data::New(&buf);
+  data->size = 16;
   data->tag = internal::ObjectUnion_Data::ObjectUnion_Tag::F_STRING;
   data->data.unknown = 0x0;
   mojo::internal::BoundsChecker bounds_checker(data,
@@ -353,6 +354,7 @@ TEST(UnionTest, StringPointerOverflowValidation) {
   size_t size = sizeof(internal::ObjectUnion_Data);
   mojo::internal::FixedBufferForTesting buf(size);
   internal::ObjectUnion_Data* data = internal::ObjectUnion_Data::New(&buf);
+  data->size = 16;
   data->tag = internal::ObjectUnion_Data::ObjectUnion_Tag::F_STRING;
   data->data.unknown = 0xFFFFFFFFFFFFFFFF;
   mojo::internal::BoundsChecker bounds_checker(data,
@@ -368,6 +370,7 @@ TEST(UnionTest, StringValidateOOB) {
   size_t size = 32;
   mojo::internal::FixedBufferForTesting buf(size);
   internal::ObjectUnion_Data* data = internal::ObjectUnion_Data::New(&buf);
+  data->size = 16;
   data->tag = internal::ObjectUnion_Data::ObjectUnion_Tag::F_STRING;
 
   data->data.f_f_string.offset = 8;
@@ -626,6 +629,30 @@ TEST(UnionTest, Validation_NullableUnion) {
   mojo::internal::BoundsChecker bounds_checker(data,
                                                static_cast<uint32_t>(size), 0);
   EXPECT_TRUE(internal::SmallStruct_Data::Validate(raw_buf, &bounds_checker));
+  free(raw_buf);
+}
+
+// Validation passes with nullable null union containing non-nullable objects.
+TEST(UnionTest, Validation_NullableObjectUnion) {
+  Environment environment;
+  StructNullObjectUnionPtr small_struct(StructNullObjectUnion::New());
+
+  size_t size = GetSerializedSize_(*small_struct);
+
+  mojo::internal::FixedBufferForTesting buf(size);
+  internal::StructNullObjectUnion_Data* data = nullptr;
+  EXPECT_EQ(mojo::internal::ValidationError::NONE,
+            Serialize_(small_struct.get(), &buf, &data));
+
+  std::vector<Handle> handles;
+  data->EncodePointersAndHandles(&handles);
+  EXPECT_TRUE(handles.empty());
+
+  void* raw_buf = buf.Leak();
+  mojo::internal::BoundsChecker bounds_checker(data,
+                                               static_cast<uint32_t>(size), 0);
+  EXPECT_TRUE(
+      internal::StructNullObjectUnion_Data::Validate(raw_buf, &bounds_checker));
   free(raw_buf);
 }
 

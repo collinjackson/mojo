@@ -69,6 +69,14 @@ struct SmallStructNonNullableUnion {
   PodUnion pod_union;
 };
 
+union ObjectOnlyUnion {
+  DummyStruct dummy1;
+};
+
+struct StructNullObjectUnion {
+  ObjectOnlyUnion? obj_union;
+};
+
 struct SmallObjStruct {
   ObjectUnion obj_union;
   int8 f_int8;
